@@ -1,8 +1,14 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException
 from app.models.pool import RafflePool
 from app.schemas.pool import PoolCreate
+from app.models.prize import Prize
 
 async def create_pool(db: AsyncSession, pool_in: PoolCreate) -> RafflePool:
+    prize = await db.get(Prize, pool_in.prize_id)
+    if not prize:
+        raise HTTPException(status_code=400, detail="Invalid prize_id: does not exist")
+
     pool = RafflePool(**pool_in.dict())
     db.add(pool)
     await db.commit()
