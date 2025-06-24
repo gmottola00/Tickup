@@ -1,5 +1,5 @@
-import '../models/prize.dart';
-import '../remote/prize_remote_datasource.dart';
+import 'package:tickup/data/models/prize.dart';
+import 'package:tickup/data/remote/prize_remote_datasource.dart';
 
 class PrizeRepository {
   final PrizeRemoteDataSource _remote = PrizeRemoteDataSource();

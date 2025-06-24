@@ -35,7 +35,11 @@ lib/
 │   │   ├─ dio_client.dart
 │   │   └─ auth_service.dart
 │   └─ realtime/
-│       └─ realtime_service.dart
+│   │   └─ realtime_service.dart
+│   └─ game_engine/
+│       ├─ game_engine.dart
+│       └─ game_interface.dart
+│       └─ game_result.dart
 │
 ├─ data/
 │   ├─ models/
@@ -56,12 +60,8 @@ lib/
 │       └─ prize/
 │           └─ prize_page.dart
 │
-├─ core/game_engine/
-│   ├─ game_interface.dart
-│   └─ game_result.dart
-│
-└─ app.dart
-main.dart
+├─ app.dart
+└─ main.dart
 ```
 
 ---

@@ -6,19 +6,19 @@ class PrizeRemoteDataSource {
   final Dio dio = DioClient().dio;
 
   Future<Prize> getPrize(String id) async {
-    final res = await dio.get('/api/v1/prize/$id');
+    final res = await dio.get('/prizes/$id');
     return Prize.fromJson(res.data);
   }
 
   Future<void> createPrize(Prize prize) async {
-    await dio.post('/api/v1/prize/', data: prize.toJson());
+    await dio.post('/prizes/', data: prize.toJson());
   }
 
   Future<void> updatePrize(String id, Prize prize) async {
-    await dio.put('/api/v1/prize/$id', data: prize.toJson());
+    await dio.put('/prizes/$id', data: prize.toJson());
   }
 
   Future<void> deletePrize(String id) async {
-    await dio.delete('/api/v1/prize/$id');
+    await dio.delete('/prizes/$id');
   }
 }

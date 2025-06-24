@@ -37,7 +37,7 @@ class RealtimeService {
     required String schema,
     required String table,
     required PostgresChangeEvent event,
-    required void Function(PostgrestRealtimePayload) onEvent,
+    required void Function(Map<String, dynamic>) onEvent,
   }) {
     final ch = _client
         .channel('$schema:$table')
@@ -45,7 +45,7 @@ class RealtimeService {
           schema: schema,
           table: table,
           event: event,
-          callback: (payload, [__]) => onEvent(payload),
+          callback: (payload, [__]) => onEvent(payload.newRecord),
         )
         .subscribe();
     return ch;

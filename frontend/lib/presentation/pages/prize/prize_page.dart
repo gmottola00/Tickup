@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/presentation/state/prize/prize_provider.dart';
+import 'package:uuid/uuid.dart';
 
 class PrizePage extends ConsumerStatefulWidget {
   const PrizePage({super.key});
@@ -49,8 +50,10 @@ class _PrizePageState extends ConsumerState<PrizePage> {
 
   void _submit({bool update = false}) async {
     if (_formKey.currentState!.validate()) {
+      final uuid = Uuid();
+
       final prize = Prize(
-        prizeId: '',
+        prizeId: update ? _idController.text.trim() : uuid.v4(),
         title: _title.text,
         description: _desc.text,
         valueCents: int.parse(_value.text),
@@ -58,6 +61,7 @@ class _PrizePageState extends ConsumerState<PrizePage> {
         sponsor: _sponsor.text,
         stock: int.parse(_stock.text),
       );
+
       try {
         final repo = ref.read(prizeRepositoryProvider);
         if (update) {
@@ -66,11 +70,22 @@ class _PrizePageState extends ConsumerState<PrizePage> {
         } else {
           await repo.createPrize(prize);
           _showSnackbar('Premio creato!');
+          _clearForm();
         }
       } catch (_) {
         _showSnackbar('Errore nella richiesta');
       }
     }
+  }
+
+  void _clearForm() {
+    _idController.clear();
+    _title.clear();
+    _desc.clear();
+    _value.clear();
+    _img.clear();
+    _sponsor.clear();
+    _stock.clear();
   }
 
   @override
@@ -117,9 +132,9 @@ class _PrizePageState extends ConsumerState<PrizePage> {
               const SizedBox(height: 24),
               ElevatedButton(
                   onPressed: () => _submit(), child: const Text('Crea premio')),
-              ElevatedButton(
-                  onPressed: () => _submit(update: true),
-                  child: const Text('Aggiorna premio')),
+              // ElevatedButton(
+              //     onPressed: () => _submit(update: true),
+              //     child: const Text('Aggiorna premio')),
             ],
           ),
         ),
