@@ -1,0 +1,56 @@
+# --------------------
+# 🔧 GENERALE
+# --------------------
+.DS_Store
+Thumbs.db
+*.swp
+
+# --------------------
+# 💻 IDE / EDITOR
+# --------------------
+.vscode/
+.idea/
+*.iml
+
+# --------------------
+# 🐍 PYTHON / FASTAPI (backend)
+# --------------------
+backend/__pycache__/
+backend/*.py[cod]
+backend/.env
+backend/.env.*
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.pylint.d/
+backend/venv/
+backend/.venv/
+backend/poetry.lock
+**/*.pyc
+
+# --------------------
+# 📱 FLUTTER (frontend)
+# --------------------
+frontend/build/
+frontend/.dart_tool/
+frontend/.idea/
+frontend/.packages
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.metadata
+frontend/pubspec.lock
+frontend/generated_plugin_registrant.dart
+
+# Ignora file binari APK/AAB
+**/*.apk
+**/*.aab
+
+# --------------------
+# 🔐 CREDENZIALI / TEMP
+# --------------------
+*.log
+*.tmp
+*.bak
+.env
+.env.*
+supabase/.temp/
+supabase/.output/
