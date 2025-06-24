@@ -39,18 +39,22 @@ lib/
 │
 ├─ data/
 │   ├─ models/
+│   │   └─ prize.dart
 │   ├─ remote/
+│   │   └─ prize_remote_datasource.dart
 │   └─ repositories/
+│       └─ prize_repository.dart
 │
 ├─ presentation/
 │   ├─ routing/
 │   ├─ state/
-│   │   └─ games/
+│   │   └─ prize/
+│   │       └─ prize_provider.dart
 │   └─ pages/
 │       ├─ home/
 │       ├─ pools/
-│       └─ games/
-│           └─ reflex_tap/
+│       └─ prize/
+│           └─ prize_page.dart
 │
 ├─ core/game_engine/
 │   ├─ game_interface.dart
@@ -59,6 +63,24 @@ lib/
 └─ app.dart
 main.dart
 ```
+
+---
+
+## 🧠 Prize Architecture Flow
+
+```
+PrizePage → PrizeNotifier (prize_provider) → PrizeRepository → PrizeRemoteDataSource → DioClient → FastAPI
+```
+
+| Componente | Ruolo |
+|------------|-------|
+| `prize_page.dart` | UI Flutter con un form per creare, aggiornare, caricare o eliminare un premio |
+| `prize_provider.dart` | StateNotifier che coordina il caricamento e cancellazione dei premi in modo reattivo (Riverpod) |
+| `prize_repository.dart` | Punto di accesso centrale alle operazioni lato data. Si occupa di orchestrare i metodi del datasource |
+| `prize_remote_datasource.dart` | Contiene la logica per chiamare l'API REST (GET, POST, PUT, DELETE) via `Dio` |
+| `dio_client.dart` | Singleton con configurazione condivisa del client HTTP `Dio`, base URL, timeout e headers |
+
+Questo approccio disaccoppia completamente la UI dalla logica di accesso ai dati e permette testabilità, scalabilità e manutenzione più semplice.
 
 ---
 
@@ -75,7 +97,6 @@ main.dart
    ```
 
 3. **Set NDK version**
-
    In `android/app/build.gradle(.kts)`:
    ```gradle
    android {
@@ -84,7 +105,6 @@ main.dart
    ```
 
 4. **Configure Supabase**
-
    ```dart
    // lib/main.dart
    await Supabase.initialize(
@@ -94,10 +114,9 @@ main.dart
    ```
 
 5. **Backend URL**
-
    ```dart
    // lib/core/network/dio_client.dart
-   baseUrl: 'http://10.0.2.2:8000/api',   // emulator
+   baseUrl: 'http://10.0.2.2:8000/api/v1/',   // emulator
    ```
 
 6. **Run**
@@ -105,17 +124,6 @@ main.dart
    flutter run          # device selected
    flutter run -d chrome
    ```
-
----
-
-## 🔧 Architettura
-
-`Page → Provider → Repository → Api → DioClient → FastAPI`
-
-- **core**: servizi condivisi  
-- **data**: mapping e sorgenti  
-- **presentation**: UI + stato  
-- **games**: widget plug‑in
 
 ---
 
@@ -148,4 +156,4 @@ main.dart
 
 ---
 
-Buon divertimento con **SkillWin Arcade**!
+Buon divertimento con **SkillWin Arcade**! 🚀
