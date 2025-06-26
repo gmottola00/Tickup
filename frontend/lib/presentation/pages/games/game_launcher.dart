@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
-import '../games/stop_bar/stop_bar_game.dart';
-import '../games/reflex_tap/reflex_game.dart';
+import 'package:go_router/go_router.dart';
 
-/// Lancia il gioco in base all'id passato (es: 'stop_bar', 'reflex_tap')
 class GameLauncher extends StatelessWidget {
-  final String gameId;
-  const GameLauncher({Key? key, required this.gameId}) : super(key: key);
+  const GameLauncher({Key? key}) : super(key: key);
+
+  static const List<Map<String, String>> _games = [
+    {'id': 'stop_bar', 'name': 'Stop Bar'},
+    {'id': 'reflex_tap', 'name': 'Reflex Tap'},
+    {'id': 'space_invaders', 'name': 'Space Invaders'},
+  ];
 
   @override
   Widget build(BuildContext context) {
-    Widget gameWidget;
-    switch (gameId) {
-      case 'stop_bar':
-        gameWidget = StopBarGame();
-        break;
-      case 'reflex_tap':
-        gameWidget = ReflexGame();
-        break;
-      default:
-        gameWidget = Scaffold(
-          appBar: AppBar(title: Text('Gioco non trovato')),
-          body: Center(child: Text('ID gioco: \$gameId non valido')),
-        );
-    }
-    return gameWidget;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Seleziona un Gioco')),
+      body: ListView.builder(
+        itemCount: _games.length,
+        itemBuilder: (context, index) {
+          final game = _games[index];
+          return ListTile(
+            title: Text(game['name']!),
+            trailing: const Icon(Icons.play_arrow),
+            onTap: () => context.go('/games/${game['id']}'),
+          );
+        },
+      ),
+    );
   }
 }
