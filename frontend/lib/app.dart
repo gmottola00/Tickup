@@ -6,6 +6,10 @@ class SkillWinApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Debug routes all'avvio
+    for (final route in appRouter.configuration.routes) {
+      debugPrint('📍 Route disponibile: ${route.toString()}');
+    }
     return MaterialApp.router(
       title: 'SkillWin',
       theme: ThemeData(
