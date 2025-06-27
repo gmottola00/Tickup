@@ -1,29 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:tickup/core/game_engine/game_interface.dart';
-import 'package:tickup/core/game_engine/game_result.dart';
-import 'package:tickup/presentation/state/games/stop_bar_logic.dart';
+import 'package:go_router/go_router.dart';
+import 'package:tickup/presentation/features/logic_games/stop_bar_logic.dart';
 
-/// Widget del gioco "Ferma la barra" che implementa GameInterface
-class StopBarGame extends StatefulWidget implements GameInterface {
-  @override
-  _StopBarGameState createState() => _StopBarGameState();
+/// Widget UI del mini-gioco "Ferma la barra" (versione a tempo).
+class StopBarGame extends StatefulWidget {
+  const StopBarGame({Key? key}) : super(key: key);
 
   @override
-  Future<GameResult?> startGame(BuildContext context) {
-    return Navigator.of(context).push<GameResult>(
-      MaterialPageRoute(builder: (_) => this),
-    );
-  }
+  State<StopBarGame> createState() => _StopBarGameState();
 }
 
 class _StopBarGameState extends State<StopBarGame> {
-  final logic = StopBarLogic();
-  GameResult? result;
+  late final StopBarLogic logic;
 
   @override
   void initState() {
     super.initState();
-    logic.start();
+    logic = StopBarLogic()..start();
   }
 
   @override
@@ -33,65 +26,88 @@ class _StopBarGameState extends State<StopBarGame> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Ferma la barra')),
-      body: Center(
-        child: AnimatedBuilder(
-          animation: logic,
-          builder: (context, _) {
-            if (logic.gameOver) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    logic.score > 0 ? '✅ Success! +10 punti' : '❌ Missed!',
-                    style: TextStyle(fontSize: 24),
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      logic.restart();
-                    },
-                    child: Text('Ricomincia'),
-                  ),
-                ],
-              );
-            }
-            // Barra e zona verde
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Stack(
-                  children: [
-                    Container(height: 50, width: 300, color: Colors.grey[300]),
-                    Positioned(
-                      left: 300 * logic.greenStart,
-                      child: Container(
-                        height: 50,
-                        width: 300 * (logic.greenEnd - logic.greenStart),
-                        color: Colors.green,
-                      ),
-                    ),
-                    Positioned(
-                      left: 300 * logic.position,
-                      child:
-                          Container(height: 50, width: 10, color: Colors.red),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: () => logic.stop((res) {
-                    Navigator.of(context).pop(res);
-                  }),
-                  child: Text('STOP!'),
-                ),
-              ],
-            );
-          },
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: const Text('Ferma la barra')),
+        body: Center(
+          child: AnimatedBuilder(
+            animation: logic,
+            builder: (context, _) => logic.gameOver
+                ? _buildEndScreen(context)
+                : _buildGameScreen(context),
+          ),
         ),
-      ),
-    );
-  }
+      );
+
+  // ────────────────────────────────────────────────────────────
+  // Schermata di gioco
+  Widget _buildGameScreen(BuildContext context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Timer e punteggio
+          Text(
+            'Tempo: ${logic.remainingSeconds}s',
+            style: const TextStyle(fontSize: 20),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Punti: ${logic.score}',
+            style: const TextStyle(fontSize: 20),
+          ),
+          const SizedBox(height: 30),
+
+          // Barra con zona verde
+          Stack(
+            children: [
+              Container(height: 50, width: 300, color: Colors.grey[300]),
+              Positioned(
+                left: 300 * StopBarLogic.greenStart,
+                child: Container(
+                  height: 50,
+                  width:
+                      300 * (StopBarLogic.greenEnd - StopBarLogic.greenStart),
+                  color: Colors.green,
+                ),
+              ),
+              Positioned(
+                left: 300 * logic.position,
+                child: Container(height: 50, width: 10, color: Colors.red),
+              ),
+            ],
+          ),
+          const SizedBox(height: 30),
+
+          // Pulsante di TAP
+          ElevatedButton(
+            onPressed: logic.tap,
+            child: const Text('STOP!'),
+          ),
+        ],
+      );
+
+  // ────────────────────────────────────────────────────────────
+  // Schermata di fine partita
+  Widget _buildEndScreen(BuildContext context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '⏱️ Tempo scaduto!',
+            style: const TextStyle(fontSize: 24),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Punteggio finale: ${logic.score}',
+            style: const TextStyle(fontSize: 22),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: logic.restart,
+            child: const Text('Gioca di nuovo'),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () => context.go('/games'),
+            child: const Text('Torna ai giochi'),
+          ),
+        ],
+      );
 }

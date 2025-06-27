@@ -83,7 +83,7 @@ README.md                    # Questo file
 ## 🚀 Avvio del Server
 
 ```bash
-poetry run uvicorn app.main:app --reload --env-file .env
+poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --env-file .env --reload 
 ```
 
 - **API** su `http://localhost:8000`  

@@ -28,6 +28,8 @@ class _SplashScreenState extends State<SplashScreen> {
             const Text('SkillWin Splash'),
             const SizedBox(height: 24),
             _buildPrizeButton(context),
+            _buildLoginButton(context),
+            _buildGamesButton(context),
           ],
         ),
       ),
@@ -38,6 +40,20 @@ class _SplashScreenState extends State<SplashScreen> {
     return ElevatedButton(
       onPressed: () => context.go('/prize'),
       child: const Text('Vai alla pagina Premio'),
+    );
+  }
+
+  Widget _buildLoginButton(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () => context.go('/login'),
+      child: const Text('Vai alla pagina Login'),
+    );
+  }
+
+  Widget _buildGamesButton(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () => context.go('/games'),
+      child: const Text('Vai alla pagina dei Giochi'),
     );
   }
 }

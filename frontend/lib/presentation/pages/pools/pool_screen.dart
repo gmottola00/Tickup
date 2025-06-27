@@ -10,13 +10,13 @@ class PoolScreen extends StatelessWidget {
       appBar: AppBar(title: Text('SkillWin Pools')),
       body: ListView(
         children: [
-          ListTile(
-            title: Text('Ferma la barra'),
-            onTap: () async {
-              final result = await StopBarGame().startGame(context);
-              // gestisci result (supabase, classifica...)
-            },
-          ),
+          // ListTile(
+          //   title: Text('Ferma la barra'),
+          //   onTap: () async {
+          //     final result = await StopBarGame().startGame(context);
+          //     // gestisci result (supabase, classifica...)
+          //   },
+          // ),
           ListTile(
             title: Text('Reflex Tap'),
             onTap: () async {

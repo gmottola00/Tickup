@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/data/models/prize.dart';
-import 'package:tickup/presentation/state/prize/prize_provider.dart';
+import 'package:tickup/presentation/features/prize/prize_provider.dart';
 import 'package:uuid/uuid.dart';
 
 class PrizePage extends ConsumerStatefulWidget {

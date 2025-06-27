@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tickup/core/game_engine/game_interface.dart';
 import 'package:tickup/core/game_engine/game_result.dart';
-import 'package:tickup/presentation/state/games/reflex_logic.dart';
+import 'package:tickup/presentation/features/logic_games/reflex_logic.dart';
 
 /// Widget del gioco "Reflex Tap"
 class ReflexGame extends StatefulWidget implements GameInterface {
