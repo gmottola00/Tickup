@@ -5,36 +5,45 @@ import 'package:tickup/presentation/pages/auth/register_screen.dart';
 import 'package:tickup/presentation/pages/prize/prize_page.dart';
 import 'package:tickup/presentation/pages/games/game_launcher.dart';
 import 'package:tickup/presentation/pages/games/game_runner.dart';
+import 'package:tickup/presentation/pages/shell/shell_page.dart';
+import 'package:tickup/presentation/routing/app_route.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: AppRoute.dashboard,
   routes: [
     GoRoute(
-      path: '/',
-      builder: (context, state) => const HomeScreen(),
+      path: AppRoute.login,
+      builder: (context, _) => const LoginScreen(),
     ),
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
+    // Shell con Bottom Navigation (nessun parametro "path" richiesto)
+    ShellRoute(
+      builder: (context, state, child) => ShellPage(child: child),
+      routes: [
+        GoRoute(
+          path: '/', // «/» (GameLauncher)
+          builder: (context, _) => const GameLauncher(),
+        ),
+        GoRoute(
+          path: '/home',
+          builder: (context, _) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: AppRoute.register, // '/register'
+          builder: (context, _) => const RegisterScreen(),
+        ),
+        GoRoute(
+          path: AppRoute.prize, // '/prize'
+          builder: (context, _) => const PrizePage(),
+        ),
+      ],
     ),
-    GoRoute(
-      path: '/games',
-      builder: (context, state) => const GameLauncher(),
-    ),
+    // GameRunner fuori dal guscio: niente Bottom Nav mentre si gioca
     GoRoute(
       path: '/games/:gameId',
       builder: (context, state) {
-        final gameId = state.pathParameters['gameId']!;
-        return GameRunner(gameId: gameId);
+        final id = state.pathParameters['gameId']!;
+        return GameRunner(gameId: id);
       },
-    ),
-    GoRoute(
-      path: '/prize',
-      builder: (context, state) => const PrizePage(),
-    ),
-    GoRoute(
-      path: '/register',
-      builder: (context, state) => const RegisterScreen(),
     ),
   ],
 );
