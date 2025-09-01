@@ -1,21 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'app.dart';
+import 'package:tickup/app.dart';
+import 'package:tickup/core/config/env_config.dart';
+import 'package:tickup/core/utils/logger.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inizializza Supabase
-  await Supabase.initialize(
-    url: 'https://augoixjimymsaboihxcx.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1Z29peGppbXltc2Fib2loeGN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkwNDQ0ODMsImV4cCI6MjA2NDYyMDQ4M30.HtoG0b0Z_yztbiSgS4Zy7sx1gyzc4lp8zeJdadp0VpQ',
-  );
+  // Setup sistema
+  await _initializeApp();
 
   runApp(
-    const ProviderScope(
-      child: SkillWinApp(),
+    ProviderScope(
+      observers: [RiverpodLogger()],
+      child: const SkillWinApp(),
     ),
   );
+}
+
+Future<void> _initializeApp() async {
+  try {
+    // Imposta orientamento (solo portrait per mobile)
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+
+    // Inizializza Supabase con configurazione da env
+    await Supabase.initialize(
+      url: EnvConfig.supabaseUrl,
+      anonKey: EnvConfig.supabaseAnonKey,
+      debug: EnvConfig.isDevelopment,
+    );
+
+    Logger.info('App initialized successfully');
+  } catch (e, stack) {
+    Logger.error('Failed to initialize app', error: e, stackTrace: stack);
+    rethrow;
+  }
 }
