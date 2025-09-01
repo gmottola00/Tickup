@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../games/stop_bar/stop_bar_game.dart';
-import 'package:tickup/presentation/pages/games/space_invaders/space_invaders_game.dart';
 
 class GameRunner extends StatelessWidget {
   final String gameId;
@@ -13,10 +11,10 @@ class GameRunner extends StatelessWidget {
 
   Widget _buildGameWidget(String id) {
     switch (id) {
-      case 'space_invaders':
-        return const SpaceInvadersPage();
-      case 'stop_bar':
-        return const StopBarGame();
+      // case 'space_invaders':
+      //   return const SpaceInvadersPage();
+      // case 'stop_bar':
+      //   return const StopBarGame();
       default:
         return Scaffold(
           appBar: AppBar(title: const Text('Gioco non trovato')),
