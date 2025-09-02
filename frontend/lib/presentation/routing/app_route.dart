@@ -2,6 +2,9 @@ class AppRoute {
   // Prevent instantiation
   AppRoute._();
 
+  // Home
+  static const home = '/';
+
   // Auth & Onboarding
   static const splash = '/splash';
   static const login = '/login';
@@ -13,6 +16,9 @@ class AppRoute {
   static const prizes = '/prizes';
   static const leaderboard = '/leaderboard';
   static const profile = '/profile';
+
+  // Prize management (singolo form di inserimento/modifica)
+  static const prize = '/prize';
 
   // Sub-routes
   static const profileEdit = '/profile/edit';

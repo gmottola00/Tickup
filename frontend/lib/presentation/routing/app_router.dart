@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tickup/presentation/pages/auth/login_screen.dart';
 import 'package:tickup/presentation/pages/auth/register_screen.dart';
+import 'package:tickup/presentation/pages/home/home_screen.dart';
 import 'package:tickup/presentation/pages/games/game_launcher.dart';
 import 'package:tickup/presentation/pages/games/game_runner.dart';
-// import 'package:tickup/presentation/pages/profile/profile_screen.dart';
+import 'package:tickup/presentation/pages/profile/profile_screen.dart';
+import 'package:tickup/presentation/pages/prize/prize_page.dart';
 // import 'package:tickup/presentation/pages/prizes/prizes_screen.dart';
 // import 'package:tickup/presentation/pages/prizes/prize_details_screen.dart';
 // import 'package:tickup/presentation/pages/leaderboard/leaderboard_screen.dart';
@@ -19,7 +21,7 @@ import 'package:tickup/core/utils/logger.dart';
 // Provider per il router
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: AppRoute.splash,
+    initialLocation: AppRoute.home,
     debugLogDiagnostics: true,
     refreshListenable: RouterNotifier(ref),
     redirect: (context, state) {
@@ -88,10 +90,29 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
+      // Prize single page (create/update)
+      GoRoute(
+        path: AppRoute.prize,
+        name: 'prize',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const PrizePage(),
+        ),
+      ),
+
       // Main App Shell
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
+          // Home Tab
+          GoRoute(
+            path: AppRoute.home,
+            name: 'home',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const HomeScreen(),
+            ),
+          ),
           // Games Tab
           GoRoute(
             path: AppRoute.games,
@@ -132,27 +153,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           //   ),
           // ),
 
-          // // Profile Tab
-          // GoRoute(
-          //   path: AppRoute.profile,
-          //   name: 'profile',
-          //   pageBuilder: (context, state) => NoTransitionPage(
-          //     key: state.pageKey,
-          //     child: const ProfileScreen(),
-          //   ),
-          //   routes: [
-          //     GoRoute(
-          //       path: 'edit',
-          //       name: 'profile-edit',
-          //       builder: (context, state) => const ProfileEditScreen(),
-          //     ),
-          //     GoRoute(
-          //       path: 'settings',
-          //       name: 'settings',
-          //       builder: (context, state) => const SettingsScreen(),
-          //     ),
-          //   ],
-          // ),
+          // Profile Tab
+          GoRoute(
+            path: AppRoute.profile,
+            name: 'profile',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ProfileScreen(),
+            ),
+          ),
         ],
       ),
 
