@@ -4,6 +4,10 @@ import 'package:tickup/data/repositories/price_repository.dart';
 
 final prizeRepositoryProvider = Provider((ref) => PrizeRepository());
 
+final prizesProvider = FutureProvider<List<Prize>>((ref) async {
+  return ref.read(prizeRepositoryProvider).fetchPrizes();
+});
+
 class PrizeNotifier extends StateNotifier<AsyncValue<Prize?>> {
   PrizeNotifier(this.ref) : super(const AsyncValue.data(null));
   final Ref ref;
