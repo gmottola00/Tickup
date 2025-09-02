@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.models.prize import Prize
 from app.schemas.prize import PrizeCreate
 
@@ -11,6 +12,10 @@ async def create_prize(db: AsyncSession, prize_in: PrizeCreate) -> Prize:
 
 async def get_prize(db: AsyncSession, prize_id: str):
     return await db.get(Prize, prize_id)
+
+async def get_all_prize(db: AsyncSession) -> list[Prize]:
+    result = await db.execute(select(Prize))
+    return result.scalars().all()
 
 async def update_prize(db: AsyncSession, prize: Prize, data: dict):
     for key, value in data.items():
