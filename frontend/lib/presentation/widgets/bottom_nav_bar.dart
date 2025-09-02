@@ -9,24 +9,17 @@ class ModernBottomNavigation extends ConsumerWidget {
 
   static const _destinations = [
     (
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home,
+      label: 'Home',
+      route: AppRoute.home,
+      color: Color(0xFF6366F1),
+    ),
+    (
       icon: Icons.sports_esports_outlined,
       activeIcon: Icons.sports_esports,
       label: 'Giochi',
       route: AppRoute.games,
-      color: Color(0xFF6366F1),
-    ),
-    (
-      icon: Icons.emoji_events_outlined,
-      activeIcon: Icons.emoji_events,
-      label: 'Premi',
-      route: AppRoute.prizes,
-      color: Color(0xFFF59E0B),
-    ),
-    (
-      icon: Icons.leaderboard_outlined,
-      activeIcon: Icons.leaderboard,
-      label: 'Classifica',
-      route: AppRoute.leaderboard,
       color: Color(0xFF10B981),
     ),
     (
@@ -39,8 +32,14 @@ class ModernBottomNavigation extends ConsumerWidget {
   ];
 
   int _getSelectedIndex(String location) {
+    // Handle home explicitly to avoid '/' matching all paths
+    if (location == AppRoute.home || location == '/') {
+      return 0;
+    }
     for (int i = 0; i < _destinations.length; i++) {
-      if (location.startsWith(_destinations[i].route)) {
+      final route = _destinations[i].route;
+      if (route == AppRoute.home) continue; // already handled
+      if (location.startsWith(route)) {
         return i;
       }
     }
