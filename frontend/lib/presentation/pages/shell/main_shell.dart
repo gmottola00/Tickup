@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tickup/presentation/widgets/bottom_nav_bar.dart';
 import 'package:tickup/providers/navigation_provider.dart';
+import 'package:tickup/presentation/routing/app_route.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -291,7 +292,7 @@ class _MainShellState extends ConsumerState<MainShell>
         },
         backgroundColor: theme.colorScheme.primary,
         icon: const Icon(Icons.bolt),
-        label: const Text('Gioca Ora'),
+        label: const Text('Azioni'),
         elevation: 8,
         highlightElevation: 12,
       ),
@@ -303,14 +304,14 @@ class _MainShellState extends ConsumerState<MainShell>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const QuickPlayBottomSheet(),
+      builder: (context) => const QuickActionsBottomSheet(),
     );
   }
 }
 
-// Bottom sheet per quick play
-class QuickPlayBottomSheet extends StatelessWidget {
-  const QuickPlayBottomSheet({super.key});
+// Bottom sheet per azioni rapide
+class QuickActionsBottomSheet extends StatelessWidget {
+  const QuickActionsBottomSheet({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -339,72 +340,44 @@ class QuickPlayBottomSheet extends StatelessWidget {
 
           // Title
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(5.0),
             child: Text(
-              'Partita Veloce',
+              'Azioni rapide',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
 
-          // Game modes
-          ..._buildGameModes(context),
+          ListTile(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(context);
+              context.push(AppRoute.prize);
+            },
+            leading: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.add_box, color: theme.colorScheme.primary),
+            ),
+            title: const Text(
+              'Aggiungi prodotto',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: const Text('Crea un nuovo premio/prodotto'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 8,
+            ),
+          ),
 
           const SizedBox(height: 20),
         ],
       ),
     );
-  }
-
-  List<Widget> _buildGameModes(BuildContext context) {
-    final modes = [
-      (
-        icon: Icons.timer,
-        title: 'Sfida 60 secondi',
-        subtitle: 'Fai più punti possibili in 1 minuto',
-        color: Colors.orange,
-        gameId: 'quick-60',
-      ),
-      (
-        icon: Icons.shuffle,
-        title: 'Gioco Casuale',
-        subtitle: 'Lasciati sorprendere!',
-        color: Colors.purple,
-        gameId: 'random',
-      ),
-      (
-        icon: Icons.local_fire_department,
-        title: 'Sfida del Giorno',
-        subtitle: 'Nuova sfida ogni 24 ore',
-        color: Colors.red,
-        gameId: 'daily',
-      ),
-    ];
-
-    return modes.map((mode) {
-      return ListTile(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          Navigator.pop(context);
-          context.push('/game/${mode.gameId}');
-        },
-        leading: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: mode.color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(mode.icon, color: mode.color),
-        ),
-        title: Text(
-          mode.title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text(mode.subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      );
-    }).toList();
   }
 }
