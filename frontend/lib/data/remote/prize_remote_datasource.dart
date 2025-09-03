@@ -72,8 +72,9 @@ class PrizeRemoteDataSource {
     return Prize.fromJson(res.data);
   }
 
-  Future<void> createPrize(Prize prize) async {
-    await dio.post('/prizes/', data: prize.toJson());
+  Future<Prize> createPrize(Prize prize) async {
+    final res = await dio.post('/prizes/', data: prize.toJson());
+    return Prize.fromJson(res.data as Map<String, dynamic>);
   }
 
   Future<void> updatePrize(String id, Prize prize) async {
