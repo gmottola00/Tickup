@@ -20,14 +20,20 @@ class Prize {
   });
 
   factory Prize.fromJson(Map<String, dynamic> json) => Prize(
-        prizeId: json['prize_id'],
-        title: json['title'],
-        description: json['description'],
-        valueCents: json['value_cents'],
-        imageUrl: json['image_url'],
-        sponsor: json['sponsor'],
-        stock: json['stock'],
-        createdAt: DateTime.tryParse(json['created_at'] ?? ''),
+        prizeId: (json['prize_id'] ?? json['id']).toString(),
+        title: (json['title'] ?? '').toString(),
+        description: (json['description'] ?? '').toString(),
+        valueCents: (json['value_cents'] ?? 0) is int
+            ? json['value_cents'] as int
+            : int.tryParse((json['value_cents'] ?? '0').toString()) ?? 0,
+        imageUrl: (json['image_url'] ?? '').toString(),
+        sponsor: (json['sponsor'] ?? '').toString(),
+        stock: (json['stock'] ?? 0) is int
+            ? json['stock'] as int
+            : int.tryParse((json['stock'] ?? '0').toString()) ?? 0,
+        createdAt: json['created_at'] != null
+            ? DateTime.tryParse(json['created_at'].toString())
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
