@@ -195,9 +195,14 @@ class _MainShellState extends ConsumerState<MainShell>
               bottom: false, // Permetti al contenuto di andare sotto la nav
               child: NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
-                  if (notification is ScrollStartNotification) {
-                    _registerScrollController(notification.context
-                        ?.findRenderObject() as ScrollController?);
+                  // Collega dinamicamente lo ScrollController corretto
+                  final ctx = notification.context;
+                  if (ctx != null) {
+                    final scrollableState = Scrollable.of(ctx);
+                    ScrollController? controller =
+                        scrollableState?.widget.controller;
+                    controller ??= PrimaryScrollController.of(ctx);
+                    _registerScrollController(controller);
                   }
                   return false;
                 },
