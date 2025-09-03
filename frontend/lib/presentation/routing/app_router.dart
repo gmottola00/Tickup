@@ -9,6 +9,7 @@ import 'package:tickup/presentation/pages/games/game_launcher.dart';
 import 'package:tickup/presentation/pages/games/game_runner.dart';
 import 'package:tickup/presentation/pages/profile/profile_screen.dart';
 import 'package:tickup/presentation/pages/prize/prize_page.dart';
+import 'package:tickup/presentation/pages/prize/prize_details_page.dart';
 // import 'package:tickup/presentation/pages/prizes/prizes_screen.dart';
 // import 'package:tickup/presentation/pages/prizes/prize_details_screen.dart';
 // import 'package:tickup/presentation/pages/leaderboard/leaderboard_screen.dart';
@@ -17,6 +18,7 @@ import 'package:tickup/presentation/pages/splash/splash_screen.dart';
 import 'package:tickup/presentation/pages/error/error_screen.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/core/utils/logger.dart';
+import 'package:tickup/data/models/prize.dart';
 
 // Provider per il router
 final routerProvider = Provider<GoRouter>((ref) {
@@ -100,6 +102,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
+      // Prize Details (top-level)
+      GoRoute(
+        path: '/prizes/:prizeId',
+        name: 'prize-details',
+        pageBuilder: (context, state) {
+          final prizeId = state.pathParameters['prizeId']!;
+          final extra = state.extra;
+          return MaterialPage(
+            key: state.pageKey,
+            child: PrizeDetailsPage(
+              prizeId: prizeId,
+              initial: extra is Prize ? extra : null,
+            ),
+          );
+        },
+      ),
+
       // Main App Shell
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
@@ -122,36 +141,6 @@ final routerProvider = Provider<GoRouter>((ref) {
               child: const GameLauncher(),
             ),
           ),
-
-          // // Prizes Tab
-          // GoRoute(
-          //   path: AppRoute.prizes,
-          //   name: 'prizes',
-          //   pageBuilder: (context, state) => NoTransitionPage(
-          //     key: state.pageKey,
-          //     child: const PrizesScreen(),
-          //   ),
-          //   routes: [
-          //     GoRoute(
-          //       path: ':prizeId',
-          //       name: 'prize-details',
-          //       builder: (context, state) {
-          //         final prizeId = state.pathParameters['prizeId']!;
-          //         return PrizeDetailsScreen(prizeId: prizeId);
-          //       },
-          //     ),
-          //   ],
-          // ),
-
-          // // Leaderboard Tab
-          // GoRoute(
-          //   path: AppRoute.leaderboard,
-          //   name: 'leaderboard',
-          //   pageBuilder: (context, state) => NoTransitionPage(
-          //     key: state.pageKey,
-          //     child: const LeaderboardScreen(),
-          //   ),
-          // ),
 
           // Profile Tab
           GoRoute(
