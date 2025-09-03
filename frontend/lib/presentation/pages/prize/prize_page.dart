@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
-import 'package:uuid/uuid.dart';
+// L'UUID viene generato dal backend alla creazione
 
 class PrizePage extends ConsumerStatefulWidget {
   const PrizePage({super.key});
@@ -56,7 +56,7 @@ class _PrizePageState extends ConsumerState<PrizePage> {
         }
         _title.text = p.title;
         _desc.text = p.description;
-        _value.text = p.valueCents.toString();
+        _value.text = (p.valueCents / 100).toStringAsFixed(2);
         _img.text = p.imageUrl;
         _sponsor.text = p.sponsor;
         _stock.text = p.stock.toString();
@@ -76,6 +76,8 @@ class _PrizePageState extends ConsumerState<PrizePage> {
     setState(() => _submitting = true);
     try {
       await ref.read(prizeNotifierProvider.notifier).delete(id);
+      // Aggiorna lista in Home
+      ref.invalidate(prizesProvider);
       _showSnackbar('Premio eliminato');
     } catch (_) {
       _showSnackbar('Errore durante l\'eliminazione');
@@ -88,12 +90,16 @@ class _PrizePageState extends ConsumerState<PrizePage> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
 
-    final uuid = const Uuid();
+    final rawEuros = _value.text.trim().replaceAll(',', '.');
+    final euros = double.tryParse(rawEuros) ?? 0.0;
+    final cents = (euros * 100).round();
+
     final prize = Prize(
-      prizeId: update ? _idController.text.trim() : uuid.v4(),
+      // In creazione l'ID viene generato dal backend; qui è placeholder.
+      prizeId: update ? _idController.text.trim() : '',
       title: _title.text.trim(),
       description: _desc.text.trim(),
-      valueCents: int.tryParse(_value.text.trim()) ?? 0,
+      valueCents: cents,
       imageUrl: _img.text.trim(),
       sponsor: _sponsor.text.trim(),
       stock: int.tryParse(_stock.text.trim()) ?? 0,
@@ -108,11 +114,17 @@ class _PrizePageState extends ConsumerState<PrizePage> {
         } else {
           await repo.updatePrize(id, prize);
           _showSnackbar('Premio aggiornato');
+          // Aggiorna lista in Home
+          ref.invalidate(prizesProvider);
         }
       } else {
-        await repo.createPrize(prize);
+        final created = await repo.createPrize(prize);
         _showSnackbar('Premio creato');
-        _clearForm(keepId: false);
+        // Mostra/propaga l'UUID generato dal backend
+        _idController.text = created.prizeId;
+        _clearForm(keepId: true);
+        // Aggiorna lista in Home
+        ref.invalidate(prizesProvider);
       }
     } catch (_) {
       _showSnackbar('Errore nella richiesta');
@@ -223,26 +235,31 @@ class _LoadDeleteSection extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 12),
+            // Input ID a tutta larghezza e azioni su riga separata
+            TextFormField(
+              controller: idController,
+              decoration: const InputDecoration(
+                labelText: 'ID Premio',
+                hintText: 'uuid...'
+              ),
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: TextFormField(
-                    controller: idController,
-                    decoration: const InputDecoration(
-                        labelText: 'ID Premio', hintText: 'uuid...'),
+                  child: FilledButton.tonalIcon(
+                    onPressed: onLoad,
+                    icon: const Icon(Icons.download),
+                    label: const Text('Carica'),
                   ),
                 ),
-                const SizedBox(width: 12),
-                FilledButton.tonalIcon(
-                  onPressed: onLoad,
-                  icon: const Icon(Icons.download),
-                  label: const Text('Carica'),
-                ),
                 const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Elimina'),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Elimina'),
+                  ),
                 ),
               ],
             ),
@@ -306,12 +323,16 @@ class _PrizeFormCard extends StatelessWidget {
             const SizedBox(height: 12),
             TextFormField(
               controller: value,
-              decoration: const InputDecoration(labelText: 'Valore (cent)'),
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(labelText: 'Valore (€)'),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+              ],
               validator: (v) {
-                final n = int.tryParse(v ?? '');
-                if (n == null || n < 0) return 'Inserisci un numero valido';
+                final raw = (v ?? '').trim().replaceAll(',', '.');
+                final n = double.tryParse(raw);
+                if (n == null || n < 0) return 'Inserisci un importo valido';
                 return null;
               },
             ),
