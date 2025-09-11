@@ -11,7 +11,7 @@ class RaffleRemoteDataSource {
     //   return _mockPools();
     // }
     // Backend route: GET /api/v1/pools/all_pools
-    final res = await dio.get('/pools/all_pools');
+    final res = await dio.get('pools/all_pools');
     final raw = res.data;
     final list = raw is List
         ? raw
@@ -48,7 +48,7 @@ class RaffleRemoteDataSource {
   }
 
   Future<RafflePool> getPool(String id) async {
-    final res = await dio.get('/pools/$id');
+    final res = await dio.get('pools/$id');
     return RafflePool.fromJson(res.data as Map<String, dynamic>);
   }
 
@@ -58,7 +58,7 @@ class RaffleRemoteDataSource {
       'ticket_price_cents': pool.ticketPriceCents,
       'tickets_required': pool.ticketsRequired,
     };
-    final res = await dio.post('/pools/', data: payload);
+    final res = await dio.post('pools/', data: payload);
     return RafflePool.fromJson(res.data as Map<String, dynamic>);
   }
 
@@ -68,10 +68,10 @@ class RaffleRemoteDataSource {
       'ticket_price_cents': pool.ticketPriceCents,
       'tickets_required': pool.ticketsRequired,
     };
-    await dio.put('/pools/$id', data: payload);
+    await dio.put('pools/$id', data: payload);
   }
 
   Future<void> deletePool(String id) async {
-    await dio.delete('/pools/$id');
+    await dio.delete('pools/$id');
   }
 }

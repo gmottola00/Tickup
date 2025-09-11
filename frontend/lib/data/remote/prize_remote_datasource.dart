@@ -11,7 +11,7 @@ class PrizeRemoteDataSource {
     //   return _mockPrizes();
     // }
     // Backend route: GET /api/v1/prizes/all_prizes
-    final res = await dio.get('/prizes/all_prizes');
+    final res = await dio.get('prizes/all_prizes');
     final raw = res.data;
     final list = raw is List
         ? raw
@@ -22,7 +22,7 @@ class PrizeRemoteDataSource {
 
   Future<List<Prize>> getMyPrizes() async {
     // Backend route: GET /api/v1/prizes/my (requires Authorization header)
-    final res = await dio.get('/prizes/my');
+    final res = await dio.get('prizes/my');
     final raw = res.data;
     final list = raw is List
         ? raw
@@ -79,20 +79,20 @@ class PrizeRemoteDataSource {
   }
 
   Future<Prize> getPrize(String id) async {
-    final res = await dio.get('/prizes/$id');
+    final res = await dio.get('prizes/$id');
     return Prize.fromJson(res.data);
   }
 
   Future<Prize> createPrize(Prize prize) async {
-    final res = await dio.post('/prizes/', data: prize.toJson());
+    final res = await dio.post('prizes/', data: prize.toJson());
     return Prize.fromJson(res.data as Map<String, dynamic>);
   }
 
   Future<void> updatePrize(String id, Prize prize) async {
-    await dio.put('/prizes/$id', data: prize.toJson());
+    await dio.put('prizes/$id', data: prize.toJson());
   }
 
   Future<void> deletePrize(String id) async {
-    await dio.delete('/prizes/$id');
+    await dio.delete('prizes/$id');
   }
 }
