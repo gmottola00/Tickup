@@ -1,7 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.pool import Pool, PoolCreate
-from app.services.pool import create_pool, get_pool, update_pool, delete_pool
+from app.services.pool import (
+    create_pool,
+    get_pool,
+    update_pool,
+    delete_pool,
+    get_all_pool,
+)
 from app.api.v1.deps import get_db_dep
 
 router = APIRouter()
@@ -9,6 +15,11 @@ router = APIRouter()
 @router.post("/", response_model=Pool)
 async def create(item: PoolCreate, db: AsyncSession = Depends(get_db_dep)):
     return await create_pool(db, item)
+
+@router.get("/all_pools", response_model=list[Pool])
+async def read_all(db: AsyncSession = Depends(get_db_dep)):
+    pools = await get_all_pool(db)
+    return pools
 
 @router.get("/{pool_id}", response_model=Pool)
 async def read(pool_id: str, db: AsyncSession = Depends(get_db_dep)):

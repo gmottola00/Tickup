@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from fastapi import HTTPException
 from app.models.pool import RafflePool
 from app.schemas.pool import PoolCreate
@@ -17,6 +18,10 @@ async def create_pool(db: AsyncSession, pool_in: PoolCreate) -> RafflePool:
 
 async def get_pool(db: AsyncSession, pool_id: str):
     return await db.get(RafflePool, pool_id)
+
+async def get_all_pool(db: AsyncSession) -> list[RafflePool]:
+    result = await db.execute(select(RafflePool))
+    return result.scalars().all()
 
 async def update_pool(db: AsyncSession, pool: RafflePool, data: dict):
     for key, value in data.items():
