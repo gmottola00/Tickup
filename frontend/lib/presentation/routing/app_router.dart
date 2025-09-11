@@ -12,6 +12,7 @@ import 'package:tickup/presentation/pages/prize/prize_page.dart';
 import 'package:tickup/presentation/pages/prize/prize_details_page.dart';
 import 'package:tickup/presentation/pages/prize/my_prizes_page.dart';
 import 'package:tickup/presentation/pages/pool/pool_create_page.dart';
+import 'package:tickup/presentation/pages/pool/pool_details_page.dart';
 // import 'package:tickup/presentation/pages/prizes/prizes_screen.dart';
 // import 'package:tickup/presentation/pages/prizes/prize_details_screen.dart';
 // import 'package:tickup/presentation/pages/leaderboard/leaderboard_screen.dart';
@@ -21,6 +22,7 @@ import 'package:tickup/presentation/pages/error/error_screen.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/core/utils/logger.dart';
 import 'package:tickup/data/models/prize.dart';
+import 'package:tickup/data/models/raffle_pool.dart';
 
 // Provider per il router
 final routerProvider = Provider<GoRouter>((ref) {
@@ -137,6 +139,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             key: state.pageKey,
             fullscreenDialog: true,
             child: PoolCreatePage(prizeId: prizeId),
+          );
+        },
+      ),
+
+      // Pool Details (top-level)
+      GoRoute(
+        path: '/pools/:poolId',
+        name: 'pool-details',
+        pageBuilder: (context, state) {
+          final poolId = state.pathParameters['poolId']!;
+          final extra = state.extra;
+          return MaterialPage(
+            key: state.pageKey,
+            child: PoolDetailsPage(
+              poolId: poolId,
+              initial: extra is RafflePool ? extra : null,
+            ),
           );
         },
       ),
