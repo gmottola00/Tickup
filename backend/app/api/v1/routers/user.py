@@ -15,7 +15,8 @@ async def create_current_user(
 ):
     existing_user = await get_user(db, user_id)
     if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists")
+        # Idempotent behavior: return existing user instead of 400
+        return existing_user
     return await create_user(db, item, user_id=user_id)
 
 @router.post("/", response_model=User)
