@@ -23,10 +23,6 @@ class PoolCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '#${pool.poolId.substring(0, 8)}',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
                   Chip(
                     label: Text(pool.state),
                     visualDensity: VisualDensity.compact,
@@ -34,7 +30,8 @@ class PoolCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Text('Ticket: € ${(pool.ticketPriceCents / 100).toStringAsFixed(2)}'),
+              Text(
+                  'Ticket: € ${(pool.ticketPriceCents / 100).toStringAsFixed(2)}'),
               const SizedBox(height: 8),
               LinearProgressIndicator(value: progress),
               const SizedBox(height: 4),
@@ -55,4 +52,3 @@ class PoolCardSkeleton extends StatelessWidget {
     return const Card(child: SizedBox.expand());
   }
 }
-

@@ -37,6 +37,7 @@ class AppRoute {
   }
 
   static String prizeDetails(String id) => '/prizes/$id';
+  static String createPoolForPrize(String id) => '/prizes/$id/create-pool';
 
   // Utility methods
   static bool isAuthRoute(String path) {
