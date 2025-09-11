@@ -326,7 +326,9 @@ class QuickActionsBottomSheet extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1F2937) : Colors.white,
+        color: isDarkMode
+            ? const Color.fromARGB(255, 0, 1, 2)
+            : const Color.fromARGB(255, 224, 85, 4),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -373,6 +375,32 @@ class QuickActionsBottomSheet extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             subtitle: const Text('Crea un nuovo premio/prodotto'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 8,
+            ),
+          ),
+
+          ListTile(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(context);
+              context.push(AppRoute.myPrizes);
+            },
+            leading: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.add_box, color: theme.colorScheme.primary),
+            ),
+            title: const Text(
+              'Crea una Ruffle',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: const Text('Crea una nuova Ruffle'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
