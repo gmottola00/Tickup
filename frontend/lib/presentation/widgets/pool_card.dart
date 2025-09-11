@@ -23,23 +23,15 @@ class PoolCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Chip(
-                    label: Text(pool.state),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
               // Prize image + title
               Consumer(
                 builder: (context, ref, _) {
                   return FutureBuilder<Prize>(
-                    future: ref
-                        .read(prizeRepositoryProvider)
-                        .fetchPrize(pool.prizeId),
+                    // Aggiungo un piccolo delay per ammorbidire il caricamento
+                    future: Future.delayed(const Duration(milliseconds: 120))
+                        .then((_) => ref
+                            .read(prizeRepositoryProvider)
+                            .fetchPrize(pool.prizeId)),
                     builder: (context, snapshot) {
                       final theme = Theme.of(context);
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -106,6 +98,16 @@ class PoolCard extends StatelessWidget {
               LinearProgressIndicator(value: progress),
               const SizedBox(height: 4),
               Text('${pool.ticketsSold}/${pool.ticketsRequired} venduti'),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Chip(
+                    label: Text(pool.state),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ),
             ],
           ),
         ),
