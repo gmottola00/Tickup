@@ -37,16 +37,27 @@ class _MyPrizesLoading extends StatelessWidget {
   const _MyPrizesLoading();
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 3 / 4,
-      ),
-      itemCount: 6,
-      itemBuilder: (_, __) => const PrizeCardSkeleton(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 900
+            ? 4
+            : width >= 600
+                ? 3
+                : 2;
+        final childAspectRatio = width >= 600 ? 3 / 5 : 2 / 3; // più verticale
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemCount: 6,
+          itemBuilder: (_, __) => const PrizeCardSkeleton(),
+        );
+      },
     );
   }
 }
@@ -86,16 +97,27 @@ class _MyPrizesContent extends StatelessWidget {
     if (items.isEmpty) {
       return const _MyPrizesEmpty();
     }
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 3 / 4,
-      ),
-      itemCount: items.length,
-      itemBuilder: (_, i) => PrizeCard(prize: items[i]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 900
+            ? 4
+            : width >= 600
+                ? 3
+                : 2;
+        final childAspectRatio = width >= 600 ? 3 / 5 : 2 / 3; // più verticale
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemCount: items.length,
+          itemBuilder: (_, i) => PrizeCard(prize: items[i]),
+        );
+      },
     );
   }
 }
