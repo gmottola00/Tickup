@@ -27,11 +27,9 @@ class PoolCard extends StatelessWidget {
               Consumer(
                 builder: (context, ref, _) {
                   return FutureBuilder<Prize>(
-                    // Aggiungo un piccolo delay per ammorbidire il caricamento
-                    future: Future.delayed(const Duration(milliseconds: 120))
-                        .then((_) => ref
-                            .read(prizeRepositoryProvider)
-                            .fetchPrize(pool.prizeId)),
+                    future: ref
+                        .read(prizeRepositoryProvider)
+                        .fetchPrize(pool.prizeId),
                     builder: (context, snapshot) {
                       final theme = Theme.of(context);
                       if (snapshot.connectionState == ConnectionState.waiting) {
