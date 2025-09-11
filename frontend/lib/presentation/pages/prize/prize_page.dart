@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/data/models/prize.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tickup/core/network/auth_service.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
 // L'UUID viene generato dal backend alla creazione
 
@@ -23,6 +25,15 @@ class _PrizePageState extends ConsumerState<PrizePage> {
 
   bool _submitting = false;
 
+  Future<void> _ensureAuthHeader() async {
+    // Recupera l'access token da Supabase (se loggato) e lo imposta nell'AuthService,
+    // così DioClient aggiunge automaticamente l'Authorization Bearer alle richieste.
+    final token = Supabase.instance.client.auth.currentSession?.accessToken;
+    if (token != null) {
+      AuthService.instance.setToken(token);
+    }
+  }
+
   @override
   void dispose() {
     _idController.dispose();
@@ -41,6 +52,7 @@ class _PrizePageState extends ConsumerState<PrizePage> {
   }
 
   Future<void> _loadPrize() async {
+    await _ensureAuthHeader();
     final id = _idController.text.trim();
     if (id.isEmpty) {
       _showSnackbar('Inserisci un ID premio');
@@ -68,6 +80,7 @@ class _PrizePageState extends ConsumerState<PrizePage> {
   }
 
   Future<void> _deletePrize() async {
+    await _ensureAuthHeader();
     final id = _idController.text.trim();
     if (id.isEmpty) {
       _showSnackbar('Inserisci un ID premio');
@@ -87,6 +100,7 @@ class _PrizePageState extends ConsumerState<PrizePage> {
   }
 
   Future<void> _submit({bool update = false}) async {
+    await _ensureAuthHeader();
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
 
@@ -122,7 +136,7 @@ class _PrizePageState extends ConsumerState<PrizePage> {
         _showSnackbar('Premio creato');
         // Mostra/propaga l'UUID generato dal backend
         _idController.text = created.prizeId;
-        _clearForm(keepId: true);
+        _clearForm();
         // Aggiorna lista in Home
         ref.invalidate(prizesProvider);
       }
@@ -133,8 +147,8 @@ class _PrizePageState extends ConsumerState<PrizePage> {
     }
   }
 
-  void _clearForm({bool keepId = true}) {
-    if (!keepId) _idController.clear();
+  void _clearForm() {
+    _idController.clear();
     _title.clear();
     _desc.clear();
     _value.clear();
@@ -239,9 +253,7 @@ class _LoadDeleteSection extends StatelessWidget {
             TextFormField(
               controller: idController,
               decoration: const InputDecoration(
-                labelText: 'ID Premio',
-                hintText: 'uuid...'
-              ),
+                  labelText: 'ID Premio', hintText: 'uuid...'),
             ),
             const SizedBox(height: 12),
             Row(

@@ -10,6 +10,8 @@ import 'package:tickup/presentation/pages/games/game_runner.dart';
 import 'package:tickup/presentation/pages/profile/profile_screen.dart';
 import 'package:tickup/presentation/pages/prize/prize_page.dart';
 import 'package:tickup/presentation/pages/prize/prize_details_page.dart';
+import 'package:tickup/presentation/pages/prize/my_prizes_page.dart';
+import 'package:tickup/presentation/pages/pool/pool_create_page.dart';
 // import 'package:tickup/presentation/pages/prizes/prizes_screen.dart';
 // import 'package:tickup/presentation/pages/prizes/prize_details_screen.dart';
 // import 'package:tickup/presentation/pages/leaderboard/leaderboard_screen.dart';
@@ -27,38 +29,34 @@ final routerProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: true,
     refreshListenable: RouterNotifier(ref),
     redirect: (context, state) {
+      final session = Supabase.instance.client.auth.currentSession;
+      final isAuthenticated = session != null;
+      final location = state.uri.toString();
+
+      Logger.debug(
+          'Navigation redirect - Location: $location, Auth: $isAuthenticated');
+
+      // Public routes that don't require authentication
+      final publicRoutes = <String>{
+        AppRoute.splash,
+        AppRoute.login,
+        AppRoute.register,
+      };
+      final isPublicRoute =
+          publicRoutes.any((route) => location.startsWith(route));
+
+      // If user is not authenticated and route is not public -> go to login
+      if (!isAuthenticated && !isPublicRoute) {
+        return AppRoute.login;
+      }
+
+      // If user is authenticated and tries to hit auth routes -> send to home
+      if (isAuthenticated &&
+          (location == AppRoute.login || location == AppRoute.register)) {
+        return AppRoute.home;
+      }
+
       return null;
-      // final session = Supabase.instance.client.auth.currentSession;
-      // final isAuthenticated = session != null;
-      // final location = state.uri.toString();
-
-      // Logger.debug(
-      //     'Navigation redirect - Location: $location, Auth: $isAuthenticated');
-
-      // // Gestione splash screen
-      // if (location == AppRoute.splash) {
-      //   return null; // Lascia gestire alla splash
-      // }
-
-      // // Route pubbliche
-      // final publicRoutes = [
-      //   AppRoute.login,
-      //   AppRoute.register,
-      // ];
-
-      // final isPublicRoute =
-      //     publicRoutes.any((route) => location.startsWith(route));
-
-      // // Redirect logic
-      // if (!isAuthenticated && !isPublicRoute) {
-      //   return AppRoute.login;
-      // }
-
-      // if (isAuthenticated && isPublicRoute) {
-      //   return AppRoute.games;
-      // }
-
-      // return null;
     },
     routes: [
       // Splash Screen
@@ -102,6 +100,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
+      // My Prizes (owned by current user)
+      GoRoute(
+        path: '/my-prizes',
+        name: 'my-prizes',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const MyPrizesPage(),
+        ),
+      ),
+
       // Prize Details (top-level)
       GoRoute(
         path: '/prizes/:prizeId',
@@ -115,6 +123,20 @@ final routerProvider = Provider<GoRouter>((ref) {
               prizeId: prizeId,
               initial: extra is Prize ? extra : null,
             ),
+          );
+        },
+      ),
+
+      // Create Pool for prize
+      GoRoute(
+        path: '/prizes/:prizeId/create-pool',
+        name: 'create-pool',
+        pageBuilder: (context, state) {
+          final prizeId = state.pathParameters['prizeId']!;
+          return MaterialPage(
+            key: state.pageKey,
+            fullscreenDialog: true,
+            child: PoolCreatePage(prizeId: prizeId),
           );
         },
       ),

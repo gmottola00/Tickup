@@ -20,6 +20,9 @@ class AppRoute {
   // Prize management (singolo form di inserimento/modifica)
   static const prize = '/prize';
 
+  // Prize management (pagina di tutti prize di un utente)
+  static const myPrizes = '/my-prizes';
+
   // Sub-routes
   static const profileEdit = '/profile/edit';
   static const profileSettings = '/profile/settings';
