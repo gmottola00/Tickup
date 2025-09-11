@@ -61,19 +61,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      // Splash Screen
-      GoRoute(
-        path: AppRoute.splash,
-        name: 'splash',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const SplashScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-        ),
-      ),
-
       // Auth Routes
       GoRoute(
         path: AppRoute.login,
