@@ -4,6 +4,8 @@ from fastapi import HTTPException
 from app.models.pool import RafflePool
 from app.schemas.pool import PoolCreate
 from app.models.prize import Prize
+from sqlalchemy.orm import aliased
+from sqlalchemy import join
 
 async def create_pool(db: AsyncSession, pool_in: PoolCreate) -> RafflePool:
     prize = await db.get(Prize, pool_in.prize_id)
@@ -21,6 +23,13 @@ async def get_pool(db: AsyncSession, pool_id: str):
 
 async def get_all_pool(db: AsyncSession) -> list[RafflePool]:
     result = await db.execute(select(RafflePool))
+    return result.scalars().all()
+
+async def get_pools_by_user(db: AsyncSession, user_id: str) -> list[RafflePool]:
+    # Join pools -> prize to filter by owner
+    j = join(RafflePool, Prize, RafflePool.prize_id == Prize.prize_id)
+    stmt = select(RafflePool).select_from(j).where(Prize.user_id == user_id)
+    result = await db.execute(stmt)
     return result.scalars().all()
 
 async def update_pool(db: AsyncSession, pool: RafflePool, data: dict):
