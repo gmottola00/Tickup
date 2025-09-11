@@ -37,7 +37,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         print("Entrato");
         // Crea app_user su backend (usa token iniettato da DioClient)
         final res = await DioClient().post(
-          '/users/me',
+          'users/me',
           data: {
             'nickname': nicknameController.text,
             'avatar_url': avatarUrlController.text.isNotEmpty

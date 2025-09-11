@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Crea app_user in backend (idempotente)
         try {
           final res = await DioClient().post(
-            '/users/me',
+            'users/me',
             data: {
               'nickname': nicknameController.text,
               'avatar_url': avatarUrlController.text.isNotEmpty
