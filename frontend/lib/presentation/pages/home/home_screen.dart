@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tickup/presentation/features/prize/prize_provider.dart';
-import 'package:tickup/data/models/prize.dart';
-import 'package:go_router/go_router.dart';
-import 'package:tickup/presentation/routing/app_route.dart';
+import 'package:tickup/presentation/features/pool/pool_provider.dart';
+import 'package:tickup/data/models/raffle_pool.dart';
+import 'package:tickup/presentation/widgets/pool_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final prizesAsync = ref.watch(prizesProvider);
+    final poolsAsync = ref.watch(poolsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -19,15 +18,15 @@ class HomeScreen extends ConsumerWidget {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(prizesProvider);
-          await ref.read(prizesProvider.future);
+          ref.invalidate(poolsProvider);
+          await ref.read(poolsProvider.future);
         },
-        child: prizesAsync.when(
+        child: poolsAsync.when(
           loading: () => const _HomeLoading(),
           error: (e, _) => _HomeError(
               error: e.toString(),
               onRetry: () {
-                ref.invalidate(prizesProvider);
+                ref.invalidate(poolsProvider);
               }),
           data: (items) => _HomeContent(items: items),
         ),
@@ -50,7 +49,7 @@ class _HomeLoading extends StatelessWidget {
         childAspectRatio: 3 / 4,
       ),
       itemCount: 6,
-      itemBuilder: (_, __) => const _PrizeCardSkeleton(),
+      itemBuilder: (_, __) => const PoolCardSkeleton(),
     );
   }
 }
@@ -83,7 +82,7 @@ class _HomeError extends StatelessWidget {
 
 class _HomeContent extends StatelessWidget {
   const _HomeContent({required this.items});
-  final List<Prize> items;
+  final List<RafflePool> items;
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +98,7 @@ class _HomeContent extends StatelessWidget {
         childAspectRatio: 3 / 4,
       ),
       itemCount: items.length,
-      itemBuilder: (_, i) => _PrizeCard(prize: items[i]),
+      itemBuilder: (_, i) => PoolCard(pool: items[i]),
     );
   }
 }
@@ -113,15 +112,15 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.emoji_events_outlined, size: 64),
+          const Icon(Icons.confirmation_number_outlined, size: 64),
           const SizedBox(height: 12),
           Text(
-            'Nessun premio disponibile',
+            'Nessun pool disponibile',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           Text(
-            'Aggiungi il primo premio con il pulsante +',
+            'Crea un pool per iniziare a vendere ticket',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
@@ -130,133 +129,4 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _PrizeCard extends StatelessWidget {
-  const _PrizeCard({required this.prize});
-  final Prize prize;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: () => context.push(
-        AppRoute.prizeDetails(prize.prizeId),
-        extra: prize,
-      ),
-      borderRadius: BorderRadius.circular(16),
-      splashColor: theme.colorScheme.primary.withOpacity(0.1),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: prize.imageUrl.startsWith('http')
-                  ? Image.network(
-                      prize.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey[200],
-                        alignment: Alignment.center,
-                        child: const Icon(Icons.broken_image),
-                      ),
-                    )
-                  : Container(
-                      color: Colors.grey[200],
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.image),
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    prize.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    prize.sponsor,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Chip(
-                        label: Text(
-                            '€ ${(prize.valueCents / 100).toStringAsFixed(2)}'),
-                        visualDensity: VisualDensity.compact,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      const SizedBox(width: 8),
-                      Chip(
-                        label: Text('Stock: ${prize.stock}'),
-                        visualDensity: VisualDensity.compact,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PrizeCardSkeleton extends StatelessWidget {
-  const _PrizeCardSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        children: [
-          Container(
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                      height: 12, width: 120, color: Colors.grey.shade300),
-                  const SizedBox(height: 8),
-                  Container(height: 10, width: 80, color: Colors.grey.shade300),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      Container(
-                          height: 24, width: 60, color: Colors.grey.shade300),
-                      const SizedBox(width: 8),
-                      Container(
-                          height: 24, width: 80, color: Colors.grey.shade300),
-                    ],
-                  )
-                ],
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
+// Card UI moved to reusable widget in presentation/widgets/pool_card.dart
