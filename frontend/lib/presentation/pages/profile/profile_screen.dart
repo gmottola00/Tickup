@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tickup/providers/theme_provider.dart';
@@ -51,7 +52,8 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  Supabase.instance.client.auth.currentUser?.email ?? 'guest@example.com',
+                  Supabase.instance.client.auth.currentUser?.email ??
+                      'guest@example.com',
                   style: theme.textTheme.bodyMedium,
                 ),
               ],
@@ -59,7 +61,8 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               children: [
                 SwitchListTile(
@@ -68,9 +71,18 @@ class ProfileScreen extends ConsumerWidget {
                   value: mode == ThemeMode.dark,
                   onChanged: (_) {
                     final notifier = ref.read(themeModeProvider.notifier);
-                    notifier.setTheme(mode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
+                    notifier.setTheme(mode == ThemeMode.dark
+                        ? ThemeMode.light
+                        : ThemeMode.dark);
                   },
                   secondary: const Icon(Icons.dark_mode),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.emoji_events),
+                  title: const Text('I miei premi'),
+                  subtitle: const Text('Elenco dei premi che hai creato'),
+                  onTap: () => context.push('/my-prizes'),
                 ),
                 const Divider(height: 1),
                 ListTile(
@@ -116,4 +128,3 @@ class ProfileScreen extends ConsumerWidget {
     }
   }
 }
-
