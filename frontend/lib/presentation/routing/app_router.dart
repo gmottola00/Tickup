@@ -13,11 +13,8 @@ import 'package:tickup/presentation/pages/prize/prize_details_page.dart';
 import 'package:tickup/presentation/pages/prize/my_prizes_page.dart';
 import 'package:tickup/presentation/pages/pool/pool_create_page.dart';
 import 'package:tickup/presentation/pages/pool/pool_details_page.dart';
-// import 'package:tickup/presentation/pages/prizes/prizes_screen.dart';
-// import 'package:tickup/presentation/pages/prizes/prize_details_screen.dart';
-// import 'package:tickup/presentation/pages/leaderboard/leaderboard_screen.dart';
+import 'package:tickup/presentation/pages/pool/my_pools_page.dart';
 import 'package:tickup/presentation/pages/shell/main_shell.dart';
-import 'package:tickup/presentation/pages/splash/splash_screen.dart';
 import 'package:tickup/presentation/pages/error/error_screen.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/core/utils/logger.dart';
@@ -96,6 +93,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => MaterialPage(
           key: state.pageKey,
           child: const MyPrizesPage(),
+        ),
+      ),
+
+      // My Pools (owned by current user)
+      GoRoute(
+        path: '/my-pools',
+        name: 'my-pools',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const MyPoolsPage(),
         ),
       ),
 
