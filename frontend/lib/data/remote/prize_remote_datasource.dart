@@ -20,6 +20,17 @@ class PrizeRemoteDataSource {
     return list.map((e) => Prize.fromJson(e as Map<String, dynamic>)).toList();
   }
 
+  Future<List<Prize>> getMyPrizes() async {
+    // Backend route: GET /api/v1/prizes/my (requires Authorization header)
+    final res = await dio.get('/prizes/my');
+    final raw = res.data;
+    final list = raw is List
+        ? raw
+        : (raw is Map<String, dynamic> ? (raw['data'] as List?) : null) ??
+            <dynamic>[];
+    return list.map((e) => Prize.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
   Future<List<Prize>> _mockPrizes() async {
     await Future.delayed(const Duration(milliseconds: 500));
     final now = DateTime.now();
