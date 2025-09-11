@@ -286,8 +286,6 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 
   Widget _buildFloatingActionButton(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
       margin: const EdgeInsets.only(bottom: 80), // Spazio per la bottom nav
       child: FloatingActionButton.extended(
@@ -295,7 +293,7 @@ class _MainShellState extends ConsumerState<MainShell>
           HapticFeedback.lightImpact();
           _showQuickPlayDialog(context);
         },
-        backgroundColor: theme.colorScheme.primary,
+        backgroundColor: const Color(0xFFFF9800),
         icon: const Icon(Icons.bolt),
         label: const Text('Azioni'),
         elevation: 8,
@@ -328,7 +326,7 @@ class QuickActionsBottomSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDarkMode
             ? const Color.fromARGB(255, 0, 1, 2)
-            : const Color.fromARGB(255, 224, 85, 4),
+            : const Color(0xFFFF9800),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
