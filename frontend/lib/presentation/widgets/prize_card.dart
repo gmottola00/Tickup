@@ -66,16 +66,19 @@ class PrizeCard extends StatelessWidget {
                         visualDensity: VisualDensity.compact,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      const Spacer(),
-                      OutlinedButton.icon(
-                        onPressed: () => context.push(
-                          AppRoute.createPoolForPrize(prize.prizeId),
-                          extra: prize,
-                        ),
-                        icon: const Icon(Icons.add_circle_outline),
-                        label: const Text('Crea pool'),
-                      ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push(
+                        AppRoute.createPoolForPrize(prize.prizeId),
+                        extra: prize,
+                      ),
+                      icon: const Icon(Icons.add_circle_outline),
+                      label: const Text('Crea pool'),
+                    ),
                   ),
                 ],
               ),
