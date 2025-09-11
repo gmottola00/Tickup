@@ -14,6 +14,7 @@ class PrizeCreate(PrizeBase):
 
 class Prize(PrizeBase):
     prize_id: UUID
+    user_id: UUID
     image_url: str
     sponsor: str
     stock: int
