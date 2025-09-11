@@ -6,9 +6,9 @@ class RaffleRepository {
 
   Future<List<RafflePool>> fetchPools() => _remote.getPools();
   Future<RafflePool> fetchPool(String id) => _remote.getPool(id);
+  Future<List<RafflePool>> fetchMyPools() => _remote.getMyPools();
   Future<RafflePool> createPool(RafflePool pool) => _remote.createPool(pool);
   Future<void> updatePool(String id, RafflePool pool) =>
       _remote.updatePool(id, pool);
   Future<void> deletePool(String id) => _remote.deletePool(id);
 }
-

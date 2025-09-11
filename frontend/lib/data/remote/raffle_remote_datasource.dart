@@ -52,6 +52,19 @@ class RaffleRemoteDataSource {
     return RafflePool.fromJson(res.data as Map<String, dynamic>);
   }
 
+  Future<List<RafflePool>> getMyPools() async {
+    // Backend route: GET /api/v1/pools/my (requires Authorization header)
+    final res = await dio.get('pools/my');
+    final raw = res.data;
+    final list = raw is List
+        ? raw
+        : (raw is Map<String, dynamic> ? (raw['data'] as List?) : null) ??
+            <dynamic>[];
+    return list
+        .map((e) => RafflePool.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<RafflePool> createPool(RafflePool pool) async {
     final payload = {
       'prize_id': pool.prizeId,
