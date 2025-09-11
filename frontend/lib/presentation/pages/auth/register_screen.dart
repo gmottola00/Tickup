@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:tickup/core/network/dio_client.dart';
 import 'package:go_router/go_router.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -36,30 +35,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
       print("Session: ${response.session}");
       if (user != null && session != null) {
         print("Entrato");
-        final accessToken = session.accessToken;
-        // Chiamata al tuo backend FastAPI per creare app_user
-        final res = await http.post(
-          Uri.parse('http://10.0.2.2:8000/api/v1/users/me'),
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
+        // Crea app_user su backend (usa token iniettato da DioClient)
+        final res = await DioClient().post(
+          '/users/me',
+          data: {
             'nickname': nicknameController.text,
             'avatar_url': avatarUrlController.text.isNotEmpty
                 ? avatarUrlController.text
                 : null,
-          }),
+          },
         );
-        print("Status: ${res.statusCode}");
-        print("Body: ${res.body}");
         if (res.statusCode == 200 || res.statusCode == 201) {
-          context.go('/pools'); // ✅ naviga se tutto ok
+          context.go('/');
         } else {
-          throw Exception("Errore backend: ${res.body}");
+          throw Exception("Errore backend: ${res.statusCode}");
         }
+      } else if (user != null && session == null) {
+        // Email confirmation required: Supabase ha creato l'utente ma non ha aperto la sessione
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Registrazione avviata. Controlla la tua email per confermare l\'account',
+              ),
+            ),
+          );
+        }
+        // Vai alla pagina di login
+        if (mounted) context.go('/home');
       } else {
-        throw Exception("Registrazione fallita. Controlla email e password.");
+        throw Exception('Registrazione fallita.');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
