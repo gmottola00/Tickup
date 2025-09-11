@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/presentation/widgets/pool_card.dart';
+import 'package:tickup/presentation/routing/app_route.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -40,16 +42,27 @@ class _HomeLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 3 / 4,
-      ),
-      itemCount: 6,
-      itemBuilder: (_, __) => const PoolCardSkeleton(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 900
+            ? 4
+            : width >= 600
+                ? 3
+                : 2;
+        final childAspectRatio = width >= 600 ? 3 / 5 : 2 / 3; // più verticale
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemCount: 6,
+          itemBuilder: (_, __) => const PoolCardSkeleton(),
+        );
+      },
     );
   }
 }
@@ -89,16 +102,33 @@ class _HomeContent extends StatelessWidget {
     if (items.isEmpty) {
       return const _EmptyState();
     }
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 3 / 4,
-      ),
-      itemCount: items.length,
-      itemBuilder: (_, i) => PoolCard(pool: items[i]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 900
+            ? 4
+            : width >= 600
+                ? 3
+                : 2;
+        final childAspectRatio = width >= 600 ? 3 / 5 : 2 / 3; // più verticale
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemCount: items.length,
+          itemBuilder: (_, i) => PoolCard(
+            pool: items[i],
+            onTap: () => context.push(
+              AppRoute.poolDetails(items[i].poolId),
+              extra: items[i],
+            ),
+          ),
+        );
+      },
     );
   }
 }
