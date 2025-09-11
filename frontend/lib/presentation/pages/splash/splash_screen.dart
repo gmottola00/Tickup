@@ -50,15 +50,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     if (!mounted) return;
 
-    // BYPASS AUTENTICAZIONE - vai sempre ai giochi
-    context.go(AppRoute.games);
-
-    // final session = Supabase.instance.client.auth.currentSession;
-    // if (session != null) {
-    //   context.go(AppRoute.games);
-    // } else {
-    //   context.go(AppRoute.login);
-    // }
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      context.go(AppRoute.games);
+    } else {
+      context.go(AppRoute.login);
+    }
   }
 
   @override
