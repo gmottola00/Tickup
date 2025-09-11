@@ -7,27 +7,30 @@ import 'package:tickup/providers/navigation_provider.dart';
 class ModernBottomNavigation extends ConsumerWidget {
   const ModernBottomNavigation({super.key});
 
+  // Brand accent color for selected nav items (Orange)
+  static const _brandColor = Color(0xFFFF6A00);
+
   static const _destinations = [
     (
       icon: Icons.home_outlined,
       activeIcon: Icons.home,
       label: 'Home',
       route: AppRoute.home,
-      color: Color(0xFF6366F1),
+      color: _brandColor,
     ),
     (
       icon: Icons.sports_esports_outlined,
       activeIcon: Icons.sports_esports,
       label: 'Giochi',
       route: AppRoute.games,
-      color: Color(0xFF10B981),
+      color: _brandColor,
     ),
     (
       icon: Icons.account_circle_outlined,
       activeIcon: Icons.account_circle,
       label: 'Profilo',
       route: AppRoute.profile,
-      color: Color(0xFF8B5CF6),
+      color: _brandColor,
     ),
   ];
 
