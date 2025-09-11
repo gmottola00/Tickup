@@ -86,6 +86,13 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
+                  leading: const Icon(Icons.confirmation_number_outlined),
+                  title: const Text('I miei pool'),
+                  subtitle: const Text('Elenco dei pool che hai creato'),
+                  onTap: () => context.push('/my-pools'),
+                ),
+                const Divider(height: 1),
+                ListTile(
                   leading: const Icon(Icons.settings),
                   title: const Text('Impostazioni'),
                   subtitle: const Text('Preferenze account e privacy'),
