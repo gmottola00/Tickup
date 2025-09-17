@@ -1,11 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, join
 from fastapi import HTTPException
+
 from app.models.pool import RafflePool
-from app.schemas.pool import PoolCreate
 from app.models.prize import Prize
-from sqlalchemy.orm import aliased
-from sqlalchemy import join
+from app.schemas.pool import PoolCreate
 
 async def create_pool(db: AsyncSession, pool_in: PoolCreate) -> RafflePool:
     prize = await db.get(Prize, pool_in.prize_id)
