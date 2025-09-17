@@ -1,269 +1,199 @@
 # Tickup Backend
 
-Backend API per Tickup, costruito con **FastAPI**, **SQLAlchemy** (asyncio), **Alembic** e **Supabase** (PostgreSQL).
+Backend API di Tickup costruita con **FastAPI**, **SQLAlchemy async**, **Alembic** e Supabase/PostgreSQL. Espone endpoint REST per gestire premi, pool a biglietti, acquisti e assegnazione ticket.
 
 ---
 
-## 📁 Struttura del Progetto
+## Struttura del progetto
 
 ```
 app/
-├── main.py                  # Entrypoint FastAPI
+├── main.py                    # Istanzia FastAPI e registra router v1
 ├── core/
-│   ├── config.py            # Settings (Pydantic BaseSettings)
-│   └── security.py          # OAuth2 / JWT placeholders
-├── db/
-│   ├── base.py              # Base declarative SQLAlchemy
-│   ├── session.py           # Engine & session (sync/async)
-│   └── migrations/          # Alembic scripts
+│   ├── config.py              # Settings (Pydantic BaseSettings)
+│   └── security.py            # Hook per auth / JWT
 ├── api/
 │   └── v1/
-│       ├── routers/
-│       │   ├── pool.py      # Endpoint CRUD pools
-│       │   ├── prize.py     # Endpoint CRUD prizes
-│       │   └── ticket.py    # Endpoint CRUD tickets
-│       └── deps.py          # Dependency injection (DB, auth, ecc.)
+│       ├── auth.py            # Helpers per ricavare lo user id
+│       ├── deps.py            # Dipendenze condivise (sessione DB, ecc.)
+│       └── routers/
+│           ├── pool.py        # Endpoint CRUD raffle pool
+│           ├── prize.py       # Endpoint CRUD prize
+│           ├── purchase.py    # Endpoint registro acquisti
+│           ├── ticket.py      # Endpoint gestione ticket
+│           └── user.py        # Endpoint utenti (seed/demo)
 ├── models/
-│   ├── pool.py              # SQLAlchemy model RafflePool
-│   ├── prize.py             # SQLAlchemy model Prize
-│   └── ticket.py            # SQLAlchemy model Ticket
+│   ├── pool.py                # Modello SQLAlchemy RafflePool
+│   ├── prize.py               # Modello SQLAlchemy Prize
+│   ├── purchase.py            # Modello SQLAlchemy Purchase
+│   ├── ticket.py              # Modello SQLAlchemy Ticket
+│   └── user.py                # Modello SQLAlchemy AppUser
 ├── schemas/
-│   ├── pool.py              # Pydantic schemas per Pool
-│   ├── prize.py             # Pydantic schemas per Prize
-│   └── ticket.py            # Pydantic schemas per Ticket
+│   ├── pool.py                # Schemi Pydantic Pool
+│   ├── prize.py               # Schemi Pydantic Prize
+│   ├── purchase.py            # Schemi Pydantic Purchase
+│   ├── ticket.py              # Schemi Pydantic Ticket
+│   └── user.py                # Schemi Pydantic User
 ├── services/
-│   ├── pool.py              # Logica CRUD asincrona per Pool
-│   ├── prize.py             # Logica CRUD asincrona per Prize
-│   └── ticket.py            # Logica CRUD asincrona per Ticket
-└── clients/
-    └── supabase.py          # Istanza client supabase-py
+│   ├── pool.py                # Logica async CRUD Pool
+│   ├── prize.py               # Logica async CRUD Prize
+│   ├── purchase.py            # Logica async CRUD Purchase
+│   ├── ticket.py              # Ticket + business rules pool
+│   └── user.py                # Utilita per l entita utente
+├── clients/
+│   └── supabase.py            # Client Supabase (se necessario)
+└── db/
+    ├── base.py                # Base declarative SQLAlchemy
+    ├── session.py             # Engine async, session factory
+    └── migrations/            # Script Alembic
 
-tests/                       # Unit & integration tests (pytest)
-alembic.ini                  # Configurazione Alembic
-Dockerfile                   # Containerizzazione
-pyproject.toml               # Configurazione Poetry
-README.md                    # Questo file
-.env                         # Variabili d’ambiente (non versionato)
+tests/                         # Test unitari / integrazione (pytest)
+alembic.ini                    # Config Alembic
+pyproject.toml                 # Configurazione Poetry
+README.md                      # Questo file
+.env                           # Variabili ambiente (non versionato)
 ```
 
 ---
 
-## ⚙️ Prerequisiti
+## Prerequisiti
 
-- Python 3.10+  
-- [Poetry](https://python-poetry.org/)  
-- Accesso al database PostgreSQL di Supabase  
+- Python 3.10+
+- [Poetry](https://python-poetry.org/)
+- Database PostgreSQL (Supabase consigliato)
+- Facoltativo: `make` + `qrencode` (gia usati nel workflow full-stack)
 
 ---
 
-## 🛠️ Installazione
+## Setup rapido (dalla root del monorepo)
 
-1. **Clona il repository**  
+1. Installa le dipendenze backend/frontend con il target condiviso:
    ```bash
-   git clone https://github.com/tuo-username/tickup-backend.git
-   cd tickup-backend
+   make install
    ```
-
-2. **Crea un file `.env`** in root:
+2. Crea `backend/.env` partendo da questo template:
    ```dotenv
-   DATABASE_URL=postgresql+asyncpg://postgres:TUAPASSWORD@tuo-progetto.supabase.co:5432/postgres
-   SUPABASE_PSW=TUAPASSWORD
-   SUPABASE_URL=https://tuo-progetto.supabase.co
-   SUPABASE_KEY=YOUR_SUPABASE_KEY
-   SUPABASE_JWT=YOUR_JWT_SECRET
+   DATABASE_URL=postgresql+asyncpg://postgres:password@host.supabase.co:5432/postgres
+   SUPABASE_URL=https://host.supabase.co
+   SUPABASE_KEY=service_key
+   SUPABASE_JWT=jwt_secret
    ```
+3. Esegui le migrazioni Alembic (vedi sezione dedicata) per popolare il database.
 
-3. **Installa le dipendenze**  
-   ```bash
-   poetry install
-   ```
+### Avvio con Makefile
 
----
-
-## 🚀 Avvio del Server
+Per lanciare l API basta usare il target `api` del Makefile di progetto:
 
 ```bash
-poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --env-file .env --reload 
+make api
 ```
 
-- **API** su `http://localhost:8000`  
-- **Swagger UI** su `http://localhost:8000/docs`  
-- **ReDoc** su `http://localhost:8000/redoc`
+Il comando equivale a:
+```bash
+poetry run uvicorn app.main:app \
+  --host 0.0.0.0 \
+  --port "$BACKEND_PORT" \
+  --env-file "$ENV_FILE" \
+  --reload
+```
+- `BACKEND_PORT` (default `8000`) e `ENV_FILE` (default `backend/.env`) possono essere sovrascritti al volo, es. `make BACKEND_PORT=9000 ENV_FILE=.env.staging api`.
+- L API resta raggiungibile su `http://localhost:BACKEND_PORT`, con Swagger UI su `/docs` e ReDoc su `/redoc`.
+
+Per chiudere rapidamente porte occupate dal backend o dal web server puoi usare `make kill-ports` (libera `8000` e `8080`).
+
+### Avvio manuale (alternativa)
+
+Se preferisci eseguire il backend senza Makefile:
+```bash
+poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --env-file backend/.env --reload
+```
 
 ---
 
-## 🗄️ Database & Migrazioni (Alembic)
+## Database e migrazioni
 
 ```bash
-# Inizializza (prima volta)
+cd backend
+
+# Genera struttura iniziale (solo la prima volta)
 poetry run alembic init app/db/migrations
 
-# Configura alembic.ini con:
-# sqlalchemy.url = postgresql+asyncpg://...
+# Aggiorna alembic.ini con la tua DATABASE_URL
 
-# Genera e applica migration
-poetry run alembic revision --autogenerate -m "Init schema"
+# Crea nuova migration automatica
+poetry run alembic revision --autogenerate -m "descrizione"
+
+# Applica l ultima migration
 poetry run alembic upgrade head
 ```
 
 ---
 
-## 1. Modello dati a livello di DB
+## Entita principali
 
-### 1.1 `prize`
+### Prize
+Premio messo in palio. Campi chiave: `prize_id` (UUID), `title`, `description`, `value_cents`, `stock`, metadati sponsor e `created_at`.
 
-Rappresenta il premio che sarà “messo in palio” in uno o più pool.
+### RafflePool
+Pool di biglietti legato a un premio:
+- `ticket_price_cents`: costo di ogni ticket
+- `tickets_required`: soglia per dichiarare il pool completo
+- `tickets_sold`: contatore aggiornato dagli acquisti
+- `state`: `OPEN` → `FULL` → (eventuale) `STARTED`/`CANCELLED`
 
-* **`prize_id`** (PK): UUID univoco  
-* **`title`**, **`description`**, **`value_cents`**: informazioni sul premio  
-* **`image_url`**, **`sponsor`**, **`stock`**: metadati aggiuntivi  
-* **`created_at`**: timestamp  
+### Purchase
+Registro transazioni utente. Vincola ogni ticket a un pagamento con:
+- `purchase_id` (UUID), `user_id`
+- `type`: `ENTRY`, `BOOST`, `RETRY`
+- `status`: `PENDING`, `CONFIRMED`, `FAILED`
+- `amount_cents`, `currency`, `provider_txn_id`
 
-### 1.2 `raffle_pool`
+### Ticket
+Biglietto numerato che abilita l ingresso al pool. Vincolato a:
+- un `pool_id`
+- un `user_id`
+- un `purchase_id` confermato
+- `ticket_num` progressivo (vincolo univoco per pool)
 
-Definisce una “lotteria” o pool di biglietti legata a un singolo premio.
-
-* **`pool_id`** (PK): UUID univoco  
-* **`prize_id`** (FK → `prize.prize_id`): premio in palio  
-* **`ticket_price_cents`**: costo di un biglietto  
-* **`tickets_required`**: soglia di biglietti venduti per far partire il sorteggio  
-* **`tickets_sold`**: contatore incrementale di biglietti acquistati  
-* **`state`**: `OPEN` │ `FULL` │ `STARTED` │ `CANCELLED`  
-* **`created_at`**: timestamp  
-
-**Relazione**: 1 *Prize* → * più *RafflePool*.
-
-### 1.3 `ticket`
-
-Rappresenta il singolo “biglietto” acquistato da un utente per partecipare a un pool.
-
-* **`ticket_id`** (PK): integer autoincrementale  
-* **`pool_id`** (FK → `raffle_pool.pool_id`): a quale pool appartiene  
-* **`user_id`** (FK → `app_user.user_id`): chi l’ha comprato  
-* **`purchase_id`** (FK → `purchase.purchase_id`): dettaglio transazione  
-* **`ticket_num`**: numero del biglietto (utile per sorteggi)  
-* **`created_at`**: timestamp  
-
-**Relazione**: 1 *RafflePool* → * più *Ticket*.  
-**Relazione**: 1 *AppUser* → * più *Ticket*.
+### User
+Modello di utilita (`app_user`) usato per associare acquisti e ticket a un utente autenticato (integrazione auth demandata a Supabase / JWT).
 
 ---
 
-## 2. Flusso logico di utilizzo
+## Flow Ticket & Purchase
 
-1. **Creazione del premio**
+1. **Purchase**: il client crea/aggiorna un acquisto via `POST /api/v1/purchases` specificando importo, tipo e id transazione del provider. Il servizio salva lo stato iniziale (`PENDING`).
+2. **Conferma**: quando il provider segnala l esito positivo, l acquisto viene marcato `CONFIRMED` tramite `PUT /api/v1/purchases/{id}`.
+3. **Redeem ticket**: il frontend invoca `POST /api/v1/tickets` con `pool_id`, `user_id` e `purchase_id`.
+   - Il servizio carica il pool e verifica che sia `OPEN` e non saturo.
+   - Controlla che l acquisto appartenga allo stesso utente, che il `type` sia `ENTRY`, lo `status` `CONFIRMED` e che non sia gia stato redento.
+   - Genera `ticket_num = tickets_sold + 1`, inserisce il ticket e aggiorna `tickets_sold`.
+   - Se la soglia `tickets_required` viene raggiunta, lo stato del pool passa a `FULL`.
+4. **Ulteriori azioni**: a pool pieno puoi eseguire estrazioni, notifiche Realtime o generare vincitori tramite job dedicati.
 
-   * Endpoint `POST /api/v1/prizes`  
-   * Fornisci titolo, descrizione, valore, ecc.  
-   * Restituisce un oggetto **Prize** con `prize_id`.
-
-2. **Apertura di un pool**
-
-   * Endpoint `POST /api/v1/pools`  
-   * Passi `prize_id`, `ticket_price_cents`, `tickets_required`.  
-   * Viene creato un nuovo **Pool** con `pool_id` e `state = OPEN`.
-
-3. **Vendita di un biglietto**
-
-   * Prima crei una **Purchase** (acquisto) → registra la transazione di pagamento.  
-   * Endpoint `POST /api/v1/tickets`  
-   ```json
-   {
-     "pool_id": "<pool_id>",
-     "user_id": "<user_id>",
-     "purchase_id": "<purchase_id>",
-     "ticket_num": 1
-   }
-   ```
-   * Il server:
-     1. Verifica che il pool sia `OPEN` e non abbia raggiunto `tickets_required`.  
-     2. Inserisce il record **Ticket** e incrementa `tickets_sold`.  
-     3. Se `tickets_sold == tickets_required`, aggiorna `state` → `FULL`.
-
-4. **Lettura/Modifica/Cancellazione**
-
-* **Prize**  
-  * `GET /api/v1/prizes/{prize_id}`  
-  * `PUT /api/v1/prizes/{prize_id}`  
-  * `DELETE /api/v1/prizes/{prize_id}`  
-* **Pool**  
-  * `GET /api/v1/pools/{pool_id}`  
-  * `PUT /api/v1/pools/{pool_id}`  
-  * `DELETE /api/v1/pools/{pool_id}`  
-* **Ticket**  
-  * `GET /api/v1/tickets/{ticket_id}`  
-  * `PUT /api/v1/tickets/{ticket_id}`  
-  * `DELETE /api/v1/tickets/{ticket_id}`  
+Questa catena garantisce che ogni ticket derivi da un acquisto valido e non possa essere riutilizzato, prevenendo frodi e disallineamenti contabili.
 
 ---
 
-## 3. Esempio di endpoint e comportamento
+## Endpoint disponibili (v1)
 
-### 3.1 Creazione Pool
+| Risorsa | Path base | Operazioni principali |
+|---------|-----------|-----------------------|
+| Prize | `/api/v1/prizes` | CRUD completo su premi |
+| Pool | `/api/v1/pools` | CRUD + conteggio ticket |
+| Purchase | `/api/v1/purchases` | Creazione, update stato, lista utente |
+| Ticket | `/api/v1/tickets` | Creazione ticket da purchase, CRUD |
+| User | `/api/v1/users` | Utility per gestione utenti (seed/test) |
 
-```http
-POST /api/v1/pools
-Content-Type: application/json
-
-{
-  "prize_id": "a1b2c3d4-...-deadbeef",
-  "ticket_price_cents": 100,
-  "tickets_required": 50
-}
-```
-
-**Risposta** (201):
-
-```json
-{
-  "pool_id": "f6e5d4c3-...-feedface",
-  "prize_id": "a1b2c3d4-...-deadbeef",
-  "ticket_price_cents": 100,
-  "tickets_required": 50,
-  "tickets_sold": 0,
-  "state": "OPEN",
-  "created_at": "2025-06-13T…Z"
-}
-```
-
-### 3.2 Acquisto di un biglietto
-
-```http
-POST /api/v1/tickets
-Content-Type: application/json
-
-{
-  "pool_id": "f6e5d4c3-...-feedface",
-  "user_id": "u1234567-…",
-  "purchase_id": "p9a8b7c6-…",
-  "ticket_num": 1
-}
-```
-
-* **Server**:
-  * Cerca il pool → aggiorna `tickets_sold += 1`.
-  * Se `tickets_sold == tickets_required`, passa `state` a `FULL`.
-* **Risposta** (201):
-```json
-{
-  "ticket_id": 42,
-  "pool_id": "f6e5d4c3-...-feedface",
-  "user_id": "u1234567-…",
-  "purchase_id": "p9a8b7c6-…",
-  "ticket_num": 1,
-  "created_at": "2025-06-13T…Z"
-}
-```
+Autenticazione e autorizzazione sono demandate agli header gestiti in `auth.py`; modifica gli helper per integrarti con Supabase o identity provider custom.
 
 ---
 
-## 4. Come evolvere
+## Prossimi step suggeriti
 
-* **Sorteggio**: quando un pool arriva a `FULL`, puoi avere un endpoint interno (o un cron job) che sceglie un ticket vincente e crea un record in `win`.  
-* **Stati aggiuntivi**: `STARTED` per indicare che il sorteggio è in corso, `AWARDED` una volta assegnato il premio.  
-* **Webhooks / Realtime**: usa Supabase Realtime per notificare client quando un pool cambia stato.  
-* **Paginazione e filtri** negli endpoint `GET /pools` o `GET /tickets`.
+- Automatizzare il sorteggio dei pool completi e notificare i vincitori.
+- Gestire pagamenti multipli (`BOOST`, `RETRY`) con logiche dedicate nel servizio ticket.
+- Abilitare webhooks da provider pagamento per aggiornare lo stato `Purchase.status`.
+- Aggiungere test end-to-end per assicurare la catena purchase → ticket.
 
----
-
-In sintesi, ogni **Prize** può essere messo in palio da uno o più **Pool**; in ciascun **Pool** gli utenti comprano **Ticket** che li qualificano al sorteggio una volta raggiunta la soglia di biglietti richiesti. Gli endpoint CRUD ti permettono di creare, leggere, aggiornare e cancellare ognuna di queste entità rispettando la logica di dominio sopra descritta.
+Hai domande o trovi incongruenze? Apri una issue o contatta il team backend.
