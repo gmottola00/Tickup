@@ -1,408 +1,232 @@
-# SkillWin Frontend – Flutter 3.22+ Modern Architecture
-*(solo lato app, FastAPI non è trattato qui)*
+# Tickup Frontend - Flutter 3.3+ Modern Architecture
+*(solo lato app; il backend FastAPI e documentato a parte)*
 
-> Mini‑arcade **skill‑based** dove l'utente gioca a micro‑giochi per vincere premi reali.
-
----
-
-## ⚙️ Stack Tecnologico
-
-| Layer | Tech & Package Principali | Note |
-|-------|--------------------------|------|
-| **State Management** | Riverpod 2.4+ | Provider pattern con sintassi classica |
-| **Routing** | GoRouter 13+ | Named routes, guards, deep linking |
-| **Backend** | Supabase | Auth, Realtime, Database |
-| **HTTP Client** | Dio 5+ | REST API con interceptors |
-| **UI Components** | Material 3 | Design system moderno con dark mode |
-| **Mini‑games** | Flutter widgets puri | Ogni gioco implementa `GameInterface` |
+> Tickup e un arcade skill-based in cui gli utenti partecipano a mini giochi e pool a premi. Questo README ti guida nel setup del frontend Flutter e nel workflow quotidiano.
 
 ---
 
-## 🚀 Prerequisiti
+## Stack tecnologico
 
-| Global | Versione Minima | Note |
-|--------|-----------------|------|
-| **Flutter** | 3.22+ | Stable channel |
-| **Dart** | 3.4+ | Null safety |
-| **Android SDK** | API 30+ | Target SDK 34 |
-| **Android NDK** | **27.0.12077973** | Configurazione obbligatoria |
-| **iOS** | 12.0+ | Per deployment iOS |
+| Layer | Tecnologie principali | Note |
+|-------|-----------------------|------|
+| App shell | Flutter 3.3+, Material 3 | Supporto light/dark theme e web/mobile |
+| State management | Flutter Riverpod 2.6 | ProviderScope con observer custom (`RiverpodLogger`) |
+| Routing | go_router 13 | Navigazione dichiarativa con shell e guard |
+| Networking | Dio 5, Supabase Flutter | REST API + sessione auth con refresh token |
+| Realtime | Supabase Realtime | Aggiornamenti live su tabelle (es. pools) |
+| Mini games | Flame + widget Flutter | Integra motore arcade con scene custom |
 
 ---
 
-## 🏗️ Nuova Architettura
+## Prerequisiti
 
-### Pattern & Principi
-- **Clean Architecture**: Separazione netta tra layers
-- **Repository Pattern**: Astrazione delle data sources
-- **Provider Pattern**: State management reattivo
-- **SOLID Principles**: Codice manutenibile e testabile
+| Strumento | Versione minima | Note |
+|-----------|-----------------|------|
+| Flutter SDK | 3.3 (channel stable) | Verifica con `flutter --version` |
+| Dart | 3.3 | Incluso nel bundle Flutter |
+| Android SDK | API 30+ | Target SDK 34 configurato nel progetto |
+| Android NDK | 27.0.12077973 | Imposta `ndkVersion` in `android/app/build.gradle` |
+| iOS | 12.0+ | Richiede Xcode per il build |
+| Python 3 | 3.10+ | Necessario per `make serve-web` |
+| qrencode (opzionale) | latest | Per generare il QR code locale |
 
-### Flusso Dati
+---
+
+## Setup rapido
+
+1. Clona il repository e accedi alla root (questo README copre `frontend/`).
+2. Installa dipendenze di backend e frontend con:
+   ```bash
+   make install
+   ```
+3. Prepara i file environment del backend (`backend/.env`) se usi `make api`.
+4. Avvia backend e frontend web in due terminal:
+   ```bash
+   make api
+   make web
+   ```
+   Il target `make web` abilita automaticamente il supporto web e espone l'app su `http://0.0.0.0:8080`.
+5. Per build e deploy web:
+   ```bash
+   make build-web
+   make serve-web   # server statico per verificare la build
+   ```
+6. Per corse mobili lancia un emulatore registrato (`EMULATOR_ID`) e usa `make android`.
+
+> Suggerimento: puoi sovrascrivere le variabili del Makefile al volo, ad esempio `make FRONTEND_PORT=3001 web` o `make BACKEND_PORT=9000 api`.
+
+---
+
+## Workflow con Makefile
+
+| Comando | Cosa fa | Dipendenze |
+|---------|---------|------------|
+| `make help` | Mostra la lista dei target disponibili | - |
+| `make install` | `poetry install` nel backend e `flutter pub get` nel frontend | Poetry, Flutter |
+| `make api` | Avvia FastAPI con uvicorn su `0.0.0.0:8000` (configurabile) | File `.env` del backend |
+| `make web` | Avvia Flutter web server su `0.0.0.0:8080` | Dispositivo web abilitato |
+| `make build-web` | Esegue `flutter build web` | Directory `frontend/build/web` |
+| `make serve-web` | Pubblica la cartella `build/web` via `python -m http.server` | Python 3 |
+| `make android` | Avvia un emulatore Android (se presente) e lancia `flutter run` | SDK Android, emulatore definito |
+| `make qr` | Genera `qrcode.png` con l'URL locale del frontend web | `qrencode` installato |
+| `make kill-ports` | Libera le porte del backend e frontend (richiede `lsof`) | lsof |
+| `make ip` | Stampa l'indirizzo IP locale da condividere con i device | hostname |
+
+Variabili globali utili: `BACKEND_DIR`, `FRONTEND_DIR`, `BACKEND_PORT`, `FRONTEND_PORT`, `ENV_FILE`, `EMULATOR_ID`. Tutte possono essere ridefinite nel comando `make` senza modificare il file.
+
+---
+
+## Configurazione ambiente
+
+L'app legge i parametri principali tramite `--dart-define` esposti in `EnvConfig`:
+
+```dart
+class EnvConfig {
+  static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  static const String supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  static const bool isDevelopment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'development') == 'development';
+  static const String appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
+}
 ```
-UI Layer → State (Riverpod) → Repository → Data Source → API/Database
-    ↑                              ↓
-    └──────── Response ────────────┘
+
+Durante lo sviluppo puoi usare:
+
+```bash
+flutter run -d chrome \
+  --dart-define SUPABASE_URL=https://<id>.supabase.co \
+  --dart-define SUPABASE_ANON_KEY=<anon-key> \
+  --dart-define ENVIRONMENT=development
 ```
+
+Sul web, `DioClient` ricava automaticamente host e schema della pagina aperta e punta il backend alla porta `8000`. Su emulatori Android usa `10.0.2.2`, su iOS/desktop `localhost`.
 
 ---
 
-## 🗂️ Struttura del Progetto
+## Struttura del codice (`frontend/lib`)
 
 ```
 lib/
-├── app.dart                       # MaterialApp.router configuration
-├── main.dart                      # Entry point + inizializzazione
-│
-├── core/                          # Layer Core - Utilities condivise
+├── app.dart                  # MaterialApp.router con tema dinamico
+├── main.dart                 # Bootstrap, Supabase init e ProviderScope
+├── core/
 │   ├── config/
-│   │   └── env_config.dart        # Variabili ambiente (dev/prod)
-│   ├── constants/
-│   │   └── app_constants.dart     # Costanti globali
+│   │   └── env_config.dart   # Gestione dei dart-define
 │   ├── network/
-│   │   ├── dio_client.dart        # HTTP client singleton
-│   │   └── auth_interceptor.dart  # JWT refresh automatico
+│   │   ├── auth_service.dart # Access token e refresh tramite Supabase
+│   │   └── dio_client.dart   # Client HTTP con interceptor JWT
+│   ├── realtime/
+│   │   └── supabase_realtime.dart # Abbonamenti alle tabelle
 │   ├── theme/
-│   │   └── app_theme.dart         # Material 3 theme definition
-│   ├── utils/
-│   │   ├── logger.dart            # Logging centralizzato
-│   │   └── validators.dart        # Form validators
-│   └── game_engine/
-│       ├── game_engine.dart       # Motore di gioco
-│       ├── game_interface.dart    # Interfaccia comune giochi
-│       └── game_result.dart       # Risultati partita
-│
-├── data/                          # Layer Data - Gestione dati
-│   ├── models/                    # Data models (JSON serializable)
-│   │   ├── user.dart
+│   │   └── app_theme.dart    # Palette Material 3
+│   └── utils/
+│       └── logger.dart       # Observer per Riverpod e logging centralizzato
+├── data/
+│   ├── models/
 │   │   ├── prize.dart
-│   │   ├── game.dart
-│   │   └── leaderboard_entry.dart
-│   ├── datasources/
-│   │   ├── remote/                # API calls
-│   │   │   ├── auth_remote.dart
-│   │   │   ├── prize_remote.dart
-│   │   │   └── game_remote.dart
-│   │   └── local/                 # Cache locale
-│   │       └── preferences.dart
-│   └── repositories/              # Repository implementations
-│       ├── auth_repository.dart
-│       ├── prize_repository.dart
-│       └── game_repository.dart
-│
-├── domain/                        # Layer Domain (opzionale per progetti grandi)
-│   ├── entities/                 # Business entities
-│   └── usecases/                 # Business logic
-│
-├── presentation/                  # Layer Presentation - UI
+│   │   └── raffle_pool.dart
+│   ├── remote/
+│   │   ├── prize_remote_datasource.dart
+│   │   └── raffle_remote_datasource.dart
+│   └── repositories/
+│       ├── price_repository.dart   # Wrapper REST premi
+│       └── raffle_repository.dart  # Wrapper REST pool
+├── presentation/
 │   ├── routing/
-│   │   ├── app_router.dart       # GoRouter configuration
-│   │   └── app_route.dart        # Route constants
-│   ├── pages/                    # Schermate principali
-│   │   ├── splash/
-│   │   │   └── splash_screen.dart
-│   │   ├── auth/
-│   │   │   ├── login_screen.dart
-│   │   │   └── register_screen.dart
-│   │   ├── shell/
-│   │   │   └── main_shell.dart   # Shell con bottom nav
-│   │   ├── games/
-│   │   │   ├── game_launcher.dart
-│   │   │   ├── game_runner.dart
-│   │   │   └── games/            # Mini-giochi
-│   │   │       ├── memory/
-│   │   │       ├── puzzle/
-│   │   │       └── reaction/
-│   │   ├── prizes/
-│   │   │   ├── prizes_screen.dart
-│   │   │   └── prize_details_screen.dart
-│   │   ├── leaderboard/
-│   │   │   └── leaderboard_screen.dart
-│   │   ├── profile/
-│   │   │   ├── profile_screen.dart
-│   │   │   └── profile_edit_screen.dart
-│   │   └── error/
-│   │       └── error_screen.dart
-│   └── widgets/                  # Widget riutilizzabili
-│       ├── common/
-│       │   ├── loading_widget.dart
-│       │   └── error_widget.dart
-│       └── bottom_navigation/
-│           └── modern_bottom_navigation.dart
-│
-└── providers/                     # State Management
-    ├── auth_provider.dart         # Gestione autenticazione
-    ├── user_provider.dart         # Dati utente
-    ├── game_provider.dart         # Stato giochi
-    ├── prize_provider.dart        # Gestione premi
-    ├── navigation_provider.dart   # Stato navigazione
-    └── theme_provider.dart        # Tema app
+│   │   ├── app_route.dart     # Costanti e path
+│   │   └── app_router.dart    # GoRouter + ShellRoute
+│   ├── widgets/
+│   │   ├── bottom_nav_bar.dart
+│   │   ├── pool_card.dart
+│   │   └── prize_card.dart
+│   └── pages/
+│       ├── shell/main_shell.dart
+│       ├── error/error_screen.dart
+│       ├── games/game_launcher.dart
+│       ├── games/game_runner.dart
+│       ├── home/home_screen.dart
+│       ├── profile/profile_screen.dart
+│       ├── prize/
+│       │   ├── prize_page.dart
+│       │   ├── my_prizes_page.dart
+│       │   └── prize_details_page.dart
+│       └── pool/
+│           ├── pool_create_page.dart
+│           ├── pool_details_page.dart
+│           └── my_pools_page.dart
+├── presentation/features/
+│   ├── pool/pool_provider.dart
+│   └── prize/prize_provider.dart
+└── providers/
+    ├── navigation_provider.dart
+    └── theme_provider.dart
 ```
+
+La directory `presentation/features/` ospita la logica di stato per dominio (es. `PrizeProvider`), separata dalle pagine UI contenute in `presentation/pages/`.
 
 ---
 
-## 🎯 Flusso Architetturale Completo
+## Architettura e flussi
 
-### Esempio: Prize Flow
+### Flow premi (CRUD)
 ```
-PrizesScreen 
-    ↓ (watch)
-PrizeProvider (Riverpod)
-    ↓ (calls)
-PrizeRepository
-    ↓ (uses)
-PrizeRemoteDataSource
-    ↓ (http)
-DioClient → Supabase/FastAPI
+presentation/pages/prize/prize_page.dart
+  -> presentation/features/prize/prize_provider.dart
+  -> data/repositories/price_repository.dart
+  -> data/remote/prize_remote_datasource.dart
+  -> core/network/dio_client.dart
+  -> FastAPI (auth tramite Supabase)
 ```
 
-### Navigation Flow
+### Flow pool e realtime
 ```
-GoRouter (Provider)
-    ├── Splash Screen (initial)
-    ├── Auth Routes (no shell)
-    │   ├── Login
-    │   └── Register
-    ├── Main Shell (with bottom nav)
-    │   ├── Games Tab
-    │   ├── Prizes Tab
-    │   ├── Leaderboard Tab
-    │   └── Profile Tab
-    └── Fullscreen Routes (no shell)
-        └── Game Runner
+presentation/pages/pool/pool_details_page.dart
+  -> presentation/features/pool/pool_provider.dart
+  -> data/repositories/raffle_repository.dart
+  -> data/remote/raffle_remote_datasource.dart
+  -> core/realtime/supabase_realtime.dart (aggiornamenti live)
 ```
+
+- Il routing principale vive in `app_router.dart` con una `ShellRoute` che mostra `MainShell` e il bottom navigation.
+- I providers globali (`theme_provider`, `navigation_provider`) risiedono in `lib/providers` per non mescolarsi con lo stato di dominio.
+- `Logger` implementa un observer Riverpod per loggare transizioni di stato durante lo sviluppo.
 
 ---
 
-## 🚦 Setup Completo
+## Testing e quality
 
-### 1. **Clona e Installa**
 ```bash
-git clone <repo-url>
-cd skillwin-frontend
-flutter pub get
+flutter analyze            # lint
+flutter test               # unit/widget test folder
+flutter test integration_test/   # se presenti integrazioni
 ```
 
-### 2. **Configura Piattaforme**
-```bash
-flutter create --platforms=android,ios,web .
-```
-
-### 3. **Android NDK Setup**
-In `android/app/build.gradle`:
-```gradle
-android {
-    compileSdkVersion 34
-    ndkVersion = "27.0.12077973"
-    
-    defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 34
-    }
-}
-```
-
-### 4. **Configura Environment Variables**
-Crea `.env` nella root:
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-BACKEND_URL=http://localhost:8000/api/v1
-ENVIRONMENT=development
-```
-
-### 5. **Supabase Setup**
-```dart
-// lib/core/config/env_config.dart
-class EnvConfig {
-  static const String supabaseUrl = 'YOUR_SUPABASE_URL';
-  static const String supabaseAnonKey = 'YOUR_ANON_KEY';
-}
-```
-
-### 6. **Run Development**
-```bash
-# Android Emulator
-flutter run
-
-# iOS Simulator
-flutter run -d iPhone
-
-# Web (Chrome)
-flutter run -d chrome
-
-# Con hot reload
-flutter run --hot
-```
+Nel caso tu aggiunga nuovi mini giochi con Flame, considera testare la logica pura in `test/` e mantenere la grafica isolata.
 
 ---
 
-## 🎮 Aggiungere un Mini-Gioco
-
-### 1. **Crea la struttura del gioco**
-```dart
-// lib/presentation/pages/games/games/nuovo_gioco/nuovo_gioco.dart
-class NuovoGioco extends ConsumerStatefulWidget implements GameInterface {
-  @override
-  ConsumerState<NuovoGioco> createState() => _NuovoGiocoState();
-  
-  @override
-  Future<GameResult> startGame() async {
-    // Logica del gioco
-  }
-}
-```
-
-### 2. **Aggiungi il Provider (opzionale)**
-```dart
-// lib/providers/games/nuovo_gioco_provider.dart
-final nuovoGiocoProvider = StateNotifierProvider<NuovoGiocoNotifier, GameState>((ref) {
-  return NuovoGiocoNotifier();
-});
-```
-
-### 3. **Registra nel Game Launcher**
-```dart
-// lib/presentation/pages/games/game_launcher.dart
-final games = [
-  GameConfig(
-    id: 'nuovo-gioco',
-    name: 'Nuovo Gioco',
-    icon: Icons.gamepad,
-    widget: NuovoGioco(),
-  ),
-  // altri giochi...
-];
-```
-
----
-
-## 🧪 Testing
-
-### Unit Tests
-```bash
-flutter test
-```
-
-### Widget Tests
-```bash
-flutter test test/widget_test.dart
-```
-
-### Integration Tests
-```bash
-flutter test integration_test/
-```
-
----
-
-## 📱 Build & Deploy
-
-### Android
-```bash
-# Debug APK
-flutter build apk --debug
-
-# Release APK
-flutter build apk --release
-
-# App Bundle (Play Store)
-flutter build appbundle --release
-```
-
-### iOS
-```bash
-# Debug IPA
-flutter build ios --debug
-
-# Release IPA (App Store)
-flutter build ios --release
-```
-
-### Web
-```bash
-# Build web
-flutter build web --release
-
-# Deploy su Firebase Hosting
-firebase deploy --only hosting
-```
-
----
-
-## 🔧 Troubleshooting Comune
+## Troubleshooting
 
 | Problema | Soluzione |
 |----------|-----------|
-| **NDK Version Mismatch** | Installa NDK 27.0.12077973 da Android Studio SDK Manager |
-| **Riverpod Not Working** | Assicurati di wrappare l'app con `ProviderScope` |
-| **GoRouter 404** | Verifica che tutte le route siano registrate in `app_router.dart` |
-| **Supabase Auth Loop** | Controlla `RouterNotifier` e auth state listeners |
-| **Bottom Nav Non Visibile** | Verifica che la route sia dentro `ShellRoute` |
-| **Build iOS Fallisce** | Esegui `cd ios && pod install` |
-| **Web CORS Issues** | Configura CORS nel backend o usa proxy |
+| Errore 401 continuo | Verifica che `AuthService.refreshToken` completi con sessione valida Supabase |
+| Il backend non e raggiungibile dal web | Assicurati che `make api` giri su `0.0.0.0` e che `DioClient` abbia la porta corretta |
+| L app web non risponde col device | Usa `make qr` e collega il device alla stessa rete, oppure esegui `make ip` per condividere l IP |
+| NDK mismatch su Android | Controlla `ndkVersion` in Gradle e reinstalla dal SDK Manager |
+| `flutter run -d web-server` fallisce | Esegui `flutter config --enable-web` (già gestito da `make web`) |
 
 ---
 
-## 📚 Documentazione Utile
+## Contributing
 
-- [Flutter Documentation](https://docs.flutter.dev/)
-- [Riverpod Documentation](https://riverpod.dev/)
-- [GoRouter Documentation](https://pub.dev/packages/go_router)
-- [Supabase Flutter Guide](https://supabase.com/docs/guides/getting-started/quickstarts/flutter)
-- [Material 3 Design](https://m3.material.io/)
+1. Crea un branch feature: `git checkout -b feature/nome-funzionalita`.
+2. Esegui lint e test prima di committare.
+3. Apri una pull request descrivendo modifiche e passi per riprodurre.
 
 ---
 
-## 🚀 Roadmap
+## Supporto e note
 
-### Completato ✅
-- [x] Architettura pulita con layer separation
-- [x] GoRouter con deep linking
-- [x] Riverpod state management
-- [x] Modern bottom navigation
-- [x] Dark mode support
-- [x] Splash screen animata
-- [x] Shell con auto-hide navigation
+- Consulta la documentazione ufficiale di Flutter, Riverpod e GoRouter per approfondimenti.
+- Per problemi collegati al backend FastAPI fai riferimento alla documentazione nella cartella `backend/`.
 
-### In Progress 🔄
-- [ ] Implementazione mini-giochi
-- [ ] Sistema premi completo
-- [ ] Leaderboard realtime
-- [ ] Profile customization
-
-### Prossimi Step 📋
-- [ ] Push notifications
-- [ ] Social login (Google, Apple)
-- [ ] In-app purchases
-- [ ] Achievements system
-- [ ] Multiplayer support
-- [ ] Analytics integration
-- [ ] Crash reporting
-- [ ] CI/CD pipeline
-
----
-
-## 👥 Contributing
-
-1. Fork il repository
-2. Crea un feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit le modifiche (`git commit -m 'Add some AmazingFeature'`)
-4. Push al branch (`git push origin feature/AmazingFeature`)
-5. Apri una Pull Request
-
----
-
-## 📄 License
-
-Questo progetto è sotto licenza MIT - vedi il file [LICENSE](LICENSE) per i dettagli.
-
----
-
-## 🤝 Support
-
-Per supporto, apri una issue su GitHub o contatta il team di sviluppo.
-
----
-
-**Buon divertimento con SkillWin Arcade!** 🎮🏆
+Buon divertimento con Tickup! :)
