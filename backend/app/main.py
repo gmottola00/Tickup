@@ -17,7 +17,7 @@ ALLOWED_ORIGINS = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,           # tienilo True se usi cookie/sessione, ok anche con Bearer
     allow_methods=["*"],
     allow_headers=["*"],              # oppure ["Authorization", "Content-Type"]
