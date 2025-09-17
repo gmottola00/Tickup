@@ -1,6 +1,9 @@
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.schemas.pool import Pool, PoolCreate
+from app.schemas.ticket import Ticket, TicketPurchaseRequest
 from app.services.pool import (
     create_pool,
     get_pool,
@@ -9,6 +12,7 @@ from app.services.pool import (
     get_all_pool,
     get_pools_by_user,
 )
+from app.services.ticket import purchase_ticket_for_pool
 from app.api.v1.deps import get_db_dep
 from app.api.v1.auth import get_current_user_id
 
@@ -51,3 +55,22 @@ async def delete(pool_id: str, db: AsyncSession = Depends(get_db_dep)):
     if not pool:
         raise HTTPException(status_code=404, detail="Pool not found")
     await delete_pool(db, pool)
+
+@router.post("/{pool_id}/tickets", response_model=Ticket, status_code=201)
+async def purchase_ticket(
+    pool_id: str,
+    payload: TicketPurchaseRequest,
+    db: AsyncSession = Depends(get_db_dep),
+    user_sub: str = Depends(get_current_user_id),
+):
+    try:
+        pool_uuid = UUID(pool_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid pool id")
+    try:
+        user_uuid = UUID(user_sub)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user identifier")
+
+    ticket, _ = await purchase_ticket_for_pool(db, pool_uuid, user_uuid, payload.purchase_id)
+    return ticket
