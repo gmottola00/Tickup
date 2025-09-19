@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/data/repositories/raffle_repository.dart';
+import 'package:tickup/presentation/pages/purchase/purchase_page_args.dart';
+import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
 
 class PoolDetailsPage extends ConsumerWidget {
@@ -207,7 +209,12 @@ class _PoolDetailsView extends StatelessWidget {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              context.push(
+                AppRoute.purchaseForPool(pool.poolId),
+                extra: PurchasePageArgs(pool: pool, prize: prize),
+              );
+            },
             child: const Text('Entra'),
           ),
         ),
