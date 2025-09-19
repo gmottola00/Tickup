@@ -175,6 +175,79 @@ Questa catena garantisce che ogni ticket derivi da un acquisto valido e non poss
 
 ---
 
+# 🏦 Wallet System
+
+## 📌 Schema del Portafoglio
+
+### `wallet_account`  
+Rappresenta il saldo attuale di un utente.  
+- `wallet_id UUID PK`  
+- `user_id FK app_user UNIQUE`  
+- `balance_cents INT NOT NULL DEFAULT 0` → usato come **cache**, aggiornato via trigger/transaction sulle movimentazioni  
+- `currency CHAR(3) DEFAULT 'EUR'`  
+- `status ENUM('ACTIVE','SUSPENDED')`  
+
+---
+
+### `wallet_ledger`  
+Libro mastro **append-only** da cui calcolare il saldo reale.  
+- `entry_id BIGSERIAL PK`  
+- `wallet_id FK`  
+- `direction ENUM('DEBIT','CREDIT')`  
+- `amount_cents INT > 0`  
+- `reason ENUM('TOPUP','TICKET_PURCHASE','REFUND','PRIZE_PAYOUT','ADJUSTMENT')`  
+- `ref_purchase_id FK` *(facoltativo)*  
+- `ref_pool_id FK` *(facoltativo)*  
+- `ref_ticket_id FK` *(facoltativo)*  
+- `ref_external_txn TEXT`  
+- `status ENUM('PENDING','POSTED','REVERSED')`  
+- `created_at TIMESTAMPTZ DEFAULT now()`  
+
+📌 **Indice**: `(wallet_id, created_at)`  
+
+Il saldo si calcola aggregando tutte le righe `POSTED`.  
+
+---
+
+### `wallet_topup_request`  
+Traccia i caricamenti fondi dal mondo esterno.  
+- `topup_id UUID PK`  
+- `wallet_id FK`  
+- `provider TEXT`  
+- `provider_txn_id TEXT UNIQUE`  
+- `amount_cents INT`  
+- `status ENUM('CREATED','PROCESSING','COMPLETED','FAILED','CANCELLED')`  
+- `created_at TIMESTAMPTZ DEFAULT now()`  
+- `completed_at TIMESTAMPTZ`  
+
+👉 Al completamento: inserisci una riga `CREDIT` nel ledger.  
+
+---
+
+### `wallet_withdrawal_request`  
+Struttura speculare per i prelievi verso l’utente.  
+
+---
+
+### `wallet_hold` *(opzionale)*  
+Permette di **bloccare fondi** prima di confermare un acquisto (utile per processi asincroni).  
+- `hold_id UUID PK`  
+- `wallet_id FK`  
+- `amount_cents INT`  
+- `reason ENUM('TICKET_RESERVATION', ...)`  
+- `expires_at TIMESTAMPTZ`  
+- `status ENUM('ACTIVE','RELEASED','CAPTURED')`  
+
+---
+
+### `wallet_balance_view`  
+Vista/materialized view per ottenere il saldo tramite aggregazione del ledger:  
+```sql
+SUM(CASE WHEN direction='CREDIT' THEN amount_cents ELSE -amount_cents END)
+
+
+---
+
 ## Endpoint disponibili (v1)
 
 | Risorsa | Path base | Operazioni principali |
