@@ -1,5 +1,5 @@
 from uuid import UUID
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
@@ -44,7 +44,10 @@ async def purchase_ticket_for_pool(
     if pool.state != "OPEN":
         raise HTTPException(status_code=400, detail="Pool is not open")
 
-    current_sold = pool.tickets_sold or 0
+    sold_query = select(func.count()).select_from(Ticket).where(Ticket.pool_id == pool.pool_id)
+    result = await db.execute(sold_query)
+    current_sold = result.scalar_one() or 0
+
     if current_sold >= pool.tickets_required:
         pool.state = "FULL"
         await db.commit()
@@ -59,6 +62,11 @@ async def purchase_ticket_for_pool(
         raise HTTPException(status_code=400, detail="Purchase type not valid for pool entry")
     if purchase.status != PurchaseStatus.CONFIRMED.value:
         raise HTTPException(status_code=400, detail="Purchase not confirmed")
+    if purchase.wallet_entry_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Purchase is missing wallet ledger entry for ticket issuance",
+        )
 
     existing_ticket = await db.execute(
         select(Ticket).where(Ticket.purchase_id == purchase.purchase_id)
@@ -71,6 +79,7 @@ async def purchase_ticket_for_pool(
         pool_id=pool.pool_id,
         user_id=user_id,
         purchase_id=purchase.purchase_id,
+        wallet_entry_id=purchase.wallet_entry_id,
         ticket_num=ticket_num,
     )
     db.add(ticket)
