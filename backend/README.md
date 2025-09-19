@@ -244,7 +244,7 @@ Permette di **bloccare fondi** prima di confermare un acquisto (utile per proces
 Vista/materialized view per ottenere il saldo tramite aggregazione del ledger:  
 ```sql
 SUM(CASE WHEN direction='CREDIT' THEN amount_cents ELSE -amount_cents END)
-
+```
 
 ---
 
