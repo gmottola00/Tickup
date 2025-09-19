@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tickup/providers/theme_provider.dart';
+import 'package:tickup/presentation/routing/app_route.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -82,14 +83,28 @@ class ProfileScreen extends ConsumerWidget {
                   leading: const Icon(Icons.emoji_events),
                   title: const Text('I miei premi'),
                   subtitle: const Text('Elenco dei premi che hai creato'),
-                  onTap: () => context.push('/my-prizes'),
+                  onTap: () => context.push(AppRoute.myPrizes),
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.confirmation_number_outlined),
                   title: const Text('I miei pool'),
                   subtitle: const Text('Elenco dei pool che hai creato'),
-                  onTap: () => context.push('/my-pools'),
+                  onTap: () => context.push(AppRoute.myPools),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.local_activity_outlined),
+                  title: const Text('I miei ticket'),
+                  subtitle: const Text('Pool a cui stai partecipando'),
+                  onTap: () => context.push(AppRoute.myTickets),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.account_balance_wallet_outlined),
+                  title: const Text('Il mio wallet'),
+                  subtitle: const Text('Saldo, movimenti e ricariche'),
+                  onTap: () => context.push(AppRoute.wallet),
                 ),
                 const Divider(height: 1),
                 ListTile(
