@@ -3,6 +3,7 @@ from app.api.v1.routers.pool import router as pool_router
 from app.api.v1.routers.prize import router as prize_router
 from app.api.v1.routers.ticket import router as ticket_router
 from app.api.v1.routers.purchase import router as purchase_router
+from app.api.v1.routers.wallet import router as wallet_router
 from app.api.v1.routers.user import router as user_router
 from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,3 +29,4 @@ app.include_router(prize_router, prefix="/api/v1/prizes", tags=["Prizes"])
 app.include_router(ticket_router, prefix="/api/v1/tickets", tags=["Tickets"])
 app.include_router(user_router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(purchase_router, prefix="/api/v1/purchases", tags=["Purchases"])
+app.include_router(wallet_router, prefix="/api/v1/wallet", tags=["Wallet"])
