@@ -22,5 +22,6 @@ class Ticket(Base):
     pool_id = Column(UUID(as_uuid=True), ForeignKey("raffle_pool.pool_id"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("app_user.user_id"), nullable=False)
     purchase_id = Column(UUID(as_uuid=True), ForeignKey("purchase.purchase_id"), nullable=False)
+    wallet_entry_id = Column(BigInteger, ForeignKey("wallet_ledger.entry_id"), nullable=True)
     ticket_num = Column(Integer, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
