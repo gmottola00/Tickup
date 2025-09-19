@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class WalletStatus(str, Enum):
@@ -60,8 +60,7 @@ class WalletAccount(BaseModel):
     status: WalletStatus
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WalletLedgerBase(BaseModel):
@@ -84,8 +83,7 @@ class WalletLedgerEntry(WalletLedgerBase):
     status: WalletLedgerEntryStatus
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WalletTopupCreate(BaseModel):
@@ -108,8 +106,7 @@ class WalletTopupRequest(BaseModel):
     created_at: datetime
     completed_at: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WalletTopupWithEntry(BaseModel):
@@ -127,5 +124,4 @@ class WalletBalance(BaseModel):
     balance_cents: int
     currency: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
