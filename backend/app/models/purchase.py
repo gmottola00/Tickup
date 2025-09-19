@@ -1,6 +1,15 @@
 import uuid
 from enum import Enum
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func, CheckConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    DateTime,
+    func,
+    CheckConstraint,
+    BigInteger,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
 
@@ -23,6 +32,9 @@ class Purchase(Base):
 
     purchase_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("app_user.user_id"), nullable=False)
+    pool_id = Column(UUID(as_uuid=True), ForeignKey("raffle_pool.pool_id"), nullable=False)
+    wallet_entry_id = Column(BigInteger, ForeignKey("wallet_ledger.entry_id"), nullable=True)
+    wallet_hold_id = Column(UUID(as_uuid=True), ForeignKey("wallet_hold.hold_id"), nullable=True)
     type = Column(String, nullable=False, default=PurchaseType.ENTRY.value)
     amount_cents = Column(Integer, nullable=False)
     currency = Column(String(3), nullable=False, default="EUR")

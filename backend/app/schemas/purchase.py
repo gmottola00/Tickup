@@ -20,19 +20,26 @@ class PurchaseBase(BaseModel):
     currency: str = Field(default="EUR", min_length=3, max_length=3)
     provider_txn_id: Optional[str] = None
     status: PurchaseStatus = PurchaseStatus.PENDING
+    pool_id: UUID
 
 class PurchaseCreate(PurchaseBase):
-    pass
+    wallet_entry_id: Optional[int] = None
+    wallet_hold_id: Optional[UUID] = None
 
 class PurchaseUpdate(BaseModel):
     type: Optional[PurchaseType] = None
     status: Optional[PurchaseStatus] = None
     provider_txn_id: Optional[str] = None
+    pool_id: Optional[UUID] = None
+    wallet_entry_id: Optional[int] = None
+    wallet_hold_id: Optional[UUID] = None
 
 class Purchase(PurchaseBase):
     purchase_id: UUID
     user_id: UUID
     created_at: datetime
+    wallet_entry_id: Optional[int] = None
+    wallet_hold_id: Optional[UUID] = None
 
     class Config:
         orm_mode = True
