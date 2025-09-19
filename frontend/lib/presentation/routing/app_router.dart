@@ -14,12 +14,18 @@ import 'package:tickup/presentation/pages/prize/my_prizes_page.dart';
 import 'package:tickup/presentation/pages/pool/pool_create_page.dart';
 import 'package:tickup/presentation/pages/pool/pool_details_page.dart';
 import 'package:tickup/presentation/pages/pool/my_pools_page.dart';
+import 'package:tickup/presentation/pages/purchase/my_tickets_page.dart';
+import 'package:tickup/presentation/pages/purchase/purchase_create_page.dart';
+import 'package:tickup/presentation/pages/purchase/purchase_page_args.dart';
 import 'package:tickup/presentation/pages/shell/main_shell.dart';
 import 'package:tickup/presentation/pages/error/error_screen.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/core/utils/logger.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
+import 'package:tickup/presentation/pages/wallet/wallet_overview_page.dart';
+import 'package:tickup/presentation/pages/wallet/wallet_topups_page.dart';
+import 'package:tickup/presentation/pages/wallet/wallet_topup_create_page.dart';
 
 // Provider per il router
 final routerProvider = Provider<GoRouter>((ref) {
@@ -88,7 +94,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // My Prizes (owned by current user)
       GoRoute(
-        path: '/my-prizes',
+        path: AppRoute.myPrizes,
         name: 'my-prizes',
         pageBuilder: (context, state) => MaterialPage(
           key: state.pageKey,
@@ -98,11 +104,48 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // My Pools (owned by current user)
       GoRoute(
-        path: '/my-pools',
+        path: AppRoute.myPools,
         name: 'my-pools',
         pageBuilder: (context, state) => MaterialPage(
           key: state.pageKey,
           child: const MyPoolsPage(),
+        ),
+      ),
+
+      // Pools joined by current user (via tickets)
+      GoRoute(
+        path: AppRoute.myTickets,
+        name: 'my-tickets',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const MyTicketsPage(),
+        ),
+      ),
+
+      // Wallet
+      GoRoute(
+        path: AppRoute.wallet,
+        name: 'wallet',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const WalletOverviewPage(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoute.walletTopups,
+        name: 'wallet-topups',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const WalletTopupsPage(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoute.walletTopupCreate,
+        name: 'wallet-topup-create',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          fullscreenDialog: true,
+          child: const WalletTopupCreatePage(),
         ),
       ),
 
@@ -149,6 +192,26 @@ final routerProvider = Provider<GoRouter>((ref) {
             child: PoolDetailsPage(
               poolId: poolId,
               initial: extra is RafflePool ? extra : null,
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/pools/:poolId/purchase',
+        name: 'pool-purchase',
+        pageBuilder: (context, state) {
+          final extra = state.extra;
+          if (extra is PurchasePageArgs) {
+            return MaterialPage(
+              key: state.pageKey,
+              fullscreenDialog: true,
+              child: PurchaseCreatePage(args: extra),
+            );
+          }
+          return MaterialPage(
+            key: state.pageKey,
+            child: ErrorScreen(
+              error: 'Dati acquisto mancanti',
             ),
           );
         },

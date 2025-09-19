@@ -22,6 +22,12 @@ class AppRoute {
 
   // Prize management (pagina di tutti prize di un utente)
   static const myPrizes = '/my-prizes';
+  static const myPools = '/my-pools';
+  static const myTickets = '/my-tickets';
+
+  static const wallet = '/wallet';
+  static const walletTopups = '/wallet/topups';
+  static const walletTopupCreate = '/wallet/topups/create';
 
   // Sub-routes
   static const profileEdit = '/profile/edit';
@@ -38,6 +44,7 @@ class AppRoute {
 
   static String prizeDetails(String id) => '/prizes/$id';
   static String createPoolForPrize(String id) => '/prizes/$id/create-pool';
+  static String purchaseForPool(String id) => '/pools/$id/purchase';
   static String poolDetails(String id) => '/pools/$id';
 
   // Utility methods
