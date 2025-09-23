@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,13 +75,14 @@ class _PurchaseCreatePageState extends ConsumerState<PurchaseCreatePage> {
     try {
       if (_status == PurchaseStatus.confirmed) {
         try {
-          walletEntry = await ref.read(walletRepositoryProvider).createLedgerDebit(
+          walletEntry = await ref
+              .read(walletRepositoryProvider)
+              .createLedgerDebit(
                 WalletDebitCreateInput(
                   amountCents: cents,
                   reason: WalletLedgerReason.ticketPurchase,
                   refPoolId: pool.poolId,
-                  refExternalTxn:
-                      providerTxnId.isEmpty ? null : providerTxnId,
+                  refExternalTxn: providerTxnId.isEmpty ? null : providerTxnId,
                 ),
               );
           walletDebited = true;
@@ -89,7 +91,12 @@ class _PurchaseCreatePageState extends ConsumerState<PurchaseCreatePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Impossibile addebitare il wallet: ${error.toString()}',
+                _walletDebitErrorMessage(
+                  _extractErrorMessage(
+                    error,
+                    fallback: 'operazione non riuscita.',
+                  ),
+                ),
               ),
             ),
           );
@@ -123,7 +130,16 @@ class _PurchaseCreatePageState extends ConsumerState<PurchaseCreatePage> {
     } catch (err) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Errore durante la creazione: $err')),
+        SnackBar(
+          content: Text(
+            _localizedInsufficientFundsMessage(
+              _extractErrorMessage(
+                err,
+                fallback: "Errore durante la creazione dell'acquisto.",
+              ),
+            ),
+          ),
+        ),
       );
     } finally {
       if (walletDebited) {
@@ -134,10 +150,98 @@ class _PurchaseCreatePageState extends ConsumerState<PurchaseCreatePage> {
     }
   }
 
+  String _walletDebitErrorMessage(String message) {
+    final normalized = _localizedInsufficientFundsMessage(message);
+    if (normalized.toLowerCase().contains('saldo insufficiente')) {
+      return normalized;
+    }
+    return 'Impossibile addebitare il wallet: $normalized';
+  }
+
+  String _localizedInsufficientFundsMessage(String message) {
+    final normalized = message.toLowerCase();
+    if (normalized.contains('saldo insufficiente') ||
+        normalized.contains('insufficient funds')) {
+      return 'Saldo insufficiente. Ricarica il wallet per partecipare al pool.';
+    }
+    return message;
+  }
+
+  String _extractErrorMessage(Object error, {required String fallback}) {
+    String? message;
+    if (error is DioException) {
+      message = _messageFromResponse(error) ?? error.message;
+    } else if (error is Exception) {
+      message = error.toString();
+    } else if (error is Error) {
+      message = error.toString();
+    }
+    return _cleanMessage(message, fallback: fallback);
+  }
+
+  String _cleanMessage(String? message, {required String fallback}) {
+    if (message == null) return fallback;
+    var text = message.trim();
+    if (text.startsWith('Exception: ')) {
+      text = text.substring('Exception: '.length).trim();
+    }
+    if (text.isEmpty) {
+      return fallback;
+    }
+    return text;
+  }
+
+  String? _messageFromResponse(DioException error) {
+    final data = error.response?.data;
+    final responseMessage = _detailFromResponse(data);
+    if (responseMessage != null && responseMessage.trim().isNotEmpty) {
+      return responseMessage.trim();
+    }
+    return error.response?.statusMessage;
+  }
+
+  String? _detailFromResponse(Object? data) {
+    if (data == null) return null;
+    if (data is String) {
+      return data;
+    }
+    if (data is Map) {
+      final detail = data['detail'];
+      final message = data['message'];
+      if (detail is String && detail.isNotEmpty) {
+        return detail;
+      }
+      if (message is String && message.isNotEmpty) {
+        return message;
+      }
+      if (detail is List && detail.isNotEmpty) {
+        final first = detail.first;
+        if (first is Map && first['msg'] is String) {
+          return first['msg'] as String;
+        }
+        if (first is String && first.isNotEmpty) {
+          return first;
+        }
+      }
+    }
+    if (data is List && data.isNotEmpty) {
+      final first = data.first;
+      if (first is String && first.isNotEmpty) {
+        return first;
+      }
+      if (first is Map && first['msg'] is String) {
+        return first['msg'] as String;
+      }
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final pool = widget.args.pool;
     final prize = widget.args.prize;
+    final prizeValueEuro =
+        prize != null ? (prize.valueCents / 100).toStringAsFixed(2) : null;
     final theme = Theme.of(context);
     final walletAsync = ref.watch(myWalletProvider);
     final walletSection = walletAsync.when(
@@ -184,7 +288,6 @@ class _PurchaseCreatePageState extends ConsumerState<PurchaseCreatePage> {
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 12),
-                        _SummaryRow(label: 'Pool ID', value: pool.poolId),
                         _SummaryRow(
                           label: 'Ticket richiesti',
                           value: pool.ticketsRequired.toString(),
@@ -200,10 +303,25 @@ class _PurchaseCreatePageState extends ConsumerState<PurchaseCreatePage> {
                         ),
                         if (prize != null) ...[
                           const SizedBox(height: 12),
-                          Text('Premio collegato',
-                              style: theme.textTheme.titleSmall),
-                          const SizedBox(height: 4),
-                          Text(prize.title, style: theme.textTheme.bodyMedium),
+                          Text(
+                            'Dettagli Oggetto',
+                            style: theme.textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 12),
+                          _SummaryRow(
+                            label: 'Nome premio',
+                            value: prize.title,
+                          ),
+                          if (prizeValueEuro != null)
+                            _SummaryRow(
+                              label: 'Prezzo totale premio',
+                              value: '€ $prizeValueEuro',
+                            ),
+                          _SummaryRow(
+                            label: 'Descrizione',
+                            value: prize.description,
+                          ),
                         ],
                       ],
                     ),
@@ -268,7 +386,8 @@ class _PurchaseCreatePageState extends ConsumerState<PurchaseCreatePage> {
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _currencyController,
-                          decoration: const InputDecoration(labelText: 'Valuta'),
+                          decoration:
+                              const InputDecoration(labelText: 'Valuta'),
                           textCapitalization: TextCapitalization.characters,
                           inputFormatters: [
                             FilteringTextInputFormatter.allow(
@@ -295,8 +414,8 @@ class _PurchaseCreatePageState extends ConsumerState<PurchaseCreatePage> {
                         const SizedBox(height: 12),
                         DropdownButtonFormField<PurchaseStatus>(
                           value: _status,
-                          decoration:
-                              const InputDecoration(labelText: 'Stato acquisto'),
+                          decoration: const InputDecoration(
+                              labelText: 'Stato acquisto'),
                           items: PurchaseStatus.values
                               .map((status) => DropdownMenuItem(
                                     value: status,
