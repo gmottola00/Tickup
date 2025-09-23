@@ -55,17 +55,58 @@ class _PoolDetailsLoader extends ConsumerWidget {
             body: Center(child: Text('Errore: ${snapshot.error}')),
           );
         }
-        return _PoolDetailsView(pool: initial, prize: snapshot.data!);
+        return FutureBuilder<List<RafflePool>>(
+          future: RaffleRepository().fetchPools(),
+          builder: (context, poolsSnapshot) {
+            if (poolsSnapshot.connectionState != ConnectionState.done) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (poolsSnapshot.hasError) {
+              return Scaffold(
+                appBar: AppBar(),
+                body: Center(child: Text('Errore: ${poolsSnapshot.error}')),
+              );
+            }
+
+            final allPools = poolsSnapshot.data ?? const <RafflePool>[];
+            final relatedMap = {
+              for (final pool in allPools
+                  .where((pool) => pool.prizeId == initial.prizeId))
+                pool.poolId: pool,
+            };
+            relatedMap[initial.poolId] = initial;
+
+            final relatedPools = relatedMap.values.toList()
+              ..sort((a, b) {
+                final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                return bTime.compareTo(aTime);
+              });
+
+            return _PoolDetailsView(
+              pool: initial,
+              prize: snapshot.data!,
+              relatedPools: relatedPools,
+            );
+          },
+        );
       },
     );
   }
 }
 
 class _PoolDetailsView extends StatelessWidget {
-  const _PoolDetailsView({required this.pool, required this.prize});
+  const _PoolDetailsView({
+    required this.pool,
+    required this.prize,
+    required this.relatedPools,
+  });
 
   final RafflePool pool;
   final Prize prize;
+  final List<RafflePool> relatedPools;
 
   @override
   Widget build(BuildContext context) {
@@ -198,6 +239,29 @@ class _PoolDetailsView extends StatelessWidget {
                       'Creato il: ${pool.createdAt!.toLocal().toString().split('.').first}',
                       style: theme.textTheme.bodySmall,
                     ),
+                  if (relatedPools.isNotEmpty) ...[
+                    const SizedBox(height: 32),
+                    Text(
+                      'Pool collegati a questo premio',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    ListView.builder(
+                      itemCount: relatedPools.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        final related = relatedPools[index];
+                        return Padding(
+                          padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
+                          child: _RelatedPoolCard(
+                            pool: related,
+                            isCurrent: related.poolId == pool.poolId,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -223,3 +287,117 @@ class _PoolDetailsView extends StatelessWidget {
   }
 }
 
+class _RelatedPoolCard extends StatelessWidget {
+  const _RelatedPoolCard({required this.pool, required this.isCurrent});
+
+  final RafflePool pool;
+  final bool isCurrent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ticketEur = (pool.ticketPriceCents / 100).toStringAsFixed(2);
+    final progress = pool.ticketsRequired > 0
+        ? (pool.ticketsSold / pool.ticketsRequired).clamp(0.0, 1.0)
+        : 0.0;
+
+    final cardColor = isCurrent ? theme.colorScheme.primaryContainer : null;
+    final textColor = isCurrent
+        ? theme.colorScheme.onPrimaryContainer
+        : theme.colorScheme.onSurface;
+
+    return Card(
+      color: cardColor,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isCurrent) ...[
+              Text(
+                'Pool corrente',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            _InfoRow(
+              label: 'Pool ID',
+              value: pool.poolId,
+              textColor: textColor,
+            ),
+            _InfoRow(
+              label: 'Stato',
+              value: pool.state,
+              textColor: textColor,
+            ),
+            _InfoRow(
+              label: 'Prezzo ticket (EUR)',
+              value: '€ $ticketEur',
+              textColor: textColor,
+            ),
+            _InfoRow(
+              label: 'Ticket richiesti',
+              value: pool.ticketsRequired.toString(),
+              textColor: textColor,
+            ),
+            _InfoRow(
+              label: 'Ticket venduti',
+              value: pool.ticketsSold.toString(),
+              textColor: textColor,
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(value: progress),
+            const SizedBox(height: 8),
+            Text(
+              '${pool.ticketsSold}/${pool.ticketsRequired} venduti',
+              style: theme.textTheme.bodySmall?.copyWith(color: textColor),
+            ),
+            if (pool.createdAt != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Creato il: ${pool.createdAt!.toLocal().toString().split('.').first}',
+                style: theme.textTheme.bodySmall?.copyWith(color: textColor),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.label, required this.value, required this.textColor});
+
+  final String label;
+  final String value;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: textColor.withOpacity(0.8),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
+          ),
+        ],
+      ),
+    );
+  }
+}
