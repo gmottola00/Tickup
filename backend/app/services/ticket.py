@@ -84,7 +84,6 @@ async def purchase_ticket_for_pool(
     )
     db.add(ticket)
 
-    pool.tickets_sold = ticket_num
     if pool.tickets_sold >= pool.tickets_required:
         pool.state = "FULL"
 
