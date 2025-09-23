@@ -3,9 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tickup/core/network/auth_service.dart';
+import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/data/repositories/raffle_repository.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
+import 'package:tickup/presentation/features/prize/prize_provider.dart';
+
+const _commissionRate = 0.05;
 
 class PoolCreatePage extends ConsumerStatefulWidget {
   const PoolCreatePage({super.key, required this.prizeId});
@@ -22,6 +26,16 @@ class _PoolCreatePageState extends ConsumerState<PoolCreatePage> {
   final _required = TextEditingController();
 
   bool _submitting = false;
+  bool _prizeLoading = true;
+  Prize? _prize;
+  String? _prizeError;
+  int? _selectedTickets;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrize();
+  }
 
   @override
   void dispose() {
@@ -42,6 +56,41 @@ class _PoolCreatePageState extends ConsumerState<PoolCreatePage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  Future<void> _loadPrize() async {
+    setState(() {
+      _prizeLoading = true;
+      _prizeError = null;
+    });
+    try {
+      final prize =
+          await ref.read(prizeRepositoryProvider).fetchPrize(widget.prizeId);
+      if (!mounted) return;
+      setState(() {
+        _prize = prize;
+        _prizeLoading = false;
+      });
+      _updatePriceForTickets(_selectedTickets);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _prize = null;
+        _prizeLoading = false;
+        _prizeError = 'Impossibile caricare il premio.';
+      });
+    }
+  }
+
+  void _updatePriceForTickets(int? tickets) {
+    if (tickets == null || _prize == null) {
+      _price.text = '';
+      return;
+    }
+    final prizeValueEuro = _prize!.valueCents / 100;
+    final totalValueEuro = prizeValueEuro * (1 + _commissionRate);
+    final priceEuro = totalValueEuro / tickets;
+    _price.text = priceEuro.toStringAsFixed(2);
+  }
+
   Future<void> _submit() async {
     await _ensureAuthHeader();
     if (!_formKey.currentState!.validate()) return;
@@ -49,7 +98,7 @@ class _PoolCreatePageState extends ConsumerState<PoolCreatePage> {
 
     final euros = double.tryParse(_price.text.trim().replaceAll(',', '.')) ?? 0;
     final cents = (euros * 100).round();
-    final required = int.tryParse(_required.text.trim()) ?? 0;
+    final required = _selectedTickets ?? 0;
 
     final pool = RafflePool(
       poolId: 'temp', // backend generates UUID, ignored on create
@@ -81,90 +130,215 @@ class _PoolCreatePageState extends ConsumerState<PoolCreatePage> {
       appBar: AppBar(title: const Text('Crea Pool')),
       body: Stack(
         children: [
-          Form(
-            key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Card(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Dettagli pool',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          initialValue: widget.prizeId,
-                          decoration:
-                              const InputDecoration(labelText: 'ID Premio'),
-                          enabled: false,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _price,
-                          decoration:
-                              const InputDecoration(labelText: 'Prezzo ticket (€)'),
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'[0-9.,]')),
-                          ],
-                          validator: (v) {
-                            final n =
-                                double.tryParse((v ?? '').replaceAll(',', '.'));
-                            if (n == null || n <= 0) {
-                              return 'Inserisci un importo valido';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _required,
-                          decoration: const InputDecoration(
-                              labelText: 'Biglietti richiesti'),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          validator: (v) {
-                            final n = int.tryParse(v ?? '');
-                            if (n == null || n <= 0) {
-                              return 'Inserisci un numero valido';
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: isLoading ? null : _submit,
-                  icon: const Icon(Icons.add_circle_outline),
-                  label: const Text('Crea pool'),
-                ),
-              ],
-            ),
-          ),
+          _buildBody(context),
           if (isLoading)
             Container(
               color: Colors.black.withOpacity(0.05),
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    if (_prizeLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_prizeError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_prizeError!),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: _loadPrize,
+              child: const Text('Riprova'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final prize = _prize;
+    if (prize == null) {
+      return const Center(child: Text('Premio non disponibile.'));
+    }
+
+    return Form(
+      key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _PrizeInfoCard(prize: prize),
+          const SizedBox(height: 16),
+          Card(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Dettagli pool',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    initialValue: widget.prizeId,
+                    decoration: const InputDecoration(labelText: 'ID Premio'),
+                    enabled: false,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _price,
+                    decoration: const InputDecoration(
+                      labelText: 'Prezzo ticket (€)',
+                    ),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                    ],
+                    readOnly: true,
+                    enabled: _selectedTickets != null,
+                    validator: (v) {
+                      if (_selectedTickets == null || (v ?? '').isEmpty) {
+                        return 'Seleziona il numero di biglietti';
+                      }
+                      final n =
+                          double.tryParse((v ?? '').replaceAll(',', '.'));
+                      if (n == null || n <= 0) {
+                        return 'Inserisci un importo valido';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: _selectedTickets,
+                    decoration: const InputDecoration(
+                      labelText: 'Biglietti richiesti',
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 10, child: Text('10 biglietti')),
+                      DropdownMenuItem(value: 20, child: Text('20 biglietti')),
+                      DropdownMenuItem(value: 30, child: Text('30 biglietti')),
+                      DropdownMenuItem(value: 40, child: Text('40 biglietti')),
+                      DropdownMenuItem(value: 50, child: Text('50 biglietti')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedTickets = value;
+                        _required.text = value?.toString() ?? '';
+                        _updatePriceForTickets(value);
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Seleziona il numero di biglietti';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: _submitting ? null : _submit,
+            icon: const Icon(Icons.add_circle_outline),
+            label: const Text('Crea pool'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrizeInfoCard extends StatelessWidget {
+  const _PrizeInfoCard({required this.prize});
+
+  final Prize prize;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final baseValue = prize.valueCents / 100;
+    final commissionValue = baseValue * _commissionRate;
+    final totalValue = baseValue + commissionValue;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              prize.title,
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.euro, size: 18),
+                const SizedBox(width: 6),
+                Text('Valore premio: € ${baseValue.toStringAsFixed(2)}',
+                    style: theme.textTheme.bodyMedium),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.receipt_long, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  'Commissione (${(_commissionRate * 100).toStringAsFixed(0)}%): € ${commissionValue.toStringAsFixed(2)}',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.account_balance_wallet, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  'Totale pool: € ${totalValue.toStringAsFixed(2)}',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            ),
+            if (prize.sponsor.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.business, size: 18),
+                  const SizedBox(width: 6),
+                  Text(prize.sponsor, style: theme.textTheme.bodyMedium),
+                ],
+              ),
+            ],
+            if (prize.description.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                prize.description,
+                style: theme.textTheme.bodySmall,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
