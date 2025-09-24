@@ -7,6 +7,7 @@ class Prize {
   final String sponsor;
   final int stock;
   final DateTime? createdAt;
+  final String? userId;
 
   Prize({
     required this.prizeId,
@@ -17,6 +18,7 @@ class Prize {
     required this.sponsor,
     required this.stock,
     this.createdAt,
+    this.userId,
   });
 
   factory Prize.fromJson(Map<String, dynamic> json) => Prize(
@@ -34,6 +36,7 @@ class Prize {
         createdAt: json['created_at'] != null
             ? DateTime.tryParse(json['created_at'].toString())
             : null,
+        userId: json['user_id']?.toString(),
       );
 
   Map<String, dynamic> toJson() => {

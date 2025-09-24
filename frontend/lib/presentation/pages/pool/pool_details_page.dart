@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/data/repositories/raffle_repository.dart';
@@ -116,6 +117,9 @@ class _PoolDetailsView extends StatelessWidget {
     final progress = pool.ticketsRequired > 0
         ? (pool.ticketsSold / pool.ticketsRequired).clamp(0.0, 1.0)
         : 0.0;
+
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final isOwner = currentUserId != null && currentUserId == prize.userId;
 
     return Scaffold(
       body: CustomScrollView(
@@ -268,21 +272,23 @@ class _PoolDetailsView extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              context.push(
-                AppRoute.purchaseForPool(pool.poolId),
-                extra: PurchasePageArgs(pool: pool, prize: prize),
-              );
-            },
-            child: const Text('Entra'),
-          ),
-        ),
-      ),
+      bottomNavigationBar: isOwner
+          ? null
+          : SafeArea(
+              minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    context.push(
+                      AppRoute.purchaseForPool(pool.poolId),
+                      extra: PurchasePageArgs(pool: pool, prize: prize),
+                    );
+                  },
+                  child: const Text('Entra'),
+                ),
+              ),
+            ),
     );
   }
 }
