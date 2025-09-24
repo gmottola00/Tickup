@@ -11,6 +11,17 @@ async def create_pool(db: AsyncSession, pool_in: PoolCreate) -> RafflePool:
     if not prize:
         raise HTTPException(status_code=400, detail="Invalid prize_id: does not exist")
 
+    # Ensure only one pool can be associated with a given prize
+    existing_pool_stmt = select(RafflePool.pool_id).where(
+        RafflePool.prize_id == pool_in.prize_id
+    )
+    existing_pool = await db.execute(existing_pool_stmt)
+    if existing_pool.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Esiste già un pool associato a questo premio",
+        )
+
     pool = RafflePool(**pool_in.dict())
     db.add(pool)
     await db.commit()
@@ -32,6 +43,24 @@ async def get_pools_by_user(db: AsyncSession, user_id: str) -> list[RafflePool]:
     return result.scalars().all()
 
 async def update_pool(db: AsyncSession, pool: RafflePool, data: dict):
+    new_prize_id = data.get("prize_id", pool.prize_id)
+
+    if new_prize_id != pool.prize_id:
+        prize = await db.get(Prize, new_prize_id)
+        if not prize:
+            raise HTTPException(status_code=400, detail="Invalid prize_id: does not exist")
+
+        existing_pool_stmt = select(RafflePool.pool_id).where(
+            RafflePool.prize_id == new_prize_id,
+            RafflePool.pool_id != pool.pool_id,
+        )
+        existing_pool = await db.execute(existing_pool_stmt)
+        if existing_pool.scalar_one_or_none() is not None:
+            raise HTTPException(
+                status_code=400,
+                detail="Esiste già un pool associato a questo premio",
+            )
+
     for key, value in data.items():
         setattr(pool, key, value)
     await db.commit()
