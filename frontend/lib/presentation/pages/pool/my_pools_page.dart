@@ -46,11 +46,7 @@ class _MyPoolsLoading extends StatelessWidget {
             : width >= 600
                 ? 3
                 : 2;
-        final childAspectRatio = width >= 900
-            ? 0.58
-            : width >= 600
-                ? 0.56
-                : 0.52;
+        final childAspectRatio = _gridAspectRatio(width);
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -110,7 +106,7 @@ class _MyPoolsContent extends ConsumerWidget {
             : width >= 600
                 ? 3
                 : 2;
-        final childAspectRatio = width >= 600 ? 3 / 5 : 2 / 3;
+        final childAspectRatio = _gridAspectRatio(width);
         return GridView.builder(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -230,6 +226,13 @@ class _MyPoolsContent extends ConsumerWidget {
     }
     return null;
   }
+}
+
+double _gridAspectRatio(double width) {
+  if (width >= 1200) return 0.7;
+  if (width >= 900) return 0.64;
+  if (width >= 600) return 0.6;
+  return 0.56;
 }
 
 class _MyPoolsEmpty extends StatelessWidget {
