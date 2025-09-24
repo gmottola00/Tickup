@@ -1,9 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, join
+from sqlalchemy import select, join, func
 from fastapi import HTTPException
 
 from app.models.pool import RafflePool
 from app.models.prize import Prize
+from app.models.ticket import Ticket
+from app.models.purchase import Purchase
 from app.schemas.pool import PoolCreate
 
 async def create_pool(db: AsyncSession, pool_in: PoolCreate) -> RafflePool:
@@ -68,5 +70,25 @@ async def update_pool(db: AsyncSession, pool: RafflePool, data: dict):
     return pool
 
 async def delete_pool(db: AsyncSession, pool: RafflePool):
+    ticket_count_stmt = select(func.count()).select_from(Ticket).where(
+        Ticket.pool_id == pool.pool_id
+    )
+    tickets_count = (await db.execute(ticket_count_stmt)).scalar_one()
+    if tickets_count and tickets_count > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Impossibile eliminare il pool: sono presenti ticket già acquistati.",
+        )
+
+    purchase_count_stmt = select(func.count()).select_from(Purchase).where(
+        Purchase.pool_id == pool.pool_id
+    )
+    purchases_count = (await db.execute(purchase_count_stmt)).scalar_one()
+    if purchases_count and purchases_count > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Impossibile eliminare il pool: esistono acquisti collegati al pool.",
+        )
+
     await db.delete(pool)
     await db.commit()
