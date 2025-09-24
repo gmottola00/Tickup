@@ -18,7 +18,8 @@ help:
 	@echo "  make web         - avvia Flutter Web su 0.0.0.0:$(FRONTEND_PORT)"
 	@echo "  make build-web   - flutter build web"
 	@echo "  make serve-web   - serve statico della build su :$(FRONTEND_PORT)"
-	@echo "  make android     - avvia emulatore Android e l'app"
+	@echo "  make emulator    - avvia emulatore Android"
+	@echo "  make app-run     - Avvia l'app dentro emulatore android"
 	@echo "  make qr          - genera QR http://$$(hostname -I | awk '{print $$1}'):$(FRONTEND_PORT)"
 	@echo "  make kill-ports  - libera le porte $(BACKEND_PORT) e $(FRONTEND_PORT)"
 	@echo "  make ip          - stampa IP locale"
@@ -40,8 +41,10 @@ build-web:
 serve-web:
 	cd "$(FRONTEND_DIR)/build/web" && python3 -m http.server "$(FRONTEND_PORT)" --bind 0.0.0.0
 
-android:
+emulator:
 	cd "$(FRONTEND_DIR)" && flutter emulators --launch "$(EMULATOR_ID)" || true
+
+app-run:
 	cd "$(FRONTEND_DIR)" && flutter run
 
 qr:
