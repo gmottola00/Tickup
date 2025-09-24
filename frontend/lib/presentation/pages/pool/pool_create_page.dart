@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -116,11 +117,67 @@ class _PoolCreatePageState extends ConsumerState<PoolCreatePage> {
       ref.invalidate(poolsProvider);
       _show('Pool creato');
       if (mounted) Navigator.of(context).pop(true);
-    } catch (_) {
-      _show('Errore nella creazione del pool');
+    } catch (error) {
+      _show(_creationErrorMessage(error));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  String _creationErrorMessage(Object error) {
+    final message = _extractErrorMessage(error);
+    if (message.toLowerCase().contains('esiste già un pool')) {
+      return 'Questo premio è già associato a un altro pool. Elimina o chiudi il pool esistente prima di crearne uno nuovo.';
+    }
+    return message;
+  }
+
+  String _extractErrorMessage(Object error) {
+    String? message;
+    if (error is DioException) {
+      message = _detailFromResponse(error.response?.data) ?? error.message;
+    } else if (error is Exception) {
+      message = error.toString();
+    } else if (error is Error) {
+      message = error.toString();
+    }
+    final cleaned = message?.trim();
+    if (cleaned == null || cleaned.isEmpty) {
+      return 'Errore nella creazione del pool';
+    }
+    return cleaned.replaceFirst(RegExp('^Exception: '), '').trim();
+  }
+
+  String? _detailFromResponse(Object? data) {
+    if (data == null) return null;
+    if (data is String) return data;
+    if (data is Map) {
+      final detail = data['detail'];
+      if (detail is String && detail.isNotEmpty) {
+        return detail;
+      }
+      if (detail is List && detail.isNotEmpty) {
+        final first = detail.first;
+        if (first is String && first.isNotEmpty) {
+          return first;
+        }
+        if (first is Map && first['msg'] is String) {
+          return first['msg'] as String;
+        }
+      }
+      final message = data['message'];
+      if (message is String && message.isNotEmpty) {
+        return message;
+      }
+    }
+    if (data is List && data.isNotEmpty) {
+      final first = data.first;
+      if (first is String && first.isNotEmpty) return first;
+      if (first is Map && first['msg'] is String) {
+        return first['msg'] as String;
+      }
+    }
+    return null;
   }
 
   @override
