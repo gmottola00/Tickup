@@ -97,13 +97,4 @@ Ecco i **prossimi passi strategici**, ordinati per priorità e valore:
 
 ## ✅ Prossimo step consigliato da fare ORA
 
-Se hai auth, backend, e un gioco:
-👉 implementa il **flusso completo “acquista ticket → gioca → assegna premio”**
-
-Vuoi che ti aiuto a:
-
-* Disegnare bene **lo schema dati finale**?
-* Scrivere il **flow completo `game_session` + `score` + `prize`**?
-* Fare una **roadmap con scadenze realistiche** (es. MVP pronto in 2 settimane)?
-
-Mi basta sapere su cosa vuoi concentrarti adesso, e ti accompagno punto per punto. 🚀
+* Annulla ticket dopo un massimo di tempo
