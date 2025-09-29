@@ -118,6 +118,7 @@ class _PurchaseCreatePageState extends ConsumerState<PurchaseCreatePage> {
       await repo.createPurchase(input);
       ref.invalidate(myPurchasesProvider);
       ref.invalidate(myParticipatingPoolsProvider);
+      ref.invalidate(myPoolParticipationSummariesProvider);
       ref.invalidate(poolsProvider);
       if (!mounted) return;
       final successMessage = _status == PurchaseStatus.confirmed
