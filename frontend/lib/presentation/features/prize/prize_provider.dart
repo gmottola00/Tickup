@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/data/repositories/price_repository.dart';
@@ -12,9 +14,9 @@ final myPrizesProvider = FutureProvider<List<Prize>>((ref) async {
   return ref.read(prizeRepositoryProvider).fetchMyPrizes();
 });
 
-class PrizeNotifier extends StateNotifier<AsyncValue<Prize?>> {
-  PrizeNotifier(this.ref) : super(const AsyncValue.data(null));
-  final Ref ref;
+class PrizeNotifier extends AsyncNotifier<Prize?> {
+  @override
+  FutureOr<Prize?> build() => null;
 
   Future<void> load(String id) async {
     state = const AsyncLoading();
@@ -37,6 +39,4 @@ class PrizeNotifier extends StateNotifier<AsyncValue<Prize?>> {
 }
 
 final prizeNotifierProvider =
-    StateNotifierProvider<PrizeNotifier, AsyncValue<Prize?>>(
-  (ref) => PrizeNotifier(ref),
-);
+    AsyncNotifierProvider<PrizeNotifier, Prize?>(PrizeNotifier.new);
