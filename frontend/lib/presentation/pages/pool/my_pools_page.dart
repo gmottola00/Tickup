@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
+import 'package:tickup/presentation/features/purchase/purchase_provider.dart';
 import 'package:tickup/presentation/widgets/pool_card.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 
@@ -160,6 +161,8 @@ class _MyPoolsContent extends ConsumerWidget {
       await ref.read(raffleRepositoryProvider).deletePool(pool.poolId);
       ref.invalidate(myPoolsProvider);
       ref.invalidate(poolsProvider);
+      ref.invalidate(myParticipatingPoolsProvider);
+      ref.invalidate(myPoolParticipationSummariesProvider);
       messenger.showSnackBar(
         const SnackBar(content: Text('Pool eliminato con successo.')),
       );
