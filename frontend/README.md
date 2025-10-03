@@ -165,6 +165,68 @@ La directory `presentation/features/` ospita la logica di stato per dominio (es.
 
 ---
 
+## Integrazione giochi Unity (Android)
+
+L'app include il plugin `flutter_unity_widget` per eseguire giochi Unity esportati come "Unity as a Library" all'interno di una pagina Flutter (`UnityGamePage`).
+
+### 1. Esporta da Unity
+
+1. Apri il progetto Unity e vai su **File → Build Settings**.
+2. Seleziona la piattaforma **Android** e premi **Switch Platform** se necessario.
+3. Premi **Export** e scegli **Export Android (Unity as a Library)**.
+4. Copia la cartella generata (contenente `launcher/` e `unityLibrary/`) dentro `frontend/android/UnityExport/`. Nella cartella trovi un `README.md` con il layout atteso.
+
+> Durante la compilazione Android, `settings.gradle.kts` include automaticamente il modulo `unityLibrary` se trova `android/UnityExport/unityLibrary`.
+
+### 2. Configurazione Flutter/Android
+
+- `pubspec.yaml` dichiara `flutter_unity_widget`.
+- `android/app/build.gradle.kts` collega il modulo Unity e abilita `useLegacyPackaging` per le librerie native `.so`.
+- `MainActivity` estende `FlutterUnityActivity`, requisito del plugin per agganciare il `UnityPlayer`.
+- Nessuna modifica iOS è necessaria finché non si integra un export dedicato.
+
+### 3. Avvio del gioco da Flutter
+
+- `GameLauncher` espone l'opzione **Unity Arcade** che porta al route `/game/unity_arcade`.
+- `GameRunner` riconosce gli ID Unity tramite la mappa `_unityGames` e costruisce un `UnityGamePage` con la relativa `UnityGameConfig`.
+- `UnityGamePage` gestisce pausa/ripresa (anche su cambi di stato dell'app), scaricamento del player Unity all'uscita e invio di eventuali comandi iniziali verso Unity.
+
+Esempio di configurazione personalizzata (aggiorna `_unityGames` in `game_runner.dart` con i nomi del tuo progetto Unity):
+
+```dart
+const Map<String, UnityGameConfig> _unityGames = {
+  'unity_arcade': UnityGameConfig(
+    title: 'Unity Arcade',
+    startupCommands: [
+      UnityCommand(
+        target: 'GameManager',
+        method: 'BootstrapFromFlutter',
+        argument: '{"difficulty":"normal"}',
+        debugLabel: 'Bootstrap',
+      ),
+    ],
+    resetCommand: UnityCommand(
+      target: 'GameManager',
+      method: 'RestartGame',
+      debugLabel: 'Restart',
+    ),
+  ),
+};
+```
+
+Ogni `UnityCommand` usa `UnityPlayer.postMessage` lato Android: assicurati che i `GameObject` e i metodi esistano nella scena Unity.
+
+### 4. Build & debug
+
+- Esegui `flutter pub get` dopo aver copiato l'export Unity.
+- Per testare su dispositivo/emulatore Android usa `flutter run -d <id>` (compila Unity per l'architettura giusta, es. arm64-v8a).
+- Se Unity non è collegato, la pagina mostrerà solo un loader ma la build Flutter continua a funzionare.
+- Per ascoltare messaggi in arrivo da Unity, sfrutta il callback `UnityGameConfig.onMessage` oppure aggiungi logging via `debugPrint`.
+
+> Suggerimento: crea in Unity un `GameObject` (es. `FlutterBridge`) che riceva messaggi da Flutter (`postMessage`) e ritorni eventi usando `UnityMessage`.
+
+---
+
 ## Architettura e flussi
 
 ### Flow premi (CRUD)

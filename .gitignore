@@ -39,6 +39,17 @@ frontend/.flutter-plugins-dependencies
 frontend/.metadata
 frontend/pubspec.lock
 frontend/generated_plugin_registrant.dart
+frontend/Unity/Tanks/.utmp
+frontend/Unity/Tanks/Builds
+frontend/Unity/Tanks/Library
+frontend/Unity/Tanks/Logs
+frontend/Unity/Tanks/Packages
+frontend/Unity/Tanks/ProjectSettings
+frontend/Unity/Tanks/Temp
+frontend/Unity/Tanks/UserSettings
+frontend/Unity/Platformer
+frontend/android/unityLibrary
+
 
 # Ignora file binari APK/AAB
 **/*.apk
