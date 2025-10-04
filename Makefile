@@ -47,6 +47,9 @@ emulator:
 app-run:
 	cd "$(FRONTEND_DIR)" && flutter run
 
+app-run-web:
+	cd "$(FRONTEND_DIR)" && flutter run -d chrome
+
 qr:
 	@command -v qrencode >/dev/null 2>&1 || { echo "qrencode non installato"; exit 1; }
 	@IP=$$(hostname -I | awk '{print $$1}'); \
