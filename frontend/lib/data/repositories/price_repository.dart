@@ -8,7 +8,7 @@ class PrizeRepository {
   Future<List<Prize>> fetchMyPrizes() => _remote.getMyPrizes();
   Future<Prize> fetchPrize(String id) => _remote.getPrize(id);
   Future<Prize> createPrize(Prize prize) => _remote.createPrize(prize);
-  Future<void> updatePrize(String id, Prize prize) =>
+  Future<Prize> updatePrize(String id, Prize prize) =>
       _remote.updatePrize(id, prize);
   Future<void> deletePrize(String id) => _remote.deletePrize(id);
 }

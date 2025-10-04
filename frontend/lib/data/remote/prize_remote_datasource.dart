@@ -37,8 +37,8 @@ class PrizeRemoteDataSource {
     return [
       Prize(
         prizeId: 'demo-1',
-        title: 'Gift Card 50€',
-        description: 'Buono acquisto digitale da 50€ utilizzabile online.',
+        title: 'Gift Card 50 EUR',
+        description: 'Buono acquisto digitale da 50 EUR utilizzabile online.',
         valueCents: 5000,
         imageUrl: 'https://picsum.photos/seed/prize1/600/400',
         sponsor: 'Acme Inc.',
@@ -88,8 +88,9 @@ class PrizeRemoteDataSource {
     return Prize.fromJson(res.data as Map<String, dynamic>);
   }
 
-  Future<void> updatePrize(String id, Prize prize) async {
-    await dio.put('prizes/$id', data: prize.toJson());
+  Future<Prize> updatePrize(String id, Prize prize) async {
+    final res = await dio.put('prizes/$id', data: prize.toJson());
+    return Prize.fromJson(res.data as Map<String, dynamic>);
   }
 
   Future<void> deletePrize(String id) async {
