@@ -857,7 +857,7 @@ MonoBehaviour:
     m_Instance: {fileID: 0}
     m_Wins: 0
     m_ComputerControlled: 0
-  m_AutoRestartScene: 1
+  m_AutoRestartScene: 0
 --- !u!4 &724200711
 Transform:
   m_ObjectHideFlags: 0
@@ -903,10 +903,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tickup.Minigames.Tanks.TanksMinigameController
   gameManager: {fileID: 724200710}
-  humanPlayerColor: {r: 0.82, g: 0.19, b: 0.16, a: 1}
-  aiPlayerColor: {r: 0.15, g: 0.39, b: 0.75, a: 1}
-  humanTankPrefabOverride: {fileID: 6707289447007570810, guid: eb51213a5067ff9bfa2c2c45e1c18bcb, type: 3}
-  aiTankPrefabOverride: {fileID: 8329452350580243744, guid: 76baefe4c4a1ad21ca8953529c0a91a4, type: 3}
 --- !u!4 &729314869
 Transform:
   m_ObjectHideFlags: 0
@@ -1801,7 +1797,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7609624745474981709, guid: 328826c1fd47c3e4bb07a1dec3ec4c19, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
