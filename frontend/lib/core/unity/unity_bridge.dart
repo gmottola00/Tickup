@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class UnityEvent {
@@ -19,7 +20,10 @@ class UnityBridge {
 
   Stream<UnityEvent>? _eventStream;
 
+  bool get isSupported => _isPlatformSupported;
+
   Future<void> launch({String? scene}) async {
+    _ensureSupported();
     await _methodChannel.invokeMethod('launchUnity', {
       if (scene != null) 'scene': scene,
     });
@@ -30,6 +34,7 @@ class UnityBridge {
     required String method,
     String message = '',
   }) async {
+    _ensureSupported();
     await _methodChannel.invokeMethod('sendMessage', {
       'gameObject': gameObject,
       'method': method,
@@ -38,10 +43,22 @@ class UnityBridge {
   }
 
   Future<void> close() async {
+    _ensureSupported();
     await _methodChannel.invokeMethod('closeUnity');
   }
 
   Stream<UnityEvent> events() {
+    if (!_isPlatformSupported) {
+      return _eventStream ??= Stream<UnityEvent>.value(
+        const UnityEvent(
+          type: 'unsupported_platform',
+          payload: {
+            'message': 'Unity integration is available only on supported mobile platforms.',
+          },
+        ),
+      ).asBroadcastStream();
+    }
+
     return _eventStream ??= _eventChannel
         .receiveBroadcastStream()
         .where((event) => event != null)
@@ -53,5 +70,18 @@ class UnityBridge {
       }
       return UnityEvent(type: 'raw', payload: {'value': event});
     }).asBroadcastStream();
+  }
+
+  void _ensureSupported() {
+    if (!_isPlatformSupported) {
+      throw PlatformException(
+        code: 'unsupported_platform',
+        message: 'Unity integration is available only on supported mobile platforms.',
+      );
+    }
+  }
+
+  bool get _isPlatformSupported {
+    return !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
   }
 }

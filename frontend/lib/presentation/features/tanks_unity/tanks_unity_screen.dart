@@ -25,6 +25,16 @@ class _TanksUnityScreenState extends ConsumerState<TanksUnityScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final bridge = ref.read(unityBridgeProvider);
+      if (!bridge.isSupported) {
+        _appendEvent(const UnityEvent(
+          type: 'unsupported_platform',
+          payload: {
+            'message': 'Unity minigame is available only on Android builds.',
+          },
+        ));
+        return;
+      }
       _listenUnityEvents();
       await _startUnity();
     });
@@ -81,6 +91,7 @@ class _TanksUnityScreenState extends ConsumerState<TanksUnityScreen> {
   }
 
   Future<void> _sendCommand(String scene) async {
+    if (!_unityActive) return;
     final bridge = ref.read(unityBridgeProvider);
     await bridge.sendMessage(
       gameObject: 'GameManager',
@@ -107,15 +118,17 @@ class _TanksUnityScreenState extends ConsumerState<TanksUnityScreen> {
           actions: [
             IconButton(
               tooltip: 'Reload lobby',
-              onPressed: () => _sendCommand('Lobby'),
+              onPressed: _unityActive ? () => _sendCommand('Lobby') : null,
               icon: const Icon(Icons.home),
             ),
             IconButton(
               tooltip: 'Close Unity',
-              onPressed: () async {
-                final bridge = ref.read(unityBridgeProvider);
-                await bridge.close();
-              },
+              onPressed: _unityActive
+                  ? () async {
+                      final bridge = ref.read(unityBridgeProvider);
+                      await bridge.close();
+                    }
+                  : null,
               icon: const Icon(Icons.stop_circle_outlined),
             ),
           ],
@@ -128,15 +141,15 @@ class _TanksUnityScreenState extends ConsumerState<TanksUnityScreen> {
                 spacing: 12,
                 children: [
                   ElevatedButton(
-                    onPressed: () => _sendCommand('Arena01'),
+                    onPressed: _unityActive ? () => _sendCommand('Arena01') : null,
                     child: const Text('Arena 01'),
                   ),
                   ElevatedButton(
-                    onPressed: () => _sendCommand('Arena02'),
+                    onPressed: _unityActive ? () => _sendCommand('Arena02') : null,
                     child: const Text('Arena 02'),
                   ),
                   ElevatedButton(
-                    onPressed: () => _sendCommand('Arena03'),
+                    onPressed: _unityActive ? () => _sendCommand('Arena03') : null,
                     child: const Text('Arena 03'),
                   ),
                 ],
