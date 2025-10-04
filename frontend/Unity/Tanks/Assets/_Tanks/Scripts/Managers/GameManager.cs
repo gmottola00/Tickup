@@ -50,6 +50,7 @@ namespace Tanks.Complete
         private TankManager m_RoundWinner;          // Reference to the winner of the current round.  Used to make an announcement of who won.
         private TankManager m_GameWinner;           // Reference to the winner of the game.  Used to make an announcement of who won.
 
+        private bool m_Initialized;
         private PlayerData[] m_TankData;            // Data passed from the menu about each selected tank (at least 2, max 4)
         private int m_PlayerCount = 0;              // The number of players (2 to 4), decided from the number of PlayerData passed by the menu
         private TextMeshProUGUI m_TitleText;        // The text used to display game message. Automatically found as part of the Menu prefab
@@ -63,8 +64,21 @@ namespace Tanks.Complete
             set => m_AutoRestartScene = value;
         }
 
+        private void Awake()
+        {
+            EnsureInitialized();
+        }
+
         private void Start()
         {
+            EnsureInitialized();
+        }
+
+        private bool EnsureInitialized()
+        {
+            if (m_Initialized)
+                return true;
+
             m_CurrentState = GameState.MainMenu;
 
             // Find the text used to display game info. Need to look at inactive object too, as the Menu prefab (which contains it) may be
@@ -75,17 +89,21 @@ namespace Tanks.Complete
             if (textRef == null)
             {
                 Debug.LogError("You need to add the Menus prefab in the scene to use the GameManager!");
-                return;
+                return false;
             }
 
             m_TitleText = textRef.Text;
-            m_TitleText.text = "";
+            if (m_TitleText != null)
+                m_TitleText.text = string.Empty;
 
             // The GameManager require 4 tanks prefabs, as the start menu have 4 fixed slot and need the 4 tanks to show there
             if (m_Tank1Prefab == null || m_Tank2Prefab == null || m_Tank3Prefab == null || m_Tank4Prefab == null)
             {
                 Debug.LogError("You need to assign 4 tank prefab in the GameManager!");
             }
+
+            m_Initialized = true;
+            return true;
         }
 
         void GameStart()
@@ -116,10 +134,14 @@ namespace Tanks.Complete
         // Called by the menu, passing along the data from the selection made by the player in the menu
         public void StartGame(PlayerData[] playerData)
         {
+            if (!EnsureInitialized())
+                return;
+
             m_TankData = playerData;
             m_PlayerCount = m_TankData.Length;
             ChangeGameState(GameState.Game);
         }
+
 
 
         private void SpawnAllTanks()

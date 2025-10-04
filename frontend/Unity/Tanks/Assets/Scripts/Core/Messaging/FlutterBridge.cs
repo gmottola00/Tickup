@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using Tickup.Core.GameFlow;
+using UnityEngine.SceneManagement;
 
 #if TICKUP_USE_FLUTTER_WIDGET
 using FlutterUnityIntegration;
@@ -12,9 +13,16 @@ namespace Tickup.Core.Messaging
     {
         [SerializeField] private PrizeRunManager prizeRunManager;
 
+#if UNITY_ANDROID && !UNITY_EDITOR
+        private const string AndroidBridgeClass = "com.example.skillwin_frontend.UnityBridge";
+#endif
+
         private void Awake()
         {
             DontDestroyOnLoad(gameObject);
+
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+            NotifyScene(SceneManager.GetActiveScene().name);
 
             if (prizeRunManager == null)
                 prizeRunManager = FindObjectOfType<PrizeRunManager>();
@@ -36,6 +44,8 @@ namespace Tickup.Core.Messaging
 
         private void OnDestroy()
         {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+
             if (prizeRunManager != null)
             {
                 prizeRunManager.PrizeCompleted -= HandlePrizeCompleted;
@@ -105,6 +115,11 @@ namespace Tickup.Core.Messaging
             SendToFlutter("minigameComplete", payload);
         }
 
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            NotifyScene(scene.name);
+        }
+
         private static void SendToFlutter(string type, string payload)
         {
 #if TICKUP_USE_FLUTTER_WIDGET
@@ -115,8 +130,49 @@ namespace Tickup.Core.Messaging
                 return;
             }
 #endif
+            DispatchToNative(type, payload);
             Debug.Log($"FlutterBridge -> {type}: {payload}");
         }
+
+        private static void NotifyScene(string sceneName)
+        {
+#if TICKUP_USE_FLUTTER_WIDGET
+            SendToFlutter("sceneLoaded", sceneName);
+#else
+            DispatchScene(sceneName);
+#endif
+        }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        private static void DispatchScene(string sceneName)
+        {
+            try
+            {
+                using var bridge = new AndroidJavaClass(AndroidBridgeClass);
+                bridge?.CallStatic("notifySceneLoaded", sceneName);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Failed to dispatch scene '{sceneName}' to Android: {ex.Message}");
+            }
+        }
+
+        private static void DispatchToNative(string type, string payload)
+        {
+            try
+            {
+                using var bridge = new AndroidJavaClass(AndroidBridgeClass);
+                bridge?.CallStatic("notifyGameEvent", type, payload);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Failed to dispatch '{type}' event to Android: {ex.Message}");
+            }
+        }
+#else
+        private static void DispatchScene(string sceneName) { }
+        private static void DispatchToNative(string type, string payload) { }
+#endif
 
         [Serializable]
         private struct FlutterCommand
