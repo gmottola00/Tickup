@@ -1,8 +1,9 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
 import 'package:tickup/presentation/widgets/prize_card.dart';
+import 'package:tickup/presentation/widgets/card_grid_config.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
 
@@ -42,19 +43,14 @@ class _MyPrizesLoading extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width >= 900
-            ? 4
-            : width >= 600
-                ? 3
-                : 2;
-        final childAspectRatio = _gridAspectRatio(width); // più verticale
+        final grid = defaultCardGridConfig(width);
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
+            crossAxisCount: grid.crossAxisCount,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: childAspectRatio,
+            childAspectRatio: grid.childAspectRatio,
           ),
           itemCount: 6,
           itemBuilder: (_, __) => const PrizeCardSkeleton(),
@@ -102,19 +98,14 @@ class _MyPrizesContent extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width >= 900
-            ? 4
-            : width >= 600
-                ? 3
-                : 2;
-        final childAspectRatio = _gridAspectRatio(width); // più verticale
+        final grid = defaultCardGridConfig(width);
         return GridView.builder(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
+            crossAxisCount: grid.crossAxisCount,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: childAspectRatio,
+            childAspectRatio: grid.childAspectRatio,
           ),
           itemCount: items.length,
           itemBuilder: (_, i) => PrizeCard(
@@ -136,7 +127,7 @@ class _MyPrizesContent extends ConsumerWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Elimina premio'),
         content: Text(
-          'Confermi l\'eliminazione del premio "${prize.title}"? Questa azione non è reversibile.',
+          'Confermi l\'eliminazione del premio "${prize.title}"? Questa azione non Ã¨ reversibile.',
         ),
         actions: [
           TextButton(
@@ -231,13 +222,6 @@ class _MyPrizesContent extends ConsumerWidget {
   }
 }
 
-double _gridAspectRatio(double width) {
-  if (width >= 1200) return 0.7;
-  if (width >= 900) return 0.64;
-  if (width >= 600) return 0.6;
-  return 0.56;
-}
-
 class _MyPrizesEmpty extends StatelessWidget {
   const _MyPrizesEmpty();
   @override
@@ -262,3 +246,5 @@ class _MyPrizesEmpty extends StatelessWidget {
     );
   }
 }
+
+

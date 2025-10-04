@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/presentation/widgets/pool_card.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
+import 'package:tickup/presentation/widgets/card_grid_config.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -26,10 +27,11 @@ class HomeScreen extends ConsumerWidget {
         child: poolsAsync.when(
           loading: () => const _HomeLoading(),
           error: (e, _) => _HomeError(
-              error: e.toString(),
-              onRetry: () {
-                ref.invalidate(poolsProvider);
-              }),
+            error: e.toString(),
+            onRetry: () {
+              ref.invalidate(poolsProvider);
+            },
+          ),
           data: (items) => _HomeContent(items: items),
         ),
       ),
@@ -45,19 +47,14 @@ class _HomeLoading extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width >= 900
-            ? 4
-            : width >= 600
-                ? 3
-                : 2;
-        final childAspectRatio = width >= 600 ? 3 / 5 : 2 / 3; // più verticale
+        final grid = defaultCardGridConfig(width);
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
+            crossAxisCount: grid.crossAxisCount,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: childAspectRatio,
+            childAspectRatio: grid.childAspectRatio,
           ),
           itemCount: 6,
           itemBuilder: (_, __) => const PoolCardSkeleton(),
@@ -105,19 +102,14 @@ class _HomeContent extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width >= 900
-            ? 4
-            : width >= 600
-                ? 3
-                : 2;
-        final childAspectRatio = width >= 600 ? 3 / 5 : 2 / 3; // più verticale
+        final grid = defaultCardGridConfig(width);
         return GridView.builder(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
+            crossAxisCount: grid.crossAxisCount,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: childAspectRatio,
+            childAspectRatio: grid.childAspectRatio,
           ),
           itemCount: items.length,
           itemBuilder: (_, i) => PoolCard(

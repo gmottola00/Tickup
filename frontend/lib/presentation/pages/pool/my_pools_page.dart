@@ -1,9 +1,10 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/presentation/features/purchase/purchase_provider.dart';
 import 'package:tickup/presentation/widgets/pool_card.dart';
+import 'package:tickup/presentation/widgets/card_grid_config.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 
 class MyPoolsPage extends ConsumerWidget {
@@ -42,19 +43,14 @@ class _MyPoolsLoading extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width >= 900
-            ? 4
-            : width >= 600
-                ? 3
-                : 2;
-        final childAspectRatio = _gridAspectRatio(width);
+        final grid = defaultCardGridConfig(width);
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
+            crossAxisCount: grid.crossAxisCount,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: childAspectRatio,
+            childAspectRatio: grid.childAspectRatio,
           ),
           itemCount: 6,
           itemBuilder: (_, __) => const PoolCardSkeleton(),
@@ -102,19 +98,14 @@ class _MyPoolsContent extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width >= 900
-            ? 4
-            : width >= 600
-                ? 3
-                : 2;
-        final childAspectRatio = _gridAspectRatio(width);
+        final grid = defaultCardGridConfig(width);
         return GridView.builder(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
+            crossAxisCount: grid.crossAxisCount,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: childAspectRatio,
+            childAspectRatio: grid.childAspectRatio,
           ),
           itemCount: items.length,
           itemBuilder: (_, i) => PoolCard(
@@ -136,7 +127,7 @@ class _MyPoolsContent extends ConsumerWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Elimina pool'),
         content: Text(
-          'Sei sicuro di voler eliminare il pool con ID ${pool.poolId}? L\'operazione è definitiva.',
+          'Sei sicuro di voler eliminare il pool con ID ${pool.poolId}? L\'operazione Ã¨ definitiva.',
         ),
         actions: [
           TextButton(
@@ -231,13 +222,6 @@ class _MyPoolsContent extends ConsumerWidget {
   }
 }
 
-double _gridAspectRatio(double width) {
-  if (width >= 1200) return 0.7;
-  if (width >= 900) return 0.64;
-  if (width >= 600) return 0.6;
-  return 0.56;
-}
-
 class _MyPoolsEmpty extends StatelessWidget {
   const _MyPoolsEmpty();
   @override
@@ -262,3 +246,7 @@ class _MyPoolsEmpty extends StatelessWidget {
     );
   }
 }
+
+
+
+
