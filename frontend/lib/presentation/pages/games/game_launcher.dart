@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:tickup/presentation/routing/app_route.dart';
+
 class GameLauncher extends StatelessWidget {
   const GameLauncher({Key? key}) : super(key: key);
 
   static const List<Map<String, String>> _games = [
-    {'id': 'stop_bar', 'name': 'Stop Bar'},
-    {'id': 'reflex_tap', 'name': 'Reflex Tap'},
-    {'id': 'space_invaders', 'name': 'Space Invaders'},
+    {'title': 'Stop Bar', 'route': '/games/stop_bar'},
+    {'title': 'Reflex Tap', 'route': '/games/reflex_tap'},
+    {'title': 'Space Invaders', 'route': '/games/space_invaders'},
+    {'title': 'Tanks (Unity)', 'route': AppRoute.unityTanks},
   ];
 
   @override
@@ -19,9 +22,9 @@ class GameLauncher extends StatelessWidget {
         itemBuilder: (context, index) {
           final game = _games[index];
           return ListTile(
-            title: Text(game['name']!),
+            title: Text(game['title']!),
             trailing: const Icon(Icons.play_arrow),
-            onTap: () => context.go('/games/${game['id']}'),
+            onTap: () => context.go(game['route']!),
           );
         },
       ),

@@ -29,6 +29,10 @@ class AppRoute {
   static const walletTopups = '/wallet/topups';
   static const walletTopupCreate = '/wallet/topups/create';
 
+  // Unity integrations
+  static const unityTanks = '/unity/tanks';
+  static String unityTanksForScene(String scene) => '$unityTanks?scene=$scene';
+
   // Sub-routes
   static const profileEdit = '/profile/edit';
   static const profileSettings = '/profile/settings';

@@ -26,6 +26,7 @@ import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/presentation/pages/wallet/wallet_overview_page.dart';
 import 'package:tickup/presentation/pages/wallet/wallet_topups_page.dart';
 import 'package:tickup/presentation/pages/wallet/wallet_topup_create_page.dart';
+import 'package:tickup/presentation/features/tanks_unity/tanks_unity_screen.dart';
 
 // Provider per il router
 final routerProvider = Provider<GoRouter>((ref) {
@@ -265,6 +266,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             child: GameRunner(
               gameId: gameId,
             ),
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/unity/tanks',
+        name: 'unity-tanks',
+        pageBuilder: (context, state) {
+          final scene = state.uri.queryParameters['scene'];
+          return MaterialPage(
+            key: state.pageKey,
+            fullscreenDialog: true,
+            child: TanksUnityScreen(initialScene: scene),
           );
         },
       ),
