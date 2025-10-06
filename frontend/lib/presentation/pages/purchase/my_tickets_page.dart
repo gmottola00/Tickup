@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tickup/data/models/prize.dart';
-import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
 import 'package:tickup/presentation/features/purchase/purchase_provider.dart';
 import 'package:tickup/presentation/pages/purchase/purchase_page_args.dart';
@@ -113,148 +112,247 @@ class _ParticipationCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FutureBuilder<Prize>(
-      future: ref.read(prizeRepositoryProvider).fetchPrize(summary.pool.prizeId),
-      builder: (context, snapshot) {
-        final theme = Theme.of(context);
-        final prize = snapshot.data;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardMaxWidth = _participationCardWidth(constraints.maxWidth);
 
-        final imageUrl = prize?.imageUrl ?? '';
-        final title = prize?.title ?? 'Pool';
-        final subtitle = prize?.sponsor ?? '';
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: cardMaxWidth),
+            child: FutureBuilder<Prize>(
+              future: ref
+                  .read(prizeRepositoryProvider)
+                  .fetchPrize(summary.pool.prizeId),
+              builder: (context, snapshot) {
+                final theme = Theme.of(context);
+                final prize = snapshot.data;
 
-        final ticketPrice = summary.pool.ticketPriceCents / 100;
-        final totalSpent = summary.totalAmountCents / 100;
-        final lastPurchase = summary.lastPurchaseAt;
+                final imageUrl = prize?.imageUrl ?? '';
+                final title = prize?.title ?? 'Pool';
+                final subtitle = prize?.sponsor ?? '';
 
-        return Card(
-          elevation: 2,
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
-                        width: 96,
-                        height: 72,
-                        child: imageUrl.startsWith('http')
-                            ? Image.network(
-                                imageUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _PlaceholderImage(title: title),
-                              )
-                            : _PlaceholderImage(title: title),
+                final ticketPrice = summary.pool.ticketPriceCents / 100;
+                final totalSpent = summary.totalAmountCents / 100;
+                final lastPurchase = summary.lastPurchaseAt;
+
+                return LayoutBuilder(
+                  builder: (context, cardConstraints) {
+                    final isCompact = cardConstraints.maxWidth < 520;
+                    final actionsVertical = cardConstraints.maxWidth < 480;
+                    final avatarSize = isCompact ? 64.0 : 80.0;
+
+                    return Card(
+                      clipBehavior: Clip.antiAlias,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (subtitle.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              subtitle,
-                              style: theme.textTheme.bodySmall,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: avatarSize,
+                                  height: avatarSize,
+                                  child: imageUrl.startsWith('http')
+                                      ? ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          child: Image.network(
+                                            imageUrl,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) =>
+                                                _PlaceholderImage(title: title),
+                                          ),
+                                        )
+                                      : ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          child: _PlaceholderImage(title: title),
+                                        ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        title,
+                                        style: theme.textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (subtitle.isNotEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          subtitle,
+                                          style: theme.textTheme.bodySmall,
+                                        ),
+                                      ],
+                                      const SizedBox(height: 12),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          Chip(
+                                            avatar: const Icon(
+                                              Icons.confirmation_number_outlined,
+                                              size: 16,
+                                            ),
+                                            label: Text(
+                                              '${summary.ticketsCount} ticket',
+                                            ),
+                                            materialTapTargetSize:
+                                                MaterialTapTargetSize.shrinkWrap,
+                                          ),
+                                          Chip(
+                                            avatar: const Icon(
+                                              Icons.euro,
+                                              size: 16,
+                                            ),
+                                            label: Text(
+                                              'EUR ${totalSpent.toStringAsFixed(2)} spesi',
+                                            ),
+                                            materialTapTargetSize:
+                                                MaterialTapTargetSize.shrinkWrap,
+                                          ),
+                                          Chip(
+                                            avatar: const Icon(
+                                              Icons.sell_outlined,
+                                              size: 16,
+                                            ),
+                                            label: Text(
+                                              'Ticket EUR ${ticketPrice.toStringAsFixed(2)}',
+                                            ),
+                                            materialTapTargetSize:
+                                                MaterialTapTargetSize.shrinkWrap,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              Chip(
-                                avatar: const Icon(Icons.confirmation_number_outlined, size: 16),
-                                label: Text('${summary.ticketsCount} ticket'),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              Chip(
-                                avatar: const Icon(Icons.euro, size: 16),
-                                label: Text('€ ${totalSpent.toStringAsFixed(2)} spesi'),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              Chip(
-                                avatar: const Icon(Icons.sell_outlined, size: 16),
-                                label: Text('Ticket € ${ticketPrice.toStringAsFixed(2)}'),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            const SizedBox(height: 16),
+                            Text(
+                              '${summary.pool.ticketsSold}/${summary.pool.ticketsRequired} ticket venduti',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            LinearProgressIndicator(
+                              value: summary.pool.ticketsRequired > 0
+                                  ? (summary.pool.ticketsSold /
+                                          summary.pool.ticketsRequired)
+                                      .clamp(0.0, 1.0)
+                                  : 0.0,
+                            ),
+                            if (lastPurchase != null) ...[
+                              const SizedBox(height: 12),
+                              Text(
+                                'Ultimo acquisto: ${_formatDate(lastPurchase)}',
+                                style: theme.textTheme.bodySmall,
                               ),
                             ],
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+                            if (actionsVertical) ...[
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  context.push(
+                                    AppRoute.poolDetails(
+                                      summary.pool.poolId,
+                                    ),
+                                    extra: summary.pool,
+                                  );
+                                },
+                                icon: const Icon(Icons.visibility_outlined),
+                                label: const Text('Vedi pool'),
+                              ),
+                              const SizedBox(height: 12),
+                              FilledButton.icon(
+                                onPressed: () {
+                                  context.push(
+                                    AppRoute.purchaseForPool(
+                                      summary.pool.poolId,
+                                    ),
+                                    extra: PurchasePageArgs(
+                                      pool: summary.pool,
+                                      prize: prize,
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.add_shopping_cart_outlined,
+                                ),
+                                label: const Text('Compra altro'),
+                              ),
+                            ] else ...[
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        context.push(
+                                          AppRoute.poolDetails(
+                                            summary.pool.poolId,
+                                          ),
+                                          extra: summary.pool,
+                                        );
+                                      },
+                                      icon:
+                                          const Icon(Icons.visibility_outlined),
+                                      label: const Text('Vedi pool'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: FilledButton.icon(
+                                      onPressed: () {
+                                        context.push(
+                                          AppRoute.purchaseForPool(
+                                            summary.pool.poolId,
+                                          ),
+                                          extra: PurchasePageArgs(
+                                            pool: summary.pool,
+                                            prize: prize,
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(
+                                        Icons.add_shopping_cart_outlined,
+                                      ),
+                                      label: const Text('Compra altro'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  '${summary.pool.ticketsSold}/${summary.pool.ticketsRequired} ticket venduti',
-                  style: theme.textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: summary.pool.ticketsRequired > 0
-                      ? (summary.pool.ticketsSold / summary.pool.ticketsRequired).clamp(0.0, 1.0)
-                      : 0.0,
-                ),
-                if (lastPurchase != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    'Ultimo acquisto: ${_formatDate(lastPurchase)}',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          context.push(
-                            AppRoute.poolDetails(summary.pool.poolId),
-                            extra: summary.pool,
-                          );
-                        },
-                        icon: const Icon(Icons.visibility_outlined),
-                        label: const Text('Vedi pool'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: () {
-                          context.push(
-                            AppRoute.purchaseForPool(summary.pool.poolId),
-                            extra: PurchasePageArgs(pool: summary.pool, prize: prize),
-                          );
-                        },
-                        icon: const Icon(Icons.add_shopping_cart_outlined),
-                        label: const Text('Compra altro'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                    );
+                  },
+                );
+              },
             ),
           ),
         );
       },
     );
   }
+}
+
+double _participationCardWidth(double availableWidth) {
+  if (availableWidth >= 1200) return 780;
+  if (availableWidth >= 992) return 720;
+  if (availableWidth >= 768) return 640;
+  return availableWidth;
 }
 
 class _ParticipationsEmpty extends StatelessWidget {
