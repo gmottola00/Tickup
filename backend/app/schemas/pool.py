@@ -13,6 +13,7 @@ class PoolCreate(PoolBase):
 class Pool(PoolBase):
     pool_id: UUID
     tickets_sold: int
+    likes: int
     state: str
     created_at: datetime
 
