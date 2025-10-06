@@ -5,6 +5,8 @@ import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/presentation/features/purchase/purchase_provider.dart';
 import 'package:tickup/presentation/widgets/pool_card.dart';
 import 'package:tickup/presentation/widgets/card_grid_config.dart';
+import 'package:tickup/presentation/routing/app_route.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 
 class MyPoolsPage extends ConsumerWidget {
@@ -111,6 +113,10 @@ class _MyPoolsContent extends ConsumerWidget {
           itemBuilder: (_, i) => PoolCard(
             pool: items[i],
             onDelete: () => _confirmDelete(context, ref, items[i]),
+            onTap: () => context.push(
+              AppRoute.poolDetails(items[i].poolId),
+              extra: items[i],
+            ),
           ),
         );
       },
