@@ -2,25 +2,40 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
-import 'package:tickup/data/models/prize.dart';
 
 class PoolCard extends StatelessWidget {
-  const PoolCard({super.key, required this.pool, this.onTap, this.onDelete});
+  const PoolCard({
+    super.key,
+    required this.pool,
+    this.onTap,
+    this.onDelete,
+    this.onToggleLike,
+    this.isLiked = false,
+  });
+
   final RafflePool pool;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
+  final VoidCallback? onToggleLike;
+  final bool isLiked;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
+        final mediaWidth = MediaQuery.of(context).size.width;
+        final availableWidth =
+            constraints.maxWidth.isFinite ? constraints.maxWidth : mediaWidth;
+        final maxWidth = _responsiveCardWidth(availableWidth);
+        final cardWidth = math.min(availableWidth, maxWidth);
+
         final maxHeight = constraints.maxHeight.isFinite
             ? constraints.maxHeight
-            : width / 0.68;
-        final desiredImageHeight = width / (16 / 9);
+            : cardWidth / 0.68;
+        final desiredImageHeight = cardWidth / (16 / 9);
         final imageHeight = math.max(
           80.0,
           math.min(desiredImageHeight, maxHeight * 0.42),
@@ -29,25 +44,32 @@ class PoolCard extends StatelessWidget {
             ? (pool.ticketsSold / pool.ticketsRequired).clamp(0.0, 1.0)
             : 0.0;
 
-        return Card(
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _PoolCardHeader(pool: pool, imageHeight: imageHeight),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: _PoolCardBody(
-                      pool: pool,
-                      progress: progress,
-                      onDelete: onDelete,
-                    ),
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: Card(
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _PoolCardHeader(pool: pool, imageHeight: imageHeight),
+                      const SizedBox(height: 12),
+                      _PoolCardBody(
+                        pool: pool,
+                        progress: progress,
+                        onDelete: onDelete,
+                        onToggleLike: onToggleLike,
+                        isLiked: isLiked,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -61,37 +83,54 @@ class _PoolCardBody extends StatelessWidget {
   const _PoolCardBody({
     required this.pool,
     required this.progress,
+    required this.isLiked,
     this.onDelete,
+    this.onToggleLike,
   });
 
   final RafflePool pool;
   final double progress;
+  final bool isLiked;
   final VoidCallback? onDelete;
+  final VoidCallback? onToggleLike;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Ticket: € ${(pool.ticketPriceCents / 100).toStringAsFixed(2)}'),
+        Text('Ticket: EUR ${(pool.ticketPriceCents / 100).toStringAsFixed(2)}'),
         const SizedBox(height: 8),
         LinearProgressIndicator(value: progress),
         const SizedBox(height: 4),
         Text('${pool.ticketsSold}/${pool.ticketsRequired} venduti'),
-        const Spacer(),
+        const SizedBox(height: 4),
+        Text('${pool.likes} mi piace'),
+        const SizedBox(height: 12),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Chip(
               label: Text(pool.state),
               visualDensity: VisualDensity.compact,
             ),
-            if (onDelete != null)
+            const Spacer(),
+            IconButton(
+              onPressed: onToggleLike,
+              icon: Icon(isLiked ? Icons.favorite : Icons.favorite_border),
+              color: isLiked ? theme.colorScheme.error : null,
+              tooltip: isLiked ? 'Rimuovi dai preferiti' : 'Mi piace',
+            ),
+            if (onDelete != null) ...[
+              const SizedBox(width: 4),
               IconButton(
                 onPressed: onDelete,
                 icon: const Icon(Icons.delete_outline),
                 tooltip: 'Elimina pool',
               ),
+            ],
           ],
         ),
       ],
@@ -165,7 +204,8 @@ class _PoolCardHeader extends ConsumerWidget {
 }
 
 class _HeaderContent extends StatelessWidget {
-  const _HeaderContent({required this.image, required this.title, required this.theme});
+  const _HeaderContent(
+      {required this.image, required this.title, required this.theme});
 
   final Widget image;
   final String title;
@@ -187,6 +227,13 @@ class _HeaderContent extends StatelessWidget {
       ],
     );
   }
+}
+
+double _responsiveCardWidth(double availableWidth) {
+  if (availableWidth >= 1200) return 780;
+  if (availableWidth >= 992) return 720;
+  if (availableWidth >= 768) return 640;
+  return availableWidth;
 }
 
 class PoolCardSkeleton extends StatelessWidget {
