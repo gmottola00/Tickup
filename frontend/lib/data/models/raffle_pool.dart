@@ -5,6 +5,7 @@ class RafflePool {
   final int ticketsRequired;
   final int ticketsSold;
   final String state;
+  final int likes;
   final DateTime? createdAt;
 
   RafflePool({
@@ -14,6 +15,7 @@ class RafflePool {
     required this.ticketsRequired,
     required this.ticketsSold,
     required this.state,
+    this.likes = 0,
     this.createdAt,
   });
 
@@ -26,6 +28,9 @@ class RafflePool {
         ticketsRequired: (json['tickets_required'] ?? 0) is int
             ? json['tickets_required'] as int
             : int.tryParse((json['tickets_required'] ?? '0').toString()) ?? 0,
+        likes: (json['likes'] ?? 0) is int
+            ? json['likes'] as int
+            : int.tryParse((json['likes'] ?? '0').toString()) ?? 0,
         ticketsSold: (json['tickets_sold'] ?? 0) is int
             ? json['tickets_sold'] as int
             : int.tryParse((json['tickets_sold'] ?? '0').toString()) ?? 0,
