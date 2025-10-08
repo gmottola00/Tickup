@@ -17,4 +17,23 @@ class RaffleRepository {
   Future<LikeStatus> fetchLikeStatus(String id) => _remote.getPoolLikeStatus(id);
   Future<LikeStatus> likePool(String id) => _remote.likePool(id);
   Future<LikeStatus> unlikePool(String id) => _remote.unlikePool(id);
+
+  Future<List<RafflePool>> fetchLikedPools() async {
+    final all = await fetchPools();
+    if (all.isEmpty) return const [];
+    final statuses = await Future.wait(
+      all.map((p) async {
+        try {
+          final s = await fetchLikeStatus(p.poolId);
+          return MapEntry(p, s);
+        } catch (_) {
+          return MapEntry(p, const LikeStatus(likes: 0, likedByMe: false));
+        }
+      }),
+    );
+    return statuses
+        .where((e) => e.value.likedByMe)
+        .map((e) => e.key.copyWith(likes: e.value.likes, likedByMe: true))
+        .toList();
+  }
 }

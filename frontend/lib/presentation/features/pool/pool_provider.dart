@@ -11,3 +11,7 @@ final poolsProvider = FutureProvider<List<RafflePool>>((ref) async {
 final myPoolsProvider = FutureProvider<List<RafflePool>>((ref) async {
   return ref.read(raffleRepositoryProvider).fetchMyPools();
 });
+
+final likedPoolsProvider = FutureProvider<List<RafflePool>>((ref) async {
+  return ref.read(raffleRepositoryProvider).fetchLikedPools();
+});
