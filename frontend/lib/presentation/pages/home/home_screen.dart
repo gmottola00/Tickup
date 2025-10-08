@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/presentation/widgets/pool_card.dart';
+import 'package:tickup/presentation/features/pool/pool_like_provider.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/presentation/widgets/card_grid_config.dart';
 
@@ -90,12 +91,12 @@ class _HomeError extends StatelessWidget {
   }
 }
 
-class _HomeContent extends StatelessWidget {
+class _HomeContent extends ConsumerWidget {
   const _HomeContent({required this.items});
   final List<RafflePool> items;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (items.isEmpty) {
       return const _EmptyState();
     }
@@ -112,13 +113,22 @@ class _HomeContent extends StatelessWidget {
             childAspectRatio: grid.childAspectRatio,
           ),
           itemCount: items.length,
-          itemBuilder: (_, i) => PoolCard(
-            pool: items[i],
-            onTap: () => context.push(
-              AppRoute.poolDetails(items[i].poolId),
-              extra: items[i],
-            ),
-          ),
+          itemBuilder: (_, i) {
+            final pool = items[i];
+            final like = ref.watch(poolLikeProvider(pool.poolId));
+            final effectivePool = like != null
+                ? pool.copyWith(likes: like.likes, likedByMe: like.likedByMe)
+                : pool;
+            return PoolCard(
+              pool: effectivePool,
+              isLiked: like?.likedByMe ?? pool.likedByMe,
+              onToggleLike: () => ref.read(poolLikeProvider(pool.poolId).notifier).toggle(),
+              onTap: () => context.push(
+                AppRoute.poolDetails(pool.poolId),
+                extra: pool,
+              ),
+            );
+          },
         );
       },
     );
