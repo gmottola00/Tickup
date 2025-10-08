@@ -14,6 +14,7 @@ import 'package:tickup/presentation/pages/prize/my_prizes_page.dart';
 import 'package:tickup/presentation/pages/pool/pool_create_page.dart';
 import 'package:tickup/presentation/pages/pool/pool_details_page.dart';
 import 'package:tickup/presentation/pages/pool/my_pools_page.dart';
+import 'package:tickup/presentation/pages/pool/liked_pools_page.dart';
 import 'package:tickup/presentation/pages/purchase/my_tickets_page.dart';
 import 'package:tickup/presentation/pages/purchase/purchase_create_page.dart';
 import 'package:tickup/presentation/pages/purchase/purchase_page_args.dart';
@@ -110,6 +111,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => MaterialPage(
           key: state.pageKey,
           child: const MyPoolsPage(),
+        ),
+      ),
+
+      // Liked Pools (favoriti dall'utente corrente)
+      GoRoute(
+        path: AppRoute.myLikedPools,
+        name: 'my-liked-pools',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const LikedPoolsPage(),
         ),
       ),
 
