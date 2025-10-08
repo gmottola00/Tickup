@@ -6,6 +6,7 @@ class RafflePool {
   final int ticketsSold;
   final String state;
   final int likes;
+  final bool likedByMe;
   final DateTime? createdAt;
 
   RafflePool({
@@ -16,6 +17,7 @@ class RafflePool {
     required this.ticketsSold,
     required this.state,
     this.likes = 0,
+    this.likedByMe = false,
     this.createdAt,
   });
 
@@ -35,6 +37,7 @@ class RafflePool {
             ? json['tickets_sold'] as int
             : int.tryParse((json['tickets_sold'] ?? '0').toString()) ?? 0,
         state: (json['state'] ?? 'OPEN').toString(),
+        likedByMe: (json['liked_by_me'] ?? false) == true,
         createdAt: json['created_at'] != null
             ? DateTime.tryParse(json['created_at'].toString())
             : null,
@@ -47,5 +50,28 @@ class RafflePool {
         'tickets_sold': ticketsSold,
         'state': state,
       };
-}
 
+  RafflePool copyWith({
+    String? poolId,
+    String? prizeId,
+    int? ticketPriceCents,
+    int? ticketsRequired,
+    int? ticketsSold,
+    String? state,
+    int? likes,
+    bool? likedByMe,
+    DateTime? createdAt,
+  }) {
+    return RafflePool(
+      poolId: poolId ?? this.poolId,
+      prizeId: prizeId ?? this.prizeId,
+      ticketPriceCents: ticketPriceCents ?? this.ticketPriceCents,
+      ticketsRequired: ticketsRequired ?? this.ticketsRequired,
+      ticketsSold: ticketsSold ?? this.ticketsSold,
+      state: state ?? this.state,
+      likes: likes ?? this.likes,
+      likedByMe: likedByMe ?? this.likedByMe,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+}
