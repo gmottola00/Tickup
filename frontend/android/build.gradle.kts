@@ -19,3 +19,7 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+packagingOptions {
+    pickFirst 'lib/armeabi-v7a/libunity.so'
+}
