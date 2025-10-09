@@ -12,6 +12,7 @@ class PoolCard extends StatelessWidget {
     this.onDelete,
     this.onToggleLike,
     this.isLiked = false,
+    this.showLikeButton = true,
   });
 
   final RafflePool pool;
@@ -19,6 +20,7 @@ class PoolCard extends StatelessWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onToggleLike;
   final bool isLiked;
+  final bool showLikeButton;
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +72,7 @@ class PoolCard extends StatelessWidget {
                         onDelete: onDelete,
                         onToggleLike: onToggleLike,
                         isLiked: isLiked,
+                        showLikeButton: showLikeButton,
                         textStyle: responsiveData.bodyTextStyle,
                         spacing: responsiveData.spacing,
                         buttonSize: responsiveData.buttonSize,
@@ -94,6 +97,7 @@ class _PoolCardBody extends StatelessWidget {
     required this.isLiked,
     this.onDelete,
     this.onToggleLike,
+    this.showLikeButton = true,
     this.textStyle,
     required this.spacing,
     required this.buttonSize,
@@ -104,6 +108,7 @@ class _PoolCardBody extends StatelessWidget {
   final bool isLiked;
   final VoidCallback? onDelete;
   final VoidCallback? onToggleLike;
+  final bool showLikeButton;
   final TextStyle? textStyle;
   final double spacing;
   final double buttonSize;
@@ -134,44 +139,70 @@ class _PoolCardBody extends StatelessWidget {
         ),
         SizedBox(height: spacing),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Chip(
-              label: Text(
-                pool.state,
-                style: TextStyle(fontSize: (textStyle?.fontSize ?? 14) * 0.8),
-              ),
-              visualDensity: VisualDensity.compact,
-            ),
-            const Spacer(),
-            IconButton(
-              onPressed: onToggleLike,
-              icon: Icon(
-                isLiked ? Icons.favorite : Icons.favorite_border,
-                size: buttonSize,
-              ),
-              color: isLiked ? theme.colorScheme.error : null,
-              tooltip: isLiked ? 'Rimuovi dai preferiti' : 'Mi piace',
-              constraints: BoxConstraints(
-                minWidth: buttonSize + 8,
-                minHeight: buttonSize + 8,
-              ),
-            ),
-            if (onDelete != null) ...[
-              SizedBox(width: spacing * 0.3),
-              IconButton(
-                onPressed: onDelete,
-                icon: Icon(Icons.delete_outline, size: buttonSize),
-                tooltip: 'Elimina pool',
-                constraints: BoxConstraints(
-                  minWidth: buttonSize + 8,
-                  minHeight: buttonSize + 8,
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Chip(
+                  label: Text(
+                    pool.state,
+                    style: TextStyle(
+                      fontSize: (textStyle?.fontSize ?? 14) * 0.8,
+                    ),
+                  ),
+                  visualDensity: VisualDensity.compact,
                 ),
               ),
-            ],
+            ),
+            ..._buildActionButtons(theme),
           ],
         ),
       ],
     );
+  }
+
+  List<Widget> _buildActionButtons(ThemeData theme) {
+    final actions = <Widget>[];
+
+    if (showLikeButton && onToggleLike != null) {
+      actions.add(
+        IconButton(
+          onPressed: onToggleLike,
+          icon: Icon(
+            isLiked ? Icons.favorite : Icons.favorite_border,
+            size: buttonSize,
+          ),
+          color: isLiked ? theme.colorScheme.error : null,
+          tooltip: isLiked ? 'Rimuovi dai preferiti' : 'Mi piace',
+          constraints: BoxConstraints(
+            minWidth: buttonSize + 4,
+            minHeight: buttonSize + 4,
+          ),
+          padding: EdgeInsets.zero,
+        ),
+      );
+    }
+
+    if (onDelete != null) {
+      if (actions.isNotEmpty) {
+        actions.add(SizedBox(width: spacing * 0.3));
+      }
+      actions.add(
+        IconButton(
+          onPressed: onDelete,
+          icon: Icon(Icons.delete_outline, size: buttonSize),
+          tooltip: 'Elimina pool',
+          constraints: BoxConstraints(
+            minWidth: buttonSize + 4,
+            minHeight: buttonSize + 4,
+          ),
+          padding: EdgeInsets.zero,
+        ),
+      );
+    }
+
+    return actions;
   }
 }
 

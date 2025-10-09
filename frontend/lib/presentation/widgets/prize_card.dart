@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tickup/data/models/prize.dart';
+import 'package:tickup/data/models/prize_image.dart';
+import 'package:tickup/presentation/features/prize/prize_images_provider.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/presentation/widgets/responsive_card_data.dart';
 
@@ -78,7 +82,7 @@ class PrizeCard extends StatelessWidget {
 
 
 
-class _PrizeCardImage extends StatelessWidget {
+class _PrizeCardImage extends ConsumerWidget {
   const _PrizeCardImage({
     required this.prize,
     required this.imageHeight,
@@ -90,49 +94,103 @@ class _PrizeCardImage extends StatelessWidget {
   final double borderRadius;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final imagesAsync = ref.watch(prizeImagesProvider(prize.prizeId));
+
+    Widget placeholder() => Container(
+          color: Colors.grey[200],
+          alignment: Alignment.center,
+          child: Icon(
+            Icons.image,
+            size: imageHeight * 0.3,
+            color: Colors.grey[400],
+          ),
+        );
+
+    String? resolveUrl(List<PrizeImage> items) {
+      PrizeImage? cover;
+      for (final img in items) {
+        if (cover == null) {
+          cover = img;
+        }
+        if (img.isCover == true) {
+          if (cover.isCover != true) {
+            cover = img;
+            continue;
+          }
+          final currentOrder = cover.sortOrder ?? (1 << 20);
+          final candidateOrder = img.sortOrder ?? (1 << 20);
+          if (candidateOrder < currentOrder) {
+            cover = img;
+          }
+        }
+      }
+
+      final selected = cover;
+      if (selected == null) return null;
+
+      if (selected.url.isNotEmpty && selected.url.startsWith('http')) {
+        return selected.url;
+      }
+
+      if (selected.bucket.isNotEmpty && selected.storagePath.isNotEmpty) {
+        return Supabase.instance.client.storage
+            .from(selected.bucket)
+            .getPublicUrl(selected.storagePath);
+      }
+
+      return null;
+    }
+
+    Widget imageFromUrl(String? url) {
+      if (url == null || url.isEmpty) {
+        return placeholder();
+      }
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: Colors.grey[200],
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (_, __, ___) => Container(
+          color: Colors.grey[200],
+          alignment: Alignment.center,
+          child: Icon(
+            Icons.broken_image,
+            size: imageHeight * 0.3,
+            color: Colors.grey[400],
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: imageHeight,
       width: double.infinity,
       child: ClipRRect(
         borderRadius: BorderRadius.vertical(top: Radius.circular(borderRadius)),
-        child: prize.imageUrl.isNotEmpty && prize.imageUrl.startsWith('http')
-            ? Image.network(
-                prize.imageUrl,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: Colors.grey[200],
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    ),
-                  );
-                },
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey[200],
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.broken_image,
-                    size: imageHeight * 0.3,
-                    color: Colors.grey[400],
-                  ),
-                ),
-              )
-            : Container(
-                color: Colors.grey[200],
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.image,
-                  size: imageHeight * 0.3,
-                  color: Colors.grey[400],
-                ),
-              ),
+        child: imagesAsync.when(
+          loading: placeholder,
+          error: (_, __) => imageFromUrl(
+            prize.imageUrl.isNotEmpty ? prize.imageUrl : null,
+          ),
+          data: (items) {
+            final url = resolveUrl(items) ??
+                (prize.imageUrl.isNotEmpty ? prize.imageUrl : null);
+            return imageFromUrl(url);
+          },
+        ),
       ),
     );
   }

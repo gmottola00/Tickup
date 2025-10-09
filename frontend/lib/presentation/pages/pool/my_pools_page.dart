@@ -112,6 +112,7 @@ class _MyPoolsContent extends ConsumerWidget {
           itemCount: items.length,
           itemBuilder: (_, i) => PoolCard(
             pool: items[i],
+            showLikeButton: false,
             onDelete: () => _confirmDelete(context, ref, items[i]),
             onTap: () => context.push(
               AppRoute.poolDetails(items[i].poolId),
@@ -252,7 +253,6 @@ class _MyPoolsEmpty extends StatelessWidget {
     );
   }
 }
-
 
 
 
