@@ -24,6 +24,7 @@ class AppRoute {
   static const myPrizes = '/my-prizes';
   static const myPools = '/my-pools';
   static const myTickets = '/my-tickets';
+  static const myLikedPools = '/my-liked-pools';
 
   static const wallet = '/wallet';
   static const walletTopups = '/wallet/topups';

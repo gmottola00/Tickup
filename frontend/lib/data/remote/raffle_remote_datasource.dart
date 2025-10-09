@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
+import 'package:tickup/data/models/like_status.dart';
 import 'package:tickup/core/network/dio_client.dart';
 import 'package:tickup/core/config/env_config.dart';
 
@@ -50,6 +51,21 @@ class RaffleRemoteDataSource {
   Future<RafflePool> getPool(String id) async {
     final res = await dio.get('pools/$id');
     return RafflePool.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<LikeStatus> getPoolLikeStatus(String id) async {
+    final res = await dio.get('pools/$id/likes');
+    return LikeStatus.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<LikeStatus> likePool(String id) async {
+    final res = await dio.post('pools/$id/like');
+    return LikeStatus.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<LikeStatus> unlikePool(String id) async {
+    final res = await dio.delete('pools/$id/like');
+    return LikeStatus.fromJson(res.data as Map<String, dynamic>);
   }
 
   Future<List<RafflePool>> getMyPools() async {

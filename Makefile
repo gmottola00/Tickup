@@ -20,6 +20,7 @@ help:
 	@echo "  make serve-web   - serve statico della build su :$(FRONTEND_PORT)"
 	@echo "  make emulator    - avvia emulatore Android"
 	@echo "  make app-run     - Avvia l'app dentro emulatore android"
+	@echo "  make app-run-web - Avvia l'app tramite web(chrome)"
 	@echo "  make qr          - genera QR http://$$(hostname -I | awk '{print $$1}'):$(FRONTEND_PORT)"
 	@echo "  make kill-ports  - libera le porte $(BACKEND_PORT) e $(FRONTEND_PORT)"
 	@echo "  make ip          - stampa IP locale"

@@ -34,7 +34,7 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
         children: [
           Center(
             child: Column(
@@ -98,6 +98,13 @@ class ProfileScreen extends ConsumerWidget {
                   title: const Text('I miei ticket'),
                   subtitle: const Text('Pool a cui stai partecipando'),
                   onTap: () => context.push(AppRoute.myTickets),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.favorite_outline),
+                  title: const Text('I miei preferiti'),
+                  subtitle: const Text('Pool che ti piacciono'),
+                  onTap: () => context.push(AppRoute.myLikedPools),
                 ),
                 const Divider(height: 1),
                 ListTile(

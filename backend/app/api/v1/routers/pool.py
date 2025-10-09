@@ -2,7 +2,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.pool import Pool, PoolCreate
+from app.schemas.pool import Pool, PoolCreate, LikeStatus
 from app.schemas.ticket import Ticket, TicketPurchaseRequest
 from app.services.pool import (
     create_pool,
@@ -11,6 +11,11 @@ from app.services.pool import (
     delete_pool,
     get_all_pool,
     get_pools_by_user,
+)
+from app.services.pool_like import (
+    like_pool as svc_like_pool,
+    unlike_pool as svc_unlike_pool,
+    get_like_status as svc_get_like_status,
 )
 from app.services.ticket import purchase_ticket_for_pool
 from app.api.v1.deps import get_db_dep
@@ -41,6 +46,60 @@ async def read(pool_id: str, db: AsyncSession = Depends(get_db_dep)):
     if not pool:
         raise HTTPException(status_code=404, detail="Pool not found")
     return pool
+
+@router.get("/{pool_id}/likes", response_model=LikeStatus)
+async def read_likes(
+    pool_id: str,
+    db: AsyncSession = Depends(get_db_dep),
+    user_sub: str = Depends(get_current_user_id),
+):
+    try:
+        pool_uuid = UUID(pool_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid pool id")
+    try:
+        user_uuid = UUID(user_sub)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user identifier")
+
+    likes, liked = await svc_get_like_status(db, pool_uuid, user_uuid)
+    return LikeStatus(likes=likes, liked_by_me=liked)
+
+@router.post("/{pool_id}/like", response_model=LikeStatus, status_code=200)
+async def like(
+    pool_id: str,
+    db: AsyncSession = Depends(get_db_dep),
+    user_sub: str = Depends(get_current_user_id),
+):
+    try:
+        pool_uuid = UUID(pool_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid pool id")
+    try:
+        user_uuid = UUID(user_sub)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user identifier")
+
+    likes, liked = await svc_like_pool(db, pool_uuid, user_uuid)
+    return LikeStatus(likes=likes, liked_by_me=liked)
+
+@router.delete("/{pool_id}/like", response_model=LikeStatus, status_code=200)
+async def unlike(
+    pool_id: str,
+    db: AsyncSession = Depends(get_db_dep),
+    user_sub: str = Depends(get_current_user_id),
+):
+    try:
+        pool_uuid = UUID(pool_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid pool id")
+    try:
+        user_uuid = UUID(user_sub)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user identifier")
+
+    likes, liked = await svc_unlike_pool(db, pool_uuid, user_uuid)
+    return LikeStatus(likes=likes, liked_by_me=liked)
 
 @router.put("/{pool_id}", response_model=Pool)
 async def update(pool_id: str, item: PoolCreate, db: AsyncSession = Depends(get_db_dep)):

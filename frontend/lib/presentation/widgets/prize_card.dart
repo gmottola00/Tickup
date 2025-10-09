@@ -1,9 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
+import 'package:tickup/presentation/widgets/responsive_card_data.dart';
 
 class PrizeCard extends StatelessWidget {
   const PrizeCard({super.key, required this.prize, this.onTap, this.onDelete});
@@ -16,119 +15,54 @@ class PrizeCard extends StatelessWidget {
     final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final mediaWidth = MediaQuery.of(context).size.width;
-        final availableWidth =
-            constraints.maxWidth.isFinite ? constraints.maxWidth : mediaWidth;
-        final maxWidth = _responsiveCardWidth(availableWidth);
-        final cardWidth = math.min(availableWidth, maxWidth);
-
-        final maxHeight = constraints.maxHeight.isFinite
-            ? constraints.maxHeight
-            : cardWidth / 0.62;
-        final desiredImageHeight = cardWidth / (16 / 9);
-        final imageHeight = math.max(
-          90.0,
-          math.min(desiredImageHeight, maxHeight * 0.45),
+        final mediaQuery = MediaQuery.of(context);
+        final screenWidth = mediaQuery.size.width;
+        final screenHeight = mediaQuery.size.height;
+        
+        // Calcola dimensioni responsive
+        final responsiveData = calculateResponsiveCardDimensions(
+          screenWidth: screenWidth,
+          screenHeight: screenHeight,
+          availableWidth: constraints.maxWidth.isFinite ? constraints.maxWidth : screenWidth,
+          availableHeight: constraints.maxHeight.isFinite ? constraints.maxHeight : screenHeight,
+          cardType: CardType.prize,
         );
 
         return Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
+            constraints: BoxConstraints(
+              maxWidth: responsiveData.cardWidth,
+              minHeight: responsiveData.minCardHeight,
+            ),
             child: InkWell(
               onTap: onTap ??
                   () => context.push(AppRoute.prizeDetails(prize.prizeId),
                       extra: prize),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(responsiveData.borderRadius),
               splashColor: theme.colorScheme.primary.withOpacity(0.1),
               child: Card(
                 clipBehavior: Clip.antiAlias,
                 elevation: 2,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(responsiveData.borderRadius),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(
-                      height: imageHeight,
-                      width: double.infinity,
-                      child: prize.imageUrl.startsWith('http')
-                          ? Image.network(
-                              prize.imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: Colors.grey[200],
-                                alignment: Alignment.center,
-                                child: const Icon(Icons.broken_image),
-                              ),
-                            )
-                          : Container(
-                              color: Colors.grey[200],
-                              alignment: Alignment.center,
-                              child: const Icon(Icons.image),
-                            ),
+                    _PrizeCardImage(
+                      prize: prize,
+                      imageHeight: responsiveData.imageHeight,
+                      borderRadius: responsiveData.borderRadius,
                     ),
                     Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            prize.title,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            prize.sponsor,
-                            style: theme.textTheme.bodySmall,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 6),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Chip(
-                              label: Text(
-                                  'EUR ${(prize.valueCents / 100).toStringAsFixed(2)}'),
-                              visualDensity: VisualDensity.compact,
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () => context.push(
-                                AppRoute.createPoolForPrize(prize.prizeId),
-                                extra: prize,
-                              ),
-                              icon: const Icon(Icons.add_circle_outline),
-                              label: const Text('Crea pool'),
-                            ),
-                          ),
-                          if (onDelete != null) ...[
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              width: double.infinity,
-                              child: TextButton.icon(
-                                onPressed: onDelete,
-                                icon: const Icon(Icons.delete_outline),
-                                label: const Text('Elimina'),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: theme.colorScheme.error,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
+                      padding: EdgeInsets.all(responsiveData.padding),
+                      child: _PrizeCardContent(
+                        prize: prize,
+                        onDelete: onDelete,
+                        theme: theme,
+                        responsiveData: responsiveData,
                       ),
                     ),
                   ],
@@ -142,11 +76,147 @@ class PrizeCard extends StatelessWidget {
   }
 }
 
-double _responsiveCardWidth(double availableWidth) {
-  if (availableWidth >= 1200) return 780;
-  if (availableWidth >= 992) return 720;
-  if (availableWidth >= 768) return 640;
-  return availableWidth;
+
+
+class _PrizeCardImage extends StatelessWidget {
+  const _PrizeCardImage({
+    required this.prize,
+    required this.imageHeight,
+    required this.borderRadius,
+  });
+
+  final Prize prize;
+  final double imageHeight;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: imageHeight,
+      width: double.infinity,
+      child: ClipRRect(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(borderRadius)),
+        child: prize.imageUrl.isNotEmpty && prize.imageUrl.startsWith('http')
+            ? Image.network(
+                prize.imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: Colors.grey[200],
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (_, __, ___) => Container(
+                  color: Colors.grey[200],
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.broken_image,
+                    size: imageHeight * 0.3,
+                    color: Colors.grey[400],
+                  ),
+                ),
+              )
+            : Container(
+                color: Colors.grey[200],
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.image,
+                  size: imageHeight * 0.3,
+                  color: Colors.grey[400],
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+class _PrizeCardContent extends StatelessWidget {
+  const _PrizeCardContent({
+    required this.prize,
+    required this.onDelete,
+    required this.theme,
+    required this.responsiveData,
+  });
+
+  final Prize prize;
+  final VoidCallback? onDelete;
+  final ThemeData theme;
+  final ResponsiveCardData responsiveData;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          prize.title,
+          style: (responsiveData.titleStyle ?? theme.textTheme.titleMedium)?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        SizedBox(height: responsiveData.spacing * 0.4),
+        Text(
+          prize.sponsor,
+          style: responsiveData.bodyTextStyle ?? theme.textTheme.bodySmall,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        SizedBox(height: responsiveData.spacing * 0.6),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Chip(
+            label: Text(
+              'EUR ${(prize.valueCents / 100).toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: (responsiveData.bodyTextStyle?.fontSize ?? 12) * 0.9,
+              ),
+            ),
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+        SizedBox(height: responsiveData.spacing),
+        SizedBox(
+          width: double.infinity,
+          height: responsiveData.buttonHeight,
+          child: OutlinedButton.icon(
+            onPressed: () => context.push(
+              AppRoute.createPoolForPrize(prize.prizeId),
+              extra: prize,
+            ),
+            icon: const Icon(Icons.add_circle_outline),
+            label: const Text('Crea pool'),
+          ),
+        ),
+        if (onDelete != null) ...[
+          SizedBox(height: responsiveData.spacing * 0.6),
+          SizedBox(
+            width: double.infinity,
+            height: responsiveData.buttonHeight,
+            child: TextButton.icon(
+              onPressed: onDelete,
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Elimina'),
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.error,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class PrizeCardSkeleton extends StatelessWidget {
@@ -154,44 +224,88 @@ class PrizeCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        children: [
-          Container(
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mediaQuery = MediaQuery.of(context);
+        final screenWidth = mediaQuery.size.width;
+        
+        final responsiveData = calculateResponsiveCardDimensions(
+          screenWidth: screenWidth,
+          screenHeight: mediaQuery.size.height,
+          availableWidth: constraints.maxWidth.isFinite ? constraints.maxWidth : screenWidth,
+          availableHeight: constraints.maxHeight.isFinite ? constraints.maxHeight : mediaQuery.size.height,
+          cardType: CardType.prize,
+        );
+
+        return Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(responsiveData.borderRadius)
+          ),
+          child: Container(
+            width: responsiveData.cardWidth,
+            height: responsiveData.minCardHeight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Skeleton per l'immagine
+                Container(
+                  height: responsiveData.imageHeight,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(responsiveData.borderRadius)
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(responsiveData.padding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Skeleton per il titolo
+                        Container(
+                          height: 16,
+                          width: double.infinity * 0.8,
+                          color: Colors.grey.shade300,
+                        ),
+                        SizedBox(height: responsiveData.spacing * 0.4),
+                        // Skeleton per lo sponsor
+                        Container(
+                          height: 14,
+                          width: double.infinity * 0.6,
+                          color: Colors.grey.shade300,
+                        ),
+                        SizedBox(height: responsiveData.spacing * 0.6),
+                        // Skeleton per il chip del prezzo
+                        Container(
+                          height: 24,
+                          width: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        const Spacer(),
+                        // Skeleton per il pulsante
+                        Container(
+                          height: responsiveData.buttonHeight,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                      height: 12, width: 120, color: Colors.grey.shade300),
-                  const SizedBox(height: 8),
-                  Container(height: 10, width: 80, color: Colors.grey.shade300),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      Container(
-                          height: 24, width: 60, color: Colors.grey.shade300),
-                      const SizedBox(width: 8),
-                      Container(
-                          height: 24, width: 80, color: Colors.grey.shade300),
-                    ],
-                  )
-                ],
-              ),
-            ),
-          )
-        ],
-      ),
+        );
+      },
     );
   }
 }

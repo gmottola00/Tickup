@@ -1,48 +1,43 @@
-﻿import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tickup/presentation/features/pool/pool_provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
-import 'package:tickup/presentation/widgets/pool_card.dart';
 import 'package:tickup/presentation/features/pool/pool_like_provider.dart';
+import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/presentation/widgets/card_grid_config.dart';
+import 'package:tickup/presentation/widgets/pool_card.dart';
 
-class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+class LikedPoolsPage extends ConsumerWidget {
+  const LikedPoolsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final poolsAsync = ref.watch(poolsProvider);
-
+    final likedPools = ref.watch(likedPoolsProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tickup'),
-        centerTitle: false,
+        title: const Text('I miei preferiti'),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(poolsProvider);
-          await ref.read(poolsProvider.future);
+          ref.invalidate(likedPoolsProvider);
+          await ref.read(likedPoolsProvider.future);
         },
-        child: poolsAsync.when(
-          loading: () => const _HomeLoading(),
-          error: (e, _) => _HomeError(
+        child: likedPools.when(
+          loading: () => const _LikedPoolsLoading(),
+          error: (e, _) => _LikedPoolsError(
             error: e.toString(),
-            onRetry: () {
-              ref.invalidate(poolsProvider);
-            },
+            onRetry: () => ref.invalidate(likedPoolsProvider),
           ),
-          data: (items) => _HomeContent(items: items),
+          data: (items) => _LikedPoolsContent(items: items),
         ),
       ),
     );
   }
 }
 
-class _HomeLoading extends StatelessWidget {
-  const _HomeLoading();
-
+class _LikedPoolsLoading extends StatelessWidget {
+  const _LikedPoolsLoading();
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -65,8 +60,8 @@ class _HomeLoading extends StatelessWidget {
   }
 }
 
-class _HomeError extends StatelessWidget {
-  const _HomeError({required this.error, required this.onRetry});
+class _LikedPoolsError extends StatelessWidget {
+  const _LikedPoolsError({required this.error, required this.onRetry});
   final String error;
   final VoidCallback onRetry;
 
@@ -76,7 +71,7 @@ class _HomeError extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.cloud_off, size: 48),
+          const Icon(Icons.error_outline, size: 48),
           const SizedBox(height: 12),
           Text('Errore: $error'),
           const SizedBox(height: 12),
@@ -91,14 +86,14 @@ class _HomeError extends StatelessWidget {
   }
 }
 
-class _HomeContent extends ConsumerWidget {
-  const _HomeContent({required this.items});
+class _LikedPoolsContent extends ConsumerWidget {
+  const _LikedPoolsContent({required this.items});
   final List<RafflePool> items;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (items.isEmpty) {
-      return const _EmptyState();
+      return const _LikedPoolsEmpty();
     }
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -116,13 +111,17 @@ class _HomeContent extends ConsumerWidget {
           itemBuilder: (_, i) {
             final pool = items[i];
             final like = ref.watch(poolLikeProvider(pool.poolId));
-            final effectivePool = like != null
+            final effective = like != null
                 ? pool.copyWith(likes: like.likes, likedByMe: like.likedByMe)
                 : pool;
             return PoolCard(
-              pool: effectivePool,
+              pool: effective,
               isLiked: like?.likedByMe ?? pool.likedByMe,
-              onToggleLike: () => ref.read(poolLikeProvider(pool.poolId).notifier).toggle(),
+              onToggleLike: () async {
+                await ref.read(poolLikeProvider(pool.poolId).notifier).toggle();
+                // Refresh the whole list in case item moved out
+                ref.invalidate(likedPoolsProvider);
+              },
               onTap: () => context.push(
                 AppRoute.poolDetails(pool.poolId),
                 extra: pool,
@@ -135,8 +134,8 @@ class _HomeContent extends ConsumerWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+class _LikedPoolsEmpty extends StatelessWidget {
+  const _LikedPoolsEmpty();
 
   @override
   Widget build(BuildContext context) {
@@ -144,21 +143,20 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.confirmation_number_outlined, size: 64),
+          const Icon(Icons.favorite_border, size: 64),
           const SizedBox(height: 12),
           Text(
-            'Nessun pool disponibile',
+            'Nessun preferito',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           Text(
-            'Crea un pool per iniziare a vendere ticket',
+            'Tocca il cuore su un pool per aggiungerlo ai preferiti',
             style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 }
-
-// Card UI moved to reusable widget in presentation/widgets/pool_card.dart

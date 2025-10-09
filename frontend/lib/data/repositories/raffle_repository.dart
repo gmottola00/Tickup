@@ -1,4 +1,5 @@
 import 'package:tickup/data/models/raffle_pool.dart';
+import 'package:tickup/data/models/like_status.dart';
 import 'package:tickup/data/remote/raffle_remote_datasource.dart';
 
 class RaffleRepository {
@@ -11,4 +12,28 @@ class RaffleRepository {
   Future<void> updatePool(String id, RafflePool pool) =>
       _remote.updatePool(id, pool);
   Future<void> deletePool(String id) => _remote.deletePool(id);
+
+  // Likes
+  Future<LikeStatus> fetchLikeStatus(String id) => _remote.getPoolLikeStatus(id);
+  Future<LikeStatus> likePool(String id) => _remote.likePool(id);
+  Future<LikeStatus> unlikePool(String id) => _remote.unlikePool(id);
+
+  Future<List<RafflePool>> fetchLikedPools() async {
+    final all = await fetchPools();
+    if (all.isEmpty) return const [];
+    final statuses = await Future.wait(
+      all.map((p) async {
+        try {
+          final s = await fetchLikeStatus(p.poolId);
+          return MapEntry(p, s);
+        } catch (_) {
+          return MapEntry(p, const LikeStatus(likes: 0, likedByMe: false));
+        }
+      }),
+    );
+    return statuses
+        .where((e) => e.value.likedByMe)
+        .map((e) => e.key.copyWith(likes: e.value.likes, likedByMe: true))
+        .toList();
+  }
 }

@@ -19,3 +19,8 @@ class Pool(PoolBase):
 
     class Config:
         orm_mode = True
+
+
+class LikeStatus(BaseModel):
+    likes: int
+    liked_by_me: bool
