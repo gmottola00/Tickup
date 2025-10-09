@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tickup/data/models/prize_image.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
+import 'package:tickup/presentation/features/prize/prize_images_provider.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
 import 'package:tickup/presentation/widgets/responsive_card_data.dart';
 
@@ -29,13 +32,17 @@ class PoolCard extends StatelessWidget {
         final mediaQuery = MediaQuery.of(context);
         final screenWidth = mediaQuery.size.width;
         final screenHeight = mediaQuery.size.height;
-        
+
         // Calcola dimensioni responsive
         final responsiveData = calculateResponsiveCardDimensions(
           screenWidth: screenWidth,
           screenHeight: screenHeight,
-          availableWidth: constraints.maxWidth.isFinite ? constraints.maxWidth : screenWidth,
-          availableHeight: constraints.maxHeight.isFinite ? constraints.maxHeight : screenHeight,
+          availableWidth: constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : screenWidth,
+          availableHeight: constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : screenHeight,
           cardType: CardType.pool,
         );
 
@@ -61,7 +68,7 @@ class PoolCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _PoolCardHeader(
-                        pool: pool, 
+                        pool: pool,
                         imageHeight: responsiveData.imageHeight,
                         titleStyle: responsiveData.titleStyle,
                       ),
@@ -88,7 +95,6 @@ class PoolCard extends StatelessWidget {
     );
   }
 }
-
 
 class _PoolCardBody extends StatelessWidget {
   const _PoolCardBody({
@@ -130,12 +136,14 @@ class _PoolCardBody extends StatelessWidget {
         SizedBox(height: spacing * 0.3),
         Text(
           '${pool.ticketsSold}/${pool.ticketsRequired} venduti',
-          style: textStyle?.copyWith(fontSize: (textStyle?.fontSize ?? 14) * 0.9),
+          style:
+              textStyle?.copyWith(fontSize: (textStyle?.fontSize ?? 14) * 0.9),
         ),
         SizedBox(height: spacing * 0.3),
         Text(
           '${pool.likes} mi piace',
-          style: textStyle?.copyWith(fontSize: (textStyle?.fontSize ?? 14) * 0.9),
+          style:
+              textStyle?.copyWith(fontSize: (textStyle?.fontSize ?? 14) * 0.9),
         ),
         SizedBox(height: spacing),
         Row(
@@ -208,7 +216,7 @@ class _PoolCardBody extends StatelessWidget {
 
 class _PoolCardHeader extends ConsumerWidget {
   const _PoolCardHeader({
-    required this.pool, 
+    required this.pool,
     required this.imageHeight,
     this.titleStyle,
   });
@@ -229,23 +237,24 @@ class _PoolCardHeader extends ConsumerWidget {
       );
     }
 
-    Widget placeholder() => buildImage(
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              color: Colors.grey.shade300,
-              child: Center(
-                child: Icon(
-                  Icons.image,
-                  size: imageHeight * 0.3,
-                  color: Colors.grey.shade500,
-                ),
+    Widget placeholderContent() => ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            color: Colors.grey.shade300,
+            child: Center(
+              child: Icon(
+                Icons.image,
+                size: imageHeight * 0.3,
+                color: Colors.grey.shade500,
               ),
             ),
           ),
         );
 
+    Widget placeholder() => buildImage(placeholderContent());
+
     final prizeAsync = ref.watch(prizeProvider(pool.prizeId));
+    final imagesAsync = ref.watch(prizeImagesProvider(pool.prizeId));
 
     return prizeAsync.when(
       loading: () => _HeaderContent(
@@ -261,36 +270,78 @@ class _PoolCardHeader extends ConsumerWidget {
         titleStyle: titleStyle,
       ),
       data: (prize) {
-        final url = prize.imageUrl;
-        final image = buildImage(
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: url.isNotEmpty && url.startsWith('http')
-                ? Image.network(
-                    url,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        color: Colors.grey.shade300,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) => placeholder(),
-                  )
-                : placeholder(),
-          ),
+        String? resolveCover(List<PrizeImage> items) {
+          PrizeImage? candidate;
+          for (final img in items) {
+            if (candidate == null) {
+              candidate = img;
+            }
+            if (img.isCover == true) {
+              if (candidate.isCover != true) {
+                candidate = img;
+                continue;
+              }
+              final currentOrder = candidate.sortOrder ?? (1 << 20);
+              final candidateOrder = img.sortOrder ?? (1 << 20);
+              if (candidateOrder < currentOrder) {
+                candidate = img;
+              }
+            }
+          }
+
+          final selected = candidate;
+          if (selected == null) return null;
+
+          if (selected.url.isNotEmpty && selected.url.startsWith('http')) {
+            return selected.url;
+          }
+
+          if (selected.bucket.isNotEmpty && selected.storagePath.isNotEmpty) {
+            return Supabase.instance.client.storage
+                .from(selected.bucket)
+                .getPublicUrl(selected.storagePath);
+          }
+
+          return null;
+        }
+
+        String? coverUrl = imagesAsync.maybeWhen(
+          data: resolveCover,
+          orElse: () => null,
         );
 
+        coverUrl ??= prize.imageUrl.isNotEmpty ? prize.imageUrl : null;
+
+        Widget content;
+        if (coverUrl != null && coverUrl.isNotEmpty) {
+          content = ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              coverUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  color: Colors.grey.shade300,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stack) => placeholderContent(),
+            ),
+          );
+        } else {
+          content = placeholderContent();
+        }
+
         return _HeaderContent(
-          image: image,
+          image: buildImage(content),
           title: prize.title,
           theme: theme,
           titleStyle: titleStyle,
@@ -302,8 +353,8 @@ class _PoolCardHeader extends ConsumerWidget {
 
 class _HeaderContent extends StatelessWidget {
   const _HeaderContent({
-    required this.image, 
-    required this.title, 
+    required this.image,
+    required this.title,
     required this.theme,
     this.titleStyle,
   });
@@ -340,12 +391,16 @@ class PoolCardSkeleton extends StatelessWidget {
       builder: (context, constraints) {
         final mediaQuery = MediaQuery.of(context);
         final screenWidth = mediaQuery.size.width;
-        
+
         final responsiveData = calculateResponsiveCardDimensions(
           screenWidth: screenWidth,
           screenHeight: mediaQuery.size.height,
-          availableWidth: constraints.maxWidth.isFinite ? constraints.maxWidth : screenWidth,
-          availableHeight: constraints.maxHeight.isFinite ? constraints.maxHeight : mediaQuery.size.height,
+          availableWidth: constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : screenWidth,
+          availableHeight: constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : mediaQuery.size.height,
           cardType: CardType.pool,
         );
 
