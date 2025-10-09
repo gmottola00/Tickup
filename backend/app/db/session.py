@@ -4,7 +4,7 @@ from typing import AsyncGenerator
 
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=True,
+    echo=False,
     connect_args={
         "statement_cache_size": 0,
         "prepared_statement_cache_size": 0,

@@ -4,17 +4,12 @@ load_dotenv()
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import SecretStr, Field
 import logging
-import os
 
 logging.basicConfig(
-    level=logging.INFO, 
+    level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s | %(message)s",
 )
 logger = logging.getLogger(__name__)
-logger.info("ENV vars loaded: %r", {
-    k: os.getenv(k) for k in
-    ["DATABASE_URL","SUPABASE_URL","SUPABASE_KEY","SUPABASE_JWT", "SUPABASE_PSW"] 
-})
 
 class Settings(BaseSettings):
     # carica .env, ignora eventuali chiavi non dichiarate
@@ -22,7 +17,7 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="ignore",
     )
-    logger.info(model_config)
+    # logger.debug(model_config)
     # valori di default
     PROJECT_NAME: str = "Tickup API"
     VERSION: str = "1.0.0"
@@ -33,5 +28,9 @@ class Settings(BaseSettings):
     SUPABASE_URL: str       = Field(..., env="SUPABASE_URL")
     SUPABASE_KEY: SecretStr = Field(..., env="SUPABASE_KEY")
     SUPABASE_JWT: str       = Field(..., env="SUPABASE_JWT")
+    # Optional service-role key for server-side storage operations
+    SUPABASE_SERVICE_ROLE_KEY: SecretStr | None = Field(
+        default=None, env="SUPABASE_SERVICE_ROLE_KEY"
+    )
 
 settings = Settings()
