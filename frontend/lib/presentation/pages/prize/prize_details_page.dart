@@ -5,6 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:tickup/core/network/auth_service.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
+import 'package:tickup/presentation/features/prize/prize_images_provider.dart';
+import 'package:tickup/data/models/prize_image.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 
 class PrizeDetailsPage extends ConsumerWidget {
   const PrizeDetailsPage({super.key, required this.prizeId, this.initial});
@@ -82,6 +87,24 @@ class _PrizeDetailsViewState extends ConsumerState<_PrizeDetailsView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final priceEur = (_prize.valueCents / 100).toStringAsFixed(2);
+    // Prefer cover image from gallery if present (public bucket)
+    final imagesAsync = ref.watch(prizeImagesProvider(_prize.prizeId));
+    String? headerImageUrl;
+    imagesAsync.when(
+      data: (items) {
+        for (final img in items) {
+          if (img.isCover && img.bucket == 'public-images') {
+            final client = Supabase.instance.client;
+            headerImageUrl = client.storage
+                .from('public-images')
+                .getPublicUrl(img.storagePath);
+            break;
+          }
+        }
+      },
+      loading: () {},
+      error: (_, __) {},
+    );
 
     return Scaffold(
       body: CustomScrollView(
@@ -103,9 +126,9 @@ class _PrizeDetailsViewState extends ConsumerState<_PrizeDetailsView> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  _prize.imageUrl.startsWith('http')
+                  (headerImageUrl ?? _prize.imageUrl).startsWith('http')
                       ? Image.network(
-                          _prize.imageUrl,
+                          headerImageUrl ?? _prize.imageUrl,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                             color: Colors.grey[200],
@@ -145,6 +168,9 @@ class _PrizeDetailsViewState extends ConsumerState<_PrizeDetailsView> {
                 onPressed: () => HapticFeedback.lightImpact(),
               ),
             ],
+          ),
+          SliverToBoxAdapter(
+            child: _PrizeGallerySection(prizeId: _prize.prizeId),
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -192,6 +218,409 @@ class _PrizeDetailsViewState extends ConsumerState<_PrizeDetailsView> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PrizeGallerySection extends ConsumerWidget {
+  const _PrizeGallerySection({required this.prizeId});
+  final String prizeId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final imagesAsync = ref.watch(prizeImagesControllerProvider(prizeId));
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Galleria', style: theme.textTheme.titleLarge),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => _openReorder(context, ref),
+                    icon: const Icon(Icons.swap_vert),
+                    tooltip: 'Riordina',
+                  ),
+                  IconButton(
+                    onPressed: () => _pickAndUpload(context, ref),
+                    icon: const Icon(Icons.add_photo_alternate_outlined),
+                    tooltip: 'Aggiungi immagini',
+                  ),
+                ],
+              )
+            ],
+          ),
+          const SizedBox(height: 8),
+          imagesAsync.when(
+            loading: () => const Center(child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(),
+            )),
+            error: (e, _) => Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Errore galleria: $e')),
+                TextButton(
+                  onPressed: () => ref
+                      .read(prizeImagesControllerProvider(prizeId).notifier)
+                      .refresh(),
+                  child: const Text('Riprova'),
+                )
+              ],
+            ),
+            data: (items) {
+              if (items.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.photo_library_outlined),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                          child: Text('Nessuna immagine. Aggiungi dalla galleria.')),
+                      TextButton.icon(
+                        onPressed: () => _pickAndUpload(context, ref),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Aggiungi'),
+                      )
+                    ],
+                  ),
+                );
+              }
+              final width = MediaQuery.of(context).size.width;
+              final crossAxisCount = width < 600 ? 2 : (width < 900 ? 3 : 4);
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 1.2,
+                ),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final img = items[index];
+                  return _PrizeImageTile(
+                    image: img,
+                    onSetCover: () => ref
+                        .read(prizeImagesControllerProvider(prizeId).notifier)
+                        .setCover(img.imageId),
+                    onDelete: () => ref
+                        .read(prizeImagesControllerProvider(prizeId).notifier)
+                        .delete(img.imageId),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickAndUpload(BuildContext context, WidgetRef ref) async {
+    final picker = ImagePicker();
+    try {
+      final picked = await picker.pickMultiImage(imageQuality: 85);
+      if (picked.isEmpty) return;
+
+      final client = Supabase.instance.client;
+      final user = client.auth.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Utente non autenticato')));
+        return;
+      }
+
+      final List<PrizeImageCreate> dtos = [];
+      for (final x in picked) {
+        final ext = _ext(x.name);
+        final key = 'prizes/$prizeId/${const Uuid().v4()}.$ext';
+        final bytes = await x.readAsBytes();
+
+        await client.storage.from('public-images').uploadBinary(
+              key,
+              bytes,
+              fileOptions: FileOptions(
+                upsert: false,
+                cacheControl: 'public, max-age=3600',
+                contentType: _contentType(ext),
+              ),
+            );
+        final publicUrl = client.storage.from('public-images').getPublicUrl(key);
+        dtos.add(PrizeImageCreate(
+          bucket: 'public-images',
+          storagePath: key,
+          url: publicUrl,
+        ));
+      }
+
+      final saved = await ref
+          .read(prizeImagesControllerProvider(prizeId).notifier)
+          .addImages(dtos);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Immagini salvate: $saved/${dtos.length}')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Errore upload: $e')));
+      }
+    }
+  }
+
+  Future<void> _openReorder(BuildContext context, WidgetRef ref) async {
+    final images = ref.read(prizeImagesControllerProvider(prizeId)).valueOrNull;
+    if (images == null || images.isEmpty) return;
+    final list = [...images];
+    final result = await showModalBottomSheet<List<PrizeImage>>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scroll) {
+            return Column(
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  height: 4,
+                  width: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text('Riordina immagini', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: ReorderableListView.builder(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    itemBuilder: (context, index) {
+                      final img = list[index];
+                      return ListTile(
+                        key: ValueKey(img.imageId),
+                        leading: SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: _thumb(img),
+                        ),
+                        title: Text(img.storagePath.split('/').last),
+                        subtitle: Text(img.isCover ? 'Cover' : ''),
+                        trailing: const Icon(Icons.drag_handle),
+                      );
+                    },
+                    itemCount: list.length,
+                    onReorder: (oldIndex, newIndex) {
+                      if (newIndex > oldIndex) newIndex -= 1;
+                      final item = list.removeAt(oldIndex);
+                      list.insert(newIndex, item);
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(null),
+                          child: const Text('Annulla'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () => Navigator.of(context).pop(list),
+                          child: const Text('Salva ordine'),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (result == null) return;
+    final items = <PrizeImageReorderItem>[];
+    for (int i = 0; i < result.length; i++) {
+      items.add(PrizeImageReorderItem(imageId: result[i].imageId, sortOrder: i + 1));
+    }
+    await ref.read(prizeImagesControllerProvider(prizeId).notifier).reorder(items);
+  }
+
+  String _ext(String name) {
+    final i = name.lastIndexOf('.');
+    if (i == -1) return 'jpg';
+    return name.substring(i + 1).toLowerCase();
+  }
+
+  String _contentType(String ext) {
+    switch (ext) {
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      default:
+        return 'image/jpeg';
+    }
+  }
+
+  Widget _thumb(PrizeImage img) {
+    final client = Supabase.instance.client;
+    if (img.bucket == 'private-images') {
+      return FutureBuilder<String>(
+        future: client.storage
+            .from('private-images')
+            .createSignedUrl(img.storagePath, 3600)
+            .then((v) => v),
+        builder: (context, snap) {
+          final url = snap.data ?? '';
+          if (url.isEmpty) return _thumbPlaceholder();
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(url, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _thumbPlaceholder(),),
+          );
+        },
+      );
+    } else {
+      final publicUrl = client.storage.from('public-images').getPublicUrl(img.storagePath);
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(publicUrl, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _thumbPlaceholder(),),
+      );
+    }
+  }
+
+  Widget _thumbPlaceholder() => Container(
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(Icons.image, color: Colors.grey),
+      );
+}
+
+class _PrizeImageTile extends ConsumerWidget {
+  const _PrizeImageTile({
+    required this.image,
+    required this.onSetCover,
+    required this.onDelete,
+  });
+  final PrizeImage image;
+  final VoidCallback onSetCover;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final client = Supabase.instance.client;
+    // Resolve display URL based on bucket type
+    String? publicUrl;
+    if (image.bucket == 'public-images') {
+      publicUrl = client.storage.from('public-images').getPublicUrl(image.storagePath);
+    }
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: image.bucket == 'private-images'
+                ? FutureBuilder<String>(
+                    future: client.storage
+                        .from('private-images')
+                        .createSignedUrl(image.storagePath, 3600)
+                        .then((v) => v),
+                    builder: (context, snap) {
+                      final url = snap.data ?? '';
+                      if (url.isEmpty) {
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                        );
+                      }
+                      return Image.network(
+                        url,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey.shade200,
+                          child: const Center(child: Icon(Icons.broken_image)),
+                        ),
+                      );
+                    },
+                  )
+                : Image.network(
+                    publicUrl ?? image.url,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey.shade200,
+                      child: const Center(child: Icon(Icons.broken_image)),
+                    ),
+                  ),
+          ),
+        ),
+        if (image.isCover)
+          Positioned(
+            left: 8,
+            top: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'Cover',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        Positioned(
+          right: 0,
+          top: 0,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton.filledTonal(
+                onPressed: image.isCover ? null : onSetCover,
+                icon: const Icon(Icons.star),
+                tooltip: 'Imposta come cover',
+              ),
+              const SizedBox(width: 4),
+              IconButton.filledTonal(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline),
+                tooltip: 'Elimina',
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
