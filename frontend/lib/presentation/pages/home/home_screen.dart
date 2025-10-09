@@ -1,8 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tickup/presentation/features/pool/pool_provider.dart';
+import 'package:tickup/data/models/like_status.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
+import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/presentation/widgets/pool_card.dart';
 import 'package:tickup/presentation/features/pool/pool_like_provider.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
@@ -115,14 +116,22 @@ class _HomeContent extends ConsumerWidget {
           itemCount: items.length,
           itemBuilder: (_, i) {
             final pool = items[i];
-            final like = ref.watch(poolLikeProvider(pool.poolId));
-            final effectivePool = like != null
-                ? pool.copyWith(likes: like.likes, likedByMe: like.likedByMe)
-                : pool;
+            final params = PoolLikeParams(
+              poolId: pool.poolId,
+              initial: LikeStatus(
+                likes: pool.likes,
+                likedByMe: pool.likedByMe,
+              ),
+            );
+            final like = ref.watch(poolLikeProvider(params));
+            final effectivePool = pool.copyWith(
+              likes: like.likes,
+              likedByMe: like.likedByMe,
+            );
             return PoolCard(
               pool: effectivePool,
-              isLiked: like?.likedByMe ?? pool.likedByMe,
-              onToggleLike: () => ref.read(poolLikeProvider(pool.poolId).notifier).toggle(),
+              isLiked: like.likedByMe,
+              onToggleLike: () => ref.read(poolLikeProvider(params).notifier).toggle(),
               onTap: () => context.push(
                 AppRoute.poolDetails(pool.poolId),
                 extra: pool,
