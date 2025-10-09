@@ -10,6 +10,10 @@ final prizesProvider = FutureProvider<List<Prize>>((ref) async {
   return ref.read(prizeRepositoryProvider).fetchPrizes();
 });
 
+final prizeProvider = FutureProvider.family<Prize, String>((ref, id) async {
+  return ref.read(prizeRepositoryProvider).fetchPrize(id);
+});
+
 final myPrizesProvider = FutureProvider<List<Prize>>((ref) async {
   return ref.read(prizeRepositoryProvider).fetchMyPrizes();
 });

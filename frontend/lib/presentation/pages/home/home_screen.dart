@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tickup/data/models/like_status.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/presentation/widgets/pool_card.dart';
@@ -116,14 +115,7 @@ class _HomeContent extends ConsumerWidget {
           itemCount: items.length,
           itemBuilder: (_, i) {
             final pool = items[i];
-            final params = PoolLikeParams(
-              poolId: pool.poolId,
-              initial: LikeStatus(
-                likes: pool.likes,
-                likedByMe: pool.likedByMe,
-              ),
-            );
-            final like = ref.watch(poolLikeProvider(params));
+            final like = ref.watch(poolLikeProvider(pool.poolId));
             final effectivePool = pool.copyWith(
               likes: like.likes,
               likedByMe: like.likedByMe,
@@ -131,7 +123,7 @@ class _HomeContent extends ConsumerWidget {
             return PoolCard(
               pool: effectivePool,
               isLiked: like.likedByMe,
-              onToggleLike: () => ref.read(poolLikeProvider(params).notifier).toggle(),
+              onToggleLike: () => ref.read(poolLikeProvider(pool.poolId).notifier).toggle(),
               onTap: () => context.push(
                 AppRoute.poolDetails(pool.poolId),
                 extra: pool,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
 import 'package:tickup/presentation/widgets/responsive_card_data.dart';
@@ -189,61 +188,55 @@ class _PoolCardHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FutureBuilder<Prize>(
-      future: ref.read(prizeRepositoryProvider).fetchPrize(pool.prizeId),
-      builder: (context, snapshot) {
-        final theme = Theme.of(context);
+    final theme = Theme.of(context);
 
-        Widget buildImage(Widget child) {
-          return SizedBox(
-            height: imageHeight,
-            width: double.infinity,
-            child: child,
-          );
-        }
+    Widget buildImage(Widget child) {
+      return SizedBox(
+        height: imageHeight,
+        width: double.infinity,
+        child: child,
+      );
+    }
 
-        Widget placeholder() => buildImage(
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  color: Colors.grey.shade300,
-                  child: Center(
-                    child: Icon(
-                      Icons.image,
-                      size: imageHeight * 0.3,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
+    Widget placeholder() => buildImage(
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              color: Colors.grey.shade300,
+              child: Center(
+                child: Icon(
+                  Icons.image,
+                  size: imageHeight * 0.3,
+                  color: Colors.grey.shade500,
                 ),
               ),
-            );
+            ),
+          ),
+        );
 
-        if (snapshot.connectionState != ConnectionState.done) {
-          return _HeaderContent(
-            image: placeholder(),
-            title: 'Caricamento...',
-            theme: theme,
-            titleStyle: titleStyle,
-          );
-        }
+    final prizeAsync = ref.watch(prizeProvider(pool.prizeId));
 
-        if (snapshot.hasError || !snapshot.hasData) {
-          return _HeaderContent(
-            image: placeholder(),
-            title: 'Premio non disponibile',
-            theme: theme,
-            titleStyle: titleStyle,
-          );
-        }
-
-        final prize = snapshot.data!;
+    return prizeAsync.when(
+      loading: () => _HeaderContent(
+        image: placeholder(),
+        title: 'Caricamento...',
+        theme: theme,
+        titleStyle: titleStyle,
+      ),
+      error: (_, __) => _HeaderContent(
+        image: placeholder(),
+        title: 'Premio non disponibile',
+        theme: theme,
+        titleStyle: titleStyle,
+      ),
+      data: (prize) {
         final url = prize.imageUrl;
         final image = buildImage(
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: url.isNotEmpty && url.startsWith('http')
                 ? Image.network(
-                    url, 
+                    url,
                     fit: BoxFit.cover,
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
@@ -253,7 +246,7 @@ class _PoolCardHeader extends ConsumerWidget {
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
                                 ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
+                                    loadingProgress.expectedTotalBytes!
                                 : null,
                           ),
                         ),

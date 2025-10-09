@@ -1,33 +1,44 @@
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/data/models/like_status.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
 
-class PoolLikeParams {
-  const PoolLikeParams({required this.poolId, required this.initial});
-
-  final String poolId;
-  final LikeStatus initial;
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is PoolLikeParams &&
-        other.poolId == poolId &&
-        other.initial.likes == initial.likes &&
-        other.initial.likedByMe == initial.likedByMe;
+LikeStatus _initialLike(Ref ref, String poolId) {
+  LikeStatus? fromAsync(AsyncValue<List<RafflePool>> asyncValue) {
+    return asyncValue.maybeWhen(
+      data: (items) {
+        for (final pool in items) {
+          if (pool.poolId == poolId) {
+            return LikeStatus(likes: pool.likes, likedByMe: pool.likedByMe);
+          }
+        }
+        return null;
+      },
+      orElse: () => null,
+    );
   }
 
-  @override
-  int get hashCode => Object.hash(poolId, initial.likes, initial.likedByMe);
+  final candidates = <AsyncValue<List<RafflePool>>>[
+    ref.read(poolsProvider),
+    ref.read(likedPoolsProvider),
+    ref.read(myPoolsProvider),
+  ];
+
+  for (final candidate in candidates) {
+    final match = fromAsync(candidate);
+    if (match != null) return match;
+  }
+
+  return const LikeStatus(likes: 0, likedByMe: false);
 }
 
 class PoolLikeController extends StateNotifier<LikeStatus> {
-  PoolLikeController(this.ref, this.params) : super(params.initial);
+  PoolLikeController(this.ref, this.poolId) : super(_initialLike(ref, poolId));
 
-  final PoolLikeParams params;
   final Ref ref;
+  final String poolId;
 
   Future<void> toggle() async {
     final repo = ref.read(raffleRepositoryProvider);
@@ -39,8 +50,8 @@ class PoolLikeController extends StateNotifier<LikeStatus> {
     state = optimistic;
     try {
       final res = before.likedByMe
-          ? await repo.unlikePool(params.poolId)
-          : await repo.likePool(params.poolId);
+          ? await repo.unlikePool(poolId)
+          : await repo.likePool(poolId);
       state = res;
     } catch (_) {
       state = before;
@@ -48,6 +59,6 @@ class PoolLikeController extends StateNotifier<LikeStatus> {
   }
 }
 
-final poolLikeProvider = StateNotifierProvider.family<PoolLikeController, LikeStatus, PoolLikeParams>(
-  (ref, params) => PoolLikeController(ref, params),
+final poolLikeProvider = StateNotifierProvider.family<PoolLikeController, LikeStatus, String>(
+  (ref, poolId) => PoolLikeController(ref, poolId),
 );
