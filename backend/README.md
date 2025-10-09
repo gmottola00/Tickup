@@ -1,6 +1,69 @@
 # Tickup Backend
 
-Backend API di Tickup costruita con **FastAPI**, **SQLAlchemy async**, **Alembic** e Supabase/PostgreSQL. Espone endpoint REST per gestire premi, pool a biglietti, acquisti e assegnazione ticket.
+Backend REST di Tickup costruito con **FastAPI**, **SQLAlchemy async** e **PostgreSQL/Supabase**.  
+Gestisce il cuore della piattaforma: premi, pool di biglietti, ticket, acquisti, likes e componenti wallet.
+
+---
+
+## Stack & principali dipendenze
+
+- **FastAPI** per routing e OpenAPI (Swagger su `/docs`, ReDoc su `/redoc`).
+- **SQLAlchemy 2 async** + **Alembic** per ORM e migrazioni.
+- **Poetry** per la gestione del virtualenv e delle dipendenze.
+- **Supabase** come identity provider (JWT), storage e database managed.
+
+---
+
+## Requisiti
+
+| Tool      | Versione | Note                                          |
+|-----------|----------|-----------------------------------------------|
+| Python    | ≥ 3.10   | Utilizza la sintassi `match`, type hints 3.10 |
+| Poetry    | ≥ 1.6    | Consigliato usare `pipx install poetry`       |
+| PostgreSQL| 13+      | In locale o via Supabase                      |
+| Make      | opzionale| Consente di usare i target condivisi          |
+
+---
+
+## Prime operazioni
+
+1. **Installazione dipendenze**
+   ```bash
+   cd backend
+   poetry install
+   ```
+   In alternativa dalla root del monorepo:
+   ```bash
+   make install
+   ```
+
+2. **Configura l’ambiente**  
+   Crea `backend/.env` con le variabili necessarie:
+   ```dotenv
+   DATABASE_URL=postgresql+asyncpg://postgres:password@host:5432/postgres
+   SUPABASE_URL=https://<project>.supabase.co
+   SUPABASE_KEY=<service-role-key>
+   SUPABASE_JWT=<jwt-secret>
+   ```
+   Altri parametri opzionali sono definiti in `app/core/config.py`.
+
+3. **Esegui le migrazioni**
+   ```bash
+   cd backend
+   poetry run alembic upgrade head
+   ```
+
+4. **Avvia il server**
+   ```bash
+   make api  # dalla root del monorepo
+   ```
+   oppure
+   ```bash
+   poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --env-file backend/.env --reload
+   ```
+
+Swagger UI: <http://localhost:8000/docs>  
+ReDoc: <http://localhost:8000/redoc>
 
 ---
 
@@ -8,265 +71,98 @@ Backend API di Tickup costruita con **FastAPI**, **SQLAlchemy async**, **Alembic
 
 ```
 app/
-├── main.py                    # Istanzia FastAPI e registra router v1
-├── core/
-│   ├── config.py              # Settings (Pydantic BaseSettings)
-│   └── security.py            # Hook per auth / JWT
+├── main.py                     # Crea FastAPI app, CORS, include router v1
+├── core/                       # Config, security hook, logging
 ├── api/
 │   └── v1/
-│       ├── auth.py            # Helpers per ricavare lo user id
-│       ├── deps.py            # Dipendenze condivise (sessione DB, ecc.)
-│       └── routers/
-│           ├── pool.py        # Endpoint CRUD raffle pool
-│           ├── prize.py       # Endpoint CRUD prize
-│           ├── purchase.py    # Endpoint registro acquisti
-│           ├── ticket.py      # Endpoint gestione ticket
-│           └── user.py        # Endpoint utenti (seed/demo)
-├── models/
-│   ├── pool.py                # Modello SQLAlchemy RafflePool
-│   ├── prize.py               # Modello SQLAlchemy Prize
-│   ├── purchase.py            # Modello SQLAlchemy Purchase
-│   ├── ticket.py              # Modello SQLAlchemy Ticket
-│   └── user.py                # Modello SQLAlchemy AppUser
-├── schemas/
-│   ├── pool.py                # Schemi Pydantic Pool
-│   ├── prize.py               # Schemi Pydantic Prize
-│   ├── purchase.py            # Schemi Pydantic Purchase
-│   ├── ticket.py              # Schemi Pydantic Ticket
-│   └── user.py                # Schemi Pydantic User
-├── services/
-│   ├── pool.py                # Logica async CRUD Pool
-│   ├── prize.py               # Logica async CRUD Prize
-│   ├── purchase.py            # Logica async CRUD Purchase
-│   ├── ticket.py              # Ticket + business rules pool
-│   └── user.py                # Utilita per l entita utente
-├── clients/
-│   └── supabase.py            # Client Supabase (se necessario)
-└── db/
-    ├── base.py                # Base declarative SQLAlchemy
-    ├── session.py             # Engine async, session factory
-    └── migrations/            # Script Alembic
+│       ├── auth.py             # Recupero user id dai token Supabase/JWT
+│       ├── deps.py             # Dipendenze comuni (sessione DB, ecc.)
+│       └── routers/            # Endpoints versionati
+│           ├── pool.py
+│           ├── prize.py
+│           ├── purchase.py
+│           ├── ticket.py
+│           ├── user.py
+│           └── wallet.py
+├── services/                   # Business logic atomica per dominio
+├── models/                     # SQLAlchemy models (Pool, Prize, Like, Wallet…)
+├── schemas/                    # Schemi Pydantic (request/response)
+└── db/                         # Engine async, base declarative, migrazioni Alembic
 
-tests/                         # Test unitari / integrazione (pytest)
-alembic.ini                    # Config Alembic
-pyproject.toml                 # Configurazione Poetry
-README.md                      # Questo file
-.env                           # Variabili ambiente (non versionato)
+tests/                          # pytest (unit + integrazione)
+pyproject.toml                  # Dipendenze Poetry
+alembic.ini                     # Config Alembic
 ```
 
 ---
 
-## Prerequisiti
+## Funzionalità principali
 
-- Python 3.10+
-- [Poetry](https://python-poetry.org/)
-- Database PostgreSQL (Supabase consigliato)
-- Facoltativo: `make` + `qrencode` (gia usati nel workflow full-stack)
+### Premi & immagini
 
----
+- CRUD premi (`/api/v1/prizes`).
+- Galleria associata (`/api/v1/prizes/{id}/images`): upload metadata, definizione cover, riordino, delete.
+- Integrazione con Supabase Storage per i file reali (il backend salva solo metadati e path pubblicabili).
 
-## Setup rapido (dalla root del monorepo)
+### Pool & likes
 
-1. Installa le dipendenze backend/frontend con il target condiviso:
-   ```bash
-   make install
-   ```
-2. Crea `backend/.env` partendo da questo template:
-   ```dotenv
-   DATABASE_URL=postgresql+asyncpg://postgres:password@host.supabase.co:5432/postgres
-   SUPABASE_URL=https://host.supabase.co
-   SUPABASE_KEY=service_key
-   SUPABASE_JWT=jwt_secret
-   ```
-3. Esegui le migrazioni Alembic (vedi sezione dedicata) per popolare il database.
+- CRUD pool (`/api/v1/pools`), listing globale (`/all_pools`) e per utente (`/my`).
+- Like/unlike idempotenti con contatore consistente (`/pools/{id}/like`).
+- Endpoint `/pools/{id}/likes` ritorna `{ likes, liked_by_me }` calcolando lo stato per l’utente corrente.
 
-### Avvio con Makefile
+### Ticket & purchase
 
-Per lanciare l API basta usare il target `api` del Makefile di progetto:
+- Registro acquisti (`/purchases`) con tipologie (`ENTRY`, `BOOST`, `RETRY`) e stati (`PENDING`, `CONFIRMED`, `FAILED`).
+- Emissione ticket (`/pools/{id}/tickets`) valida l’esistenza di un acquisto confermato, assegna numero progressivo, aggiorna `tickets_sold` e imposta lo stato `FULL` quando la soglia è raggiunta.
 
-```bash
-make api
-```
+### Wallet (in sviluppo)
 
-Il comando equivale a:
-```bash
-poetry run uvicorn app.main:app \
-  --host 0.0.0.0 \
-  --port "$BACKEND_PORT" \
-  --env-file "$ENV_FILE" \
-  --reload
-```
-- `BACKEND_PORT` (default `8000`) e `ENV_FILE` (default `backend/.env`) possono essere sovrascritti al volo, es. `make BACKEND_PORT=9000 ENV_FILE=.env.staging api`.
-- L API resta raggiungibile su `http://localhost:BACKEND_PORT`, con Swagger UI su `/docs` e ReDoc su `/redoc`.
-
-Per chiudere rapidamente porte occupate dal backend o dal web server puoi usare `make kill-ports` (libera `8000` e `8080`).
-
-### Avvio manuale (alternativa)
-
-Se preferisci eseguire il backend senza Makefile:
-```bash
-poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --env-file backend/.env --reload
-```
+- Modelli per `wallet_account`, `wallet_ledger`, `wallet_topup_request`, `wallet_hold`.
+- Le movimentazioni vengono registrate in modalità append-only; il saldo cache (`wallet_account.balance_cents`) è aggiornato da trigger/transazioni per letture veloci.
 
 ---
 
-## Database e migrazioni
+## Eseguire i test
 
 ```bash
 cd backend
-
-# Genera struttura iniziale (solo la prima volta)
-poetry run alembic init app/db/migrations
-
-# Aggiorna alembic.ini con la tua DATABASE_URL
-
-# Crea nuova migration automatica
-poetry run alembic revision --autogenerate -m "descrizione"
-
-# Applica l ultima migration
-poetry run alembic upgrade head
+poetry run pytest
 ```
 
----
-
-## Entita principali
-
-### Prize
-Premio messo in palio. Campi chiave: `prize_id` (UUID), `title`, `description`, `value_cents`, `stock`, metadati sponsor e `created_at`.
-
-### RafflePool
-Pool di biglietti legato a un premio:
-- `ticket_price_cents`: costo di ogni ticket
-- `tickets_required`: soglia per dichiarare il pool completo
-- `tickets_sold`: contatore aggiornato dagli acquisti
-- `state`: `OPEN` → `FULL` → (eventuale) `STARTED`/`CANCELLED`
-
-### Purchase
-Registro transazioni utente. Vincola ogni ticket a un pagamento con:
-- `purchase_id` (UUID), `user_id`
-- `type`: `ENTRY`, `BOOST`, `RETRY`
-- `status`: `PENDING`, `CONFIRMED`, `FAILED`
-- `amount_cents`, `currency`, `provider_txn_id`
-
-### Ticket
-Biglietto numerato che abilita l ingresso al pool. Vincolato a:
-- un `pool_id`
-- un `user_id`
-- un `purchase_id` confermato
-- `ticket_num` progressivo (vincolo univoco per pool)
-
-### User
-Modello di utilita (`app_user`) usato per associare acquisti e ticket a un utente autenticato (integrazione auth demandata a Supabase / JWT).
+Consigli:
+- Usa database dedicato per i test (configurabile via variabili d’ambiente).
+- Integra `pytest --disable-warnings -q` in CI per feedback rapidi.
 
 ---
 
-## Flow Ticket & Purchase
+## Utility & comandi
 
-1. **Purchase**: il client crea/aggiorna un acquisto via `POST /api/v1/purchases` specificando importo, tipo e id transazione del provider. Il servizio salva lo stato iniziale (`PENDING`).
-2. **Conferma**: quando il provider segnala l esito positivo, l acquisto viene marcato `CONFIRMED` tramite `PUT /api/v1/purchases/{id}`.
-3. **Redeem ticket**: il frontend invoca `POST /api/v1/tickets` con `pool_id`, `user_id` e `purchase_id`.
-   - Il servizio carica il pool e verifica che sia `OPEN` e non saturo.
-   - Controlla che l acquisto appartenga allo stesso utente, che il `type` sia `ENTRY`, lo `status` `CONFIRMED` e che non sia gia stato redento.
-   - Genera `ticket_num = tickets_sold + 1`, inserisce il ticket e aggiorna `tickets_sold`.
-   - Se la soglia `tickets_required` viene raggiunta, lo stato del pool passa a `FULL`.
-4. **Ulteriori azioni**: a pool pieno puoi eseguire estrazioni, notifiche Realtime o generare vincitori tramite job dedicati.
-
-Questa catena garantisce che ogni ticket derivi da un acquisto valido e non possa essere riutilizzato, prevenendo frodi e disallineamenti contabili.
+| Comando                              | Descrizione                                    |
+|--------------------------------------|------------------------------------------------|
+| `poetry shell`                       | Attiva virtualenv                              |
+| `poetry run alembic revision ...`    | Genera nuova migration                         |
+| `poetry run alembic upgrade head`    | Applica l’ultima migration                     |
+| `poetry run uvicorn app.main:app`    | Avvio manuale API                              |
+| `make api` (root)                    | Avvio con parametri da Makefile                |
+| `make kill-ports` (root)             | Libera porte 8000/8080                         |
 
 ---
 
-# 🏦 Wallet System
+## Convenzioni & suggerimenti
 
-## 📌 Schema del Portafoglio
-
-### `wallet_account`  
-Rappresenta il saldo attuale di un utente.  
-- `wallet_id UUID PK`  
-- `user_id FK app_user UNIQUE`  
-- `balance_cents INT NOT NULL DEFAULT 0` → usato come **cache**, aggiornato via trigger/transaction sulle movimentazioni  
-- `currency CHAR(3) DEFAULT 'EUR'`  
-- `status ENUM('ACTIVE','SUSPENDED')`  
+- Mantieni separata la logica di dominio nelle `services/`. I router devono delegare e gestire solo validazione/risposte HTTP.
+- Usa le `schemas/` per serializzazione consistente. Se aggiungi campi ai modelli, aggiorna anche i DTO equivalenti.
+- Ogni modifica al DB → crea migration Alembic atomica con descrizione chiara.
+- Le eccezioni domain-specific convertono in `HTTPException` con messaggi pensati per il client.
+- Aggiorna la documentazione qui (sezione funzionalità/API) quando introduci nuove rotte o flussi.
 
 ---
 
-### `wallet_ledger`  
-Libro mastro **append-only** da cui calcolare il saldo reale.  
-- `entry_id BIGSERIAL PK`  
-- `wallet_id FK`  
-- `direction ENUM('DEBIT','CREDIT')`  
-- `amount_cents INT > 0`  
-- `reason ENUM('TOPUP','TICKET_PURCHASE','REFUND','PRIZE_PAYOUT','ADJUSTMENT')`  
-- `ref_purchase_id FK` *(facoltativo)*  
-- `ref_pool_id FK` *(facoltativo)*  
-- `ref_ticket_id FK` *(facoltativo)*  
-- `ref_external_txn TEXT`  
-- `status ENUM('PENDING','POSTED','REVERSED')`  
-- `created_at TIMESTAMPTZ DEFAULT now()`  
+## Prossimi passi suggeriti
 
-📌 **Indice**: `(wallet_id, created_at)`  
+- Automazione sorteggio vincitori (cron job o event handler).
+- Webhook provider pagamento per aggiornare `Purchase.status`.
+- Endpoints aggregati per statistiche pool (es. top liked, pool completati).
+- Test end‑to‑end che coprano la catena `purchase → ticket → pool FULL`.
 
-Il saldo si calcola aggregando tutte le righe `POSTED`.  
-
----
-
-### `wallet_topup_request`  
-Traccia i caricamenti fondi dal mondo esterno.  
-- `topup_id UUID PK`  
-- `wallet_id FK`  
-- `provider TEXT`  
-- `provider_txn_id TEXT UNIQUE`  
-- `amount_cents INT`  
-- `status ENUM('CREATED','PROCESSING','COMPLETED','FAILED','CANCELLED')`  
-- `created_at TIMESTAMPTZ DEFAULT now()`  
-- `completed_at TIMESTAMPTZ`  
-
-👉 Al completamento: inserisci una riga `CREDIT` nel ledger.  
-
----
-
-### `wallet_withdrawal_request`  
-Struttura speculare per i prelievi verso l’utente.  
-
----
-
-### `wallet_hold` *(opzionale)*  
-Permette di **bloccare fondi** prima di confermare un acquisto (utile per processi asincroni).  
-- `hold_id UUID PK`  
-- `wallet_id FK`  
-- `amount_cents INT`  
-- `reason ENUM('TICKET_RESERVATION', ...)`  
-- `expires_at TIMESTAMPTZ`  
-- `status ENUM('ACTIVE','RELEASED','CAPTURED')`  
-
----
-
-### `wallet_balance_view`  
-Vista/materialized view per ottenere il saldo tramite aggregazione del ledger:  
-```sql
-SUM(CASE WHEN direction='CREDIT' THEN amount_cents ELSE -amount_cents END)
-```
-
----
-
-## Endpoint disponibili (v1)
-
-| Risorsa | Path base | Operazioni principali |
-|---------|-----------|-----------------------|
-| Prize | `/api/v1/prizes` | CRUD completo su premi |
-| Pool | `/api/v1/pools` | CRUD + conteggio ticket |
-| Purchase | `/api/v1/purchases` | Creazione, update stato, lista utente |
-| Ticket | `/api/v1/tickets` | Creazione ticket da purchase, CRUD |
-| User | `/api/v1/users` | Utility per gestione utenti (seed/test) |
-
-Autenticazione e autorizzazione sono demandate agli header gestiti in `auth.py`; modifica gli helper per integrarti con Supabase o identity provider custom.
-
----
-
-## Prossimi step suggeriti
-
-- Automatizzare il sorteggio dei pool completi e notificare i vincitori.
-- Gestire pagamenti multipli (`BOOST`, `RETRY`) con logiche dedicate nel servizio ticket.
-- Abilitare webhooks da provider pagamento per aggiornare lo stato `Purchase.status`.
-- Aggiungere test end-to-end per assicurare la catena purchase → ticket.
-
-Hai domande o trovi incongruenze? Apri una issue o contatta il team backend.
+Per domande o contributi apri una issue o contatta il team backend.
