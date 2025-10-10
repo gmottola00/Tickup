@@ -351,29 +351,11 @@ class _PoolDetailsView extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 28),
-                  if (relatedPools.isNotEmpty) ...[
-                    const SizedBox(height: 32),
-                    Text(
-                      'Pool collegati a questo premio',
-                      style: theme.textTheme.titleMedium,
+                  if (relatedPools.isNotEmpty)
+                    _PoolSummaryCard(
+                      pool: relatedPools.first,
+                      isOwner: isOwner,
                     ),
-                    const SizedBox(height: 12),
-                    ListView.builder(
-                      itemCount: relatedPools.length,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        final related = relatedPools[index];
-                        return Padding(
-                          padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
-                          child: _RelatedPoolCard(
-                            pool: related,
-                            isCurrent: related.poolId == pool.poolId,
-                          ),
-                        );
-                      },
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -401,11 +383,11 @@ class _PoolDetailsView extends ConsumerWidget {
   }
 }
 
-class _RelatedPoolCard extends StatelessWidget {
-  const _RelatedPoolCard({required this.pool, required this.isCurrent});
+class _PoolSummaryCard extends StatelessWidget {
+  const _PoolSummaryCard({required this.pool, required this.isOwner});
 
   final RafflePool pool;
-  final bool isCurrent;
+  final bool isOwner;
 
   @override
   Widget build(BuildContext context) {
@@ -416,44 +398,74 @@ class _RelatedPoolCard extends StatelessWidget {
         : 0.0;
 
     final remaining = (pool.ticketsRequired - pool.ticketsSold).clamp(0, pool.ticketsRequired);
-    final onColor = isCurrent
-        ? theme.colorScheme.onPrimaryContainer
-        : theme.colorScheme.onSurface;
 
     final decoration = BoxDecoration(
-      borderRadius: BorderRadius.circular(24),
-      gradient: isCurrent
-          ? LinearGradient(
-              colors: [
-                theme.colorScheme.primaryContainer,
-                theme.colorScheme.primary.withOpacity(0.85),
-              ],
-            )
-          : null,
-      color: isCurrent ? null : theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(28),
+      gradient: LinearGradient(
+        colors: [
+          theme.colorScheme.primaryContainer,
+          theme.colorScheme.primary.withOpacity(0.9),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      border: Border.all(
+        color: theme.colorScheme.primary.withOpacity(0.25),
+        width: 1.2,
+      ),
       boxShadow: [
         BoxShadow(
-          color: theme.colorScheme.shadow.withOpacity(0.08),
-          blurRadius: 18,
-          offset: const Offset(0, 12),
+          color: theme.colorScheme.primary.withOpacity(0.25),
+          blurRadius: 22,
+          offset: const Offset(0, 14),
         ),
       ],
     );
 
     return Container(
       decoration: decoration,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isCurrent ? 'Pool corrente' : 'Pool',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: onColor,
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Pool attivo',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (isOwner)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onPrimaryContainer.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.shield_outlined,
+                        size: 16,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Creato da te',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -461,22 +473,22 @@ class _RelatedPoolCard extends StatelessWidget {
               _MiniMetricChip(
                 icon: Icons.flag_outlined,
                 label: pool.state,
-                color: onColor,
+                color: theme.colorScheme.onPrimaryContainer,
               ),
               _MiniMetricChip(
                 icon: Icons.euro,
                 label: '€ $ticketEur',
-                color: onColor,
+                color: theme.colorScheme.onPrimaryContainer,
               ),
               _MiniMetricChip(
                 icon: Icons.confirmation_number,
                 label: '${pool.ticketsSold}/${pool.ticketsRequired} ticket',
-                color: onColor,
+                color: theme.colorScheme.onPrimaryContainer,
               ),
               _MiniMetricChip(
                 icon: Icons.timer_outlined,
                 label: remaining > 0 ? 'Restano $remaining' : 'Completato',
-                color: onColor,
+                color: theme.colorScheme.onPrimaryContainer,
               ),
             ],
           ),
@@ -485,9 +497,9 @@ class _RelatedPoolCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: onColor.withOpacity(0.15),
+              backgroundColor: theme.colorScheme.onPrimaryContainer.withOpacity(0.15),
               valueColor: AlwaysStoppedAnimation(
-                isCurrent ? theme.colorScheme.onPrimary : theme.colorScheme.primary,
+                theme.colorScheme.onPrimaryContainer,
               ),
               minHeight: 8,
             ),
