@@ -231,47 +231,46 @@ class _PrizeCardContent extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         SizedBox(height: responsiveData.spacing * 0.6),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Chip(
-            label: Text(
-              'EUR ${(prize.valueCents / 100).toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: (responsiveData.bodyTextStyle?.fontSize ?? 12) * 0.9,
+        Text(
+          '€ ${(prize.valueCents / 100).toStringAsFixed(2)}',
+          style: responsiveData.bodyTextStyle?.copyWith(
+                fontSize: (responsiveData.bodyTextStyle?.fontSize ?? 12) * 0.85,
+                fontWeight: FontWeight.w600,
+              ) ??
+              theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        SizedBox(height: responsiveData.spacing * 1.2),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: responsiveData.buttonHeight,
+                child: OutlinedButton(
+                  onPressed: () => context.push(
+                    AppRoute.createPoolForPrize(prize.prizeId),
+                    extra: prize,
+                  ),
+                  style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
+                  child: const Icon(Icons.add_circle_outline),
+                ),
               ),
             ),
-            visualDensity: VisualDensity.compact,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ),
-        SizedBox(height: responsiveData.spacing),
-        SizedBox(
-          width: double.infinity,
-          height: responsiveData.buttonHeight,
-          child: OutlinedButton.icon(
-            onPressed: () => context.push(
-              AppRoute.createPoolForPrize(prize.prizeId),
-              extra: prize,
-            ),
-            icon: const Icon(Icons.add_circle_outline),
-            label: const Text('Crea pool'),
-          ),
-        ),
-        if (onDelete != null) ...[
-          SizedBox(height: responsiveData.spacing * 0.6),
-          SizedBox(
-            width: double.infinity,
-            height: responsiveData.buttonHeight,
-            child: TextButton.icon(
-              onPressed: onDelete,
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Elimina'),
-              style: TextButton.styleFrom(
-                foregroundColor: theme.colorScheme.error,
+            if (onDelete != null) ...[
+              const SizedBox(width: 10),
+              SizedBox(
+                height: responsiveData.buttonHeight,
+                child: IconButton(
+                  onPressed: onDelete,
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: theme.colorScheme.error,
+                  ),
+                  tooltip: 'Elimina premio',
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          ],
+        ),
       ],
     );
   }
