@@ -67,7 +67,7 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Desktop large
     breakpointData = _BreakpointData(
       maxCardWidth: 400,
-      aspectRatio: cardType == CardType.pool ? 0.9 : 0.6,
+      aspectRatio: 0.65,
       padding: 16,
       spacing: 14,
       borderRadius: 16,
@@ -78,7 +78,7 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Desktop
     breakpointData = _BreakpointData(
       maxCardWidth: 360,
-      aspectRatio: cardType == CardType.pool ? 0.85 : 0.58,
+      aspectRatio: 0.64,
       padding: 14,
       spacing: 12,
       borderRadius: 14,
@@ -89,7 +89,7 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Tablet
     breakpointData = _BreakpointData(
       maxCardWidth: 320,
-      aspectRatio: cardType == CardType.pool ? 0.82 : 0.56,
+      aspectRatio: 0.62,
       padding: 12,
       spacing: 10,
       borderRadius: 12,
@@ -100,7 +100,7 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Mobile large
     breakpointData = _BreakpointData(
       maxCardWidth: double.infinity,
-      aspectRatio: cardType == CardType.pool ? 0.78 : 0.54,
+      aspectRatio: 0.6,
       padding: 12,
       spacing: 10,
       borderRadius: 12,
@@ -111,7 +111,7 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Mobile small
     breakpointData = _BreakpointData(
       maxCardWidth: double.infinity,
-      aspectRatio: cardType == CardType.pool ? 1 : 0.52,
+      aspectRatio: 1,
       padding: 6,
       spacing: 6,
       borderRadius: 10,
@@ -121,29 +121,35 @@ ResponsiveCardData calculateResponsiveCardDimensions({
   }
 
   // Calcola larghezza della card
+  final basePadding = breakpointData.padding;
   final cardWidth = breakpointData.maxCardWidth == double.infinity
       ? availableWidth - (breakpointData.padding * 2)
       : math.min(availableWidth - (breakpointData.padding * 2),
           breakpointData.maxCardWidth);
 
+  final padding = cardType == CardType.prize
+      ? math.max(4.0, basePadding * 0.6)
+      : basePadding;
+  final baseSpacing = breakpointData.spacing;
+  final spacing = cardType == CardType.prize
+      ? math.max(4.0, baseSpacing * 0.5)
+      : baseSpacing;
+
   // Calcola altezza dell'immagine basata sulla larghezza e aspect ratio
-  final baseImageHeight = cardWidth * breakpointData.aspectRatio;
-  final maxImageHeightRatio = cardType == CardType.pool ? 0.6 : 0.35;
+  final aspectRatio = breakpointData.aspectRatio;
+  final baseImageHeight = cardWidth * aspectRatio;
+  final maxImageHeightRatio = 0.55;
   final maxImageHeight = availableHeight * maxImageHeightRatio;
   final imageHeight = math.min(baseImageHeight, maxImageHeight);
 
   // Calcola altezza minima della card
   final estimatedContentHeight = cardType == CardType.pool
-      ? imageHeight + (breakpointData.spacing * 5) + 140
-      : imageHeight +
-          (breakpointData.spacing * 6) +
-          breakpointData.buttonHeight * 2 +
-          80;
+      ? imageHeight + (spacing * 5) + 140
+      : imageHeight + (spacing * 6) + breakpointData.buttonHeight * 2 + 80;
 
-  final desiredCardHeight =
-      cardType == CardType.pool ? imageHeight / 0.6 : imageHeight / 0.5;
+  final desiredCardHeight = imageHeight / 0.58;
 
-  final maxCardHeightRatio = cardType == CardType.pool ? 0.95 : 0.9;
+  final maxCardHeightRatio = 0.92;
   final minCardHeight = math.min(
     math.max(estimatedContentHeight, desiredCardHeight),
     availableHeight * maxCardHeightRatio,
@@ -168,8 +174,8 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     cardWidth: cardWidth,
     imageHeight: imageHeight,
     minCardHeight: minCardHeight,
-    padding: breakpointData.padding,
-    spacing: breakpointData.spacing,
+    padding: padding,
+    spacing: spacing,
     borderRadius: breakpointData.borderRadius,
     titleStyle: titleStyle,
     bodyTextStyle: bodyTextStyle,

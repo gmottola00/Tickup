@@ -22,13 +22,17 @@ class PrizeCard extends StatelessWidget {
         final mediaQuery = MediaQuery.of(context);
         final screenWidth = mediaQuery.size.width;
         final screenHeight = mediaQuery.size.height;
-        
+
         // Calcola dimensioni responsive
         final responsiveData = calculateResponsiveCardDimensions(
           screenWidth: screenWidth,
           screenHeight: screenHeight,
-          availableWidth: constraints.maxWidth.isFinite ? constraints.maxWidth : screenWidth,
-          availableHeight: constraints.maxHeight.isFinite ? constraints.maxHeight : screenHeight,
+          availableWidth: constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : screenWidth,
+          availableHeight: constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : screenHeight,
           cardType: CardType.prize,
         );
 
@@ -49,7 +53,8 @@ class PrizeCard extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 elevation: 2,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(responsiveData.borderRadius),
+                  borderRadius:
+                      BorderRadius.circular(responsiveData.borderRadius),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,8 +84,6 @@ class PrizeCard extends StatelessWidget {
     );
   }
 }
-
-
 
 class _PrizeCardImage extends ConsumerWidget {
   const _PrizeCardImage({
@@ -211,23 +214,30 @@ class _PrizeCardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final createPoolLabelStyle = theme.textTheme.labelLarge?.copyWith(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.w600,
+        ) ??
+        theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.w600,
+        ) ??
+        TextStyle(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.w600,
+        );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           prize.title,
-          style: (responsiveData.titleStyle ?? theme.textTheme.titleMedium)?.copyWith(
+          style: (responsiveData.titleStyle ?? theme.textTheme.titleMedium)
+              ?.copyWith(
             fontWeight: FontWeight.w600,
           ),
           maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        SizedBox(height: responsiveData.spacing * 0.4),
-        Text(
-          prize.sponsor,
-          style: responsiveData.bodyTextStyle ?? theme.textTheme.bodySmall,
-          maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         SizedBox(height: responsiveData.spacing * 0.6),
@@ -245,13 +255,42 @@ class _PrizeCardContent extends StatelessWidget {
             Expanded(
               child: SizedBox(
                 height: responsiveData.buttonHeight,
-                child: OutlinedButton(
-                  onPressed: () => context.push(
-                    AppRoute.createPoolForPrize(prize.prizeId),
-                    extra: prize,
+                child: Tooltip(
+                  message: 'Crea un nuovo pool',
+                  child: OutlinedButton(
+                    onPressed: () => context.push(
+                      AppRoute.createPoolForPrize(prize.prizeId),
+                      extra: prize,
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: responsiveData.spacing,
+                      ),
+                      side: BorderSide(
+                        color: theme.colorScheme.primary.withOpacity(0.6),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          responsiveData.borderRadius * 0.35,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.dashboard_customize_outlined,
+                          color: theme.colorScheme.primary,
+                        ),
+                        SizedBox(width: responsiveData.spacing * 0.4),
+                        Text(
+                          'Crea pool',
+                          style: createPoolLabelStyle,
+                        ),
+                      ],
+                    ),
                   ),
-                  style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
-                  child: const Icon(Icons.add_circle_outline),
                 ),
               ),
             ),
@@ -285,19 +324,22 @@ class PrizeCardSkeleton extends StatelessWidget {
       builder: (context, constraints) {
         final mediaQuery = MediaQuery.of(context);
         final screenWidth = mediaQuery.size.width;
-        
+
         final responsiveData = calculateResponsiveCardDimensions(
           screenWidth: screenWidth,
           screenHeight: mediaQuery.size.height,
-          availableWidth: constraints.maxWidth.isFinite ? constraints.maxWidth : screenWidth,
-          availableHeight: constraints.maxHeight.isFinite ? constraints.maxHeight : mediaQuery.size.height,
+          availableWidth: constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : screenWidth,
+          availableHeight: constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : mediaQuery.size.height,
           cardType: CardType.prize,
         );
 
         return Card(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(responsiveData.borderRadius)
-          ),
+              borderRadius: BorderRadius.circular(responsiveData.borderRadius)),
           child: Container(
             width: responsiveData.cardWidth,
             height: responsiveData.minCardHeight,
@@ -311,8 +353,7 @@ class PrizeCardSkeleton extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.grey.shade300,
                     borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(responsiveData.borderRadius)
-                    ),
+                        top: Radius.circular(responsiveData.borderRadius)),
                   ),
                 ),
                 Expanded(
