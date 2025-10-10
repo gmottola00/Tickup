@@ -214,19 +214,6 @@ class _PrizeCardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final createPoolLabelStyle = theme.textTheme.labelLarge?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w600,
-        ) ??
-        theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w600,
-        ) ??
-        TextStyle(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w600,
-        );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -263,32 +250,20 @@ class _PrizeCardContent extends StatelessWidget {
                       extra: prize,
                     ),
                     style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: responsiveData.spacing,
-                      ),
+                      padding: EdgeInsets.zero,
                       side: BorderSide(
                         color: theme.colorScheme.primary.withOpacity(0.6),
                       ),
+                      minimumSize: Size.square(responsiveData.buttonHeight),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
                           responsiveData.borderRadius * 0.35,
                         ),
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.dashboard_customize_outlined,
-                          color: theme.colorScheme.primary,
-                        ),
-                        SizedBox(width: responsiveData.spacing * 0.4),
-                        Text(
-                          'Crea pool',
-                          style: createPoolLabelStyle,
-                        ),
-                      ],
+                    child: Icon(
+                      Icons.auto_awesome_motion_outlined,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                 ),
