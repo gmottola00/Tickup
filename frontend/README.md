@@ -113,7 +113,6 @@ lib/
 ## Caratteristiche
 
 - **PoolCard & PrizeCard**: recuperano dinamicamente le immagini di copertina da Supabase Storage (galleria `prizeImagesProvider`), con fallback a `prize.imageUrl` e placeholder coerente.
-- **Likes ottimizzati**: `poolLikeProvider` si inizializza dai dati già caricati (`poolsProvider`, `myPoolsProvider`, `likedPoolsProvider`), eliminando chiamate extra all’avvio e mantenendo toggle ottimistici.
 - **Shell navigation**: `MainShell` combina bottom navigation e sub‑route con persistenza stato per ogni tab.
 - **Mini-giochi**: `presentation/pages/game` integra Flame e Unity; la configurazione Unity è opzionale e isolata.
 - **Realtime**: `SupabaseRealtime` (quando attivato) sincronizza update su pool/ticket senza refresh manuale.
