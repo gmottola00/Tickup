@@ -63,8 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
           await DioClient().post(
             'users/me',
             data: {
-              'nickname': null,
-              'avatar_url': null,
+              'nickname': _fallbackNickname(email),
             },
           );
         } on Exception catch (e) {
@@ -289,5 +288,11 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  String _fallbackNickname(String email) {
+    if (email.isEmpty) return 'tickup-user';
+    final localPart = email.split('@').first.trim();
+    return localPart.isNotEmpty ? localPart : 'tickup-user';
   }
 }

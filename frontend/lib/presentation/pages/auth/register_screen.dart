@@ -57,7 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final res = await DioClient().post(
           'users/me',
           data: {
-            'nickname': nickname.isEmpty ? null : nickname,
+            'nickname': nickname,
           },
         );
 
