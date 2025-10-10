@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:tickup/core/network/auth_service.dart';
 import 'package:tickup/data/models/prize.dart';
+import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
 import 'package:tickup/presentation/features/prize/prize_images_provider.dart';
+import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/data/models/prize_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import 'package:go_router/go_router.dart';
+import 'package:tickup/presentation/routing/app_route.dart';
 
 class PrizeDetailsPage extends ConsumerWidget {
   const PrizeDetailsPage({super.key, required this.prizeId, this.initial});
@@ -89,6 +92,7 @@ class _PrizeDetailsViewState extends ConsumerState<_PrizeDetailsView> {
     final priceEur = (_prize.valueCents / 100).toStringAsFixed(2);
     // Prefer cover image from gallery if present (public bucket)
     final imagesAsync = ref.watch(prizeImagesProvider(_prize.prizeId));
+    final poolsAsync = ref.watch(poolsProvider);
     String? headerImageUrl;
     imagesAsync.when(
       data: (items) {
@@ -118,6 +122,10 @@ class _PrizeDetailsViewState extends ConsumerState<_PrizeDetailsView> {
               onPressed: () => context.pop(),
             ),
             flexibleSpace: FlexibleSpaceBar(
+              stretchModes: const [
+                StretchMode.zoomBackground,
+                StretchMode.fadeTitle,
+              ],
               title: Text(
                 _prize.title,
                 maxLines: 1,
@@ -174,49 +182,338 @@ class _PrizeDetailsViewState extends ConsumerState<_PrizeDetailsView> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Chip(
-                        label: Text('EUR $priceEur'),
-                        avatar: const Icon(Icons.euro, size: 16),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      const SizedBox(width: 8),
-                      Chip(
-                        label: Text('Stock: ${_prize.stock}'),
-                        avatar: const Icon(Icons.inventory_2, size: 16),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (_prize.sponsor.isNotEmpty)
-                    Row(
-                      children: [
-                        const Icon(Icons.business, size: 18),
-                        const SizedBox(width: 6),
-                        Text(_prize.sponsor, style: theme.textTheme.bodyMedium),
-                      ],
-                    ),
-                  const SizedBox(height: 16),
-                  Text('Descrizione', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text(_prize.description, style: theme.textTheme.bodyMedium),
-                  const SizedBox(height: 24),
-                  if (_prize.createdAt != null)
-                    Text(
-                      'Creato il: ${_prize.createdAt!.toLocal().toString().split('.').first}',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                ],
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+              child: _buildBodySections(context, theme, priceEur, poolsAsync),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBodySections(
+    BuildContext context,
+    ThemeData theme,
+    String priceEur,
+    AsyncValue<List<RafflePool>> poolsAsync,
+  ) {
+    final sections = <Widget>[
+      _buildSummaryCard(theme, priceEur),
+    ];
+
+    if (_prize.description.trim().isNotEmpty) {
+      sections
+        ..add(const SizedBox(height: 20))
+        ..add(_buildDescriptionCard(theme));
+    }
+
+    final poolSection = _buildPoolSection(context, theme, poolsAsync);
+    if (poolSection != null) {
+      sections
+        ..add(const SizedBox(height: 28))
+        ..add(poolSection);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: sections,
+    );
+  }
+
+  Widget _buildSummaryCard(ThemeData theme, String priceEur) {
+    final isDark = theme.brightness == Brightness.dark;
+    final gradientColors = isDark
+        ? [const Color(0xFF101822), const Color(0xFF0D1218)]
+        : [
+            theme.colorScheme.primary.withOpacity(0.12),
+            theme.colorScheme.primary.withOpacity(0.05),
+          ];
+
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.15),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Valore premio',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '€ $priceEur',
+            style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ) ??
+                TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
+                ),
+          ),
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _buildMetricTile(
+                theme,
+                icon: Icons.inventory_2_outlined,
+                label: 'Disponibilità',
+                value: '${_prize.stock} pezzi',
+              ),
+              if (_prize.sponsor.isNotEmpty)
+                _buildMetricTile(
+                  theme,
+                  icon: Icons.verified_outlined,
+                  label: 'Sponsor',
+                  value: _prize.sponsor,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricTile(
+    ThemeData theme, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    final isDark = theme.brightness == Brightness.dark;
+    final background = isDark
+        ? Colors.white.withOpacity(0.06)
+        : theme.colorScheme.surface.withOpacity(0.9);
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 140),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withOpacity(0.24),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: theme.colorScheme.primary),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.primary.withOpacity(0.85),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ) ??
+                      TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDescriptionCard(ThemeData theme) {
+    return _buildSurfaceCard(
+      theme,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Descrizione',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _prize.description,
+            style: theme.textTheme.bodyLarge?.copyWith(height: 1.5) ??
+                TextStyle(
+                  fontSize: 15,
+                  height: 1.5,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget? _buildPoolSection(
+    BuildContext context,
+    ThemeData theme,
+    AsyncValue<List<RafflePool>> poolsAsync,
+  ) {
+    return poolsAsync.when<Widget?>(
+      data: (pools) {
+        RafflePool? associated;
+        for (final pool in pools) {
+          if (pool.prizeId == _prize.prizeId) {
+            associated = pool;
+            break;
+          }
+        }
+        if (associated == null) {
+          return null;
+        }
+        final pool = associated;
+        final ticketPrice =
+            (pool.ticketPriceCents / 100).toStringAsFixed(2);
+        final progress = pool.ticketsRequired == 0
+            ? 0.0
+            : (pool.ticketsSold / pool.ticketsRequired)
+                .clamp(0.0, 1.0);
+
+        return _buildSurfaceCard(
+          theme,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Pool collegato',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Ticket € $ticketPrice • Stato ${pool.state}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.textTheme.bodyMedium?.color
+                          ?.withOpacity(0.75),
+                    ) ??
+                    TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress.isNaN ? 0 : progress,
+                  minHeight: 6,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${pool.ticketsSold}/${pool.ticketsRequired} ticket venduti',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => context.push(
+                    AppRoute.poolDetails(pool.poolId),
+                    extra: pool,
+                  ),
+                  icon: const Icon(Icons.confirmation_number_outlined),
+                  label: const Text('Vai al pool'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => _buildSurfaceCard(
+        theme,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pool non disponibile',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Non è stato possibile caricare il pool associato in questo momento.',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSurfaceCard(
+    ThemeData theme, {
+    required Widget child,
+    EdgeInsetsGeometry? padding,
+  }) {
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withOpacity(0.18),
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+      ),
+      child: Padding(
+        padding: padding ?? const EdgeInsets.all(22),
+        child: child,
       ),
     );
   }
