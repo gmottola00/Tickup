@@ -105,11 +105,11 @@ class _HomeContent extends ConsumerWidget {
         final width = constraints.maxWidth;
         final grid = defaultCardGridConfig(width);
         return GridView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 120),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: grid.crossAxisCount,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 10,
             childAspectRatio: grid.childAspectRatio,
           ),
           itemCount: items.length,

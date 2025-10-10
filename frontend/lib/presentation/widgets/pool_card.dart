@@ -62,7 +62,10 @@ class PoolCard extends StatelessWidget {
               child: InkWell(
                 onTap: onTap,
                 child: Padding(
-                  padding: EdgeInsets.all(responsiveData.padding),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: responsiveData.padding,
+                    vertical: responsiveData.padding * 0.75,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -71,15 +74,16 @@ class PoolCard extends StatelessWidget {
                         pool: pool,
                         imageHeight: responsiveData.imageHeight,
                         titleStyle: responsiveData.titleStyle,
+                        isLiked: isLiked,
+                        showLikeButton: showLikeButton,
+                        likeCount: pool.likes,
+                        onToggleLike: onToggleLike,
                       ),
-                      SizedBox(height: responsiveData.spacing),
+                      SizedBox(height: responsiveData.spacing * 0.6),
                       _PoolCardBody(
                         pool: pool,
                         progress: progress,
                         onDelete: onDelete,
-                        onToggleLike: onToggleLike,
-                        isLiked: isLiked,
-                        showLikeButton: showLikeButton,
                         textStyle: responsiveData.bodyTextStyle,
                         spacing: responsiveData.spacing,
                         buttonSize: responsiveData.buttonSize,
@@ -100,10 +104,7 @@ class _PoolCardBody extends StatelessWidget {
   const _PoolCardBody({
     required this.pool,
     required this.progress,
-    required this.isLiked,
     this.onDelete,
-    this.onToggleLike,
-    this.showLikeButton = true,
     this.textStyle,
     required this.spacing,
     required this.buttonSize,
@@ -111,10 +112,7 @@ class _PoolCardBody extends StatelessWidget {
 
   final RafflePool pool;
   final double progress;
-  final bool isLiked;
   final VoidCallback? onDelete;
-  final VoidCallback? onToggleLike;
-  final bool showLikeButton;
   final TextStyle? textStyle;
   final double spacing;
   final double buttonSize;
@@ -129,23 +127,11 @@ class _PoolCardBody extends StatelessWidget {
       children: [
         Text(
           'Ticket: EUR ${(pool.ticketPriceCents / 100).toStringAsFixed(2)}',
-          style: textStyle,
+          style: textStyle?.copyWith(fontWeight: FontWeight.w600),
         ),
-        SizedBox(height: spacing * 0.6),
+        SizedBox(height: spacing * 0.8),
         LinearProgressIndicator(value: progress),
-        SizedBox(height: spacing * 0.3),
-        Text(
-          '${pool.ticketsSold}/${pool.ticketsRequired} venduti',
-          style:
-              textStyle?.copyWith(fontSize: (textStyle?.fontSize ?? 14) * 0.9),
-        ),
-        SizedBox(height: spacing * 0.3),
-        Text(
-          '${pool.likes} mi piace',
-          style:
-              textStyle?.copyWith(fontSize: (textStyle?.fontSize ?? 14) * 0.9),
-        ),
-        SizedBox(height: spacing),
+        SizedBox(height: spacing * 0.8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -172,25 +158,6 @@ class _PoolCardBody extends StatelessWidget {
 
   List<Widget> _buildActionButtons(ThemeData theme) {
     final actions = <Widget>[];
-
-    if (showLikeButton && onToggleLike != null) {
-      actions.add(
-        IconButton(
-          onPressed: onToggleLike,
-          icon: Icon(
-            isLiked ? Icons.favorite : Icons.favorite_border,
-            size: buttonSize,
-          ),
-          color: isLiked ? theme.colorScheme.error : null,
-          tooltip: isLiked ? 'Rimuovi dai preferiti' : 'Mi piace',
-          constraints: BoxConstraints(
-            minWidth: buttonSize + 4,
-            minHeight: buttonSize + 4,
-          ),
-          padding: EdgeInsets.zero,
-        ),
-      );
-    }
 
     if (onDelete != null) {
       if (actions.isNotEmpty) {
@@ -219,11 +186,19 @@ class _PoolCardHeader extends ConsumerWidget {
     required this.pool,
     required this.imageHeight,
     this.titleStyle,
+    required this.isLiked,
+    required this.showLikeButton,
+    required this.likeCount,
+    this.onToggleLike,
   });
 
   final RafflePool pool;
   final double imageHeight;
   final TextStyle? titleStyle;
+  final bool isLiked;
+  final bool showLikeButton;
+  final int likeCount;
+  final VoidCallback? onToggleLike;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -340,11 +315,49 @@ class _PoolCardHeader extends ConsumerWidget {
           content = placeholderContent();
         }
 
-        return _HeaderContent(
-          image: buildImage(content),
-          title: prize.title,
-          theme: theme,
-          titleStyle: titleStyle,
+        return Stack(
+          children: [
+            buildImage(content),
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.15),
+                      Colors.black.withOpacity(0.05),
+                      Colors.black.withOpacity(0.45),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: Text(
+                prize.title,
+                style: (titleStyle ?? theme.textTheme.titleMedium)?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Positioned(
+              bottom: 12,
+              right: 12,
+              child: _LikeOverlay(
+                count: likeCount,
+                isActive: isLiked,
+                interactive: showLikeButton && onToggleLike != null,
+                onTap: onToggleLike,
+              ),
+            ),
+          ],
         );
       },
     );
@@ -440,6 +453,67 @@ class PoolCardSkeleton extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _LikeOverlay extends StatelessWidget {
+  const _LikeOverlay({
+    required this.count,
+    required this.isActive,
+    required this.interactive,
+    this.onTap,
+  });
+
+  final int count;
+  final bool isActive;
+  final bool interactive;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final background = Colors.black.withOpacity(0.5);
+    final foreground = isActive ? theme.colorScheme.error : Colors.white;
+
+    final pill = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isActive ? Icons.favorite : Icons.favorite_border,
+            size: 20,
+            color: foreground,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$count',
+            style: TextStyle(
+              color: foreground,
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (!interactive) {
+      return pill;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: pill,
+      ),
     );
   }
 }

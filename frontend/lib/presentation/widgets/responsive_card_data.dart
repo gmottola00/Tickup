@@ -62,14 +62,14 @@ ResponsiveCardData calculateResponsiveCardDimensions({
 }) {
   // Breakpoints responsivi unificati
   late final _BreakpointData breakpointData;
-  
+
   if (screenWidth >= 1200) {
     // Desktop large
     breakpointData = _BreakpointData(
       maxCardWidth: 400,
-      aspectRatio: cardType == CardType.pool ? 0.75 : 0.6,
+      aspectRatio: cardType == CardType.pool ? 0.9 : 0.6,
       padding: 16,
-      spacing: 12,
+      spacing: 14,
       borderRadius: 16,
       buttonSize: 24,
       buttonHeight: 40,
@@ -78,9 +78,9 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Desktop
     breakpointData = _BreakpointData(
       maxCardWidth: 360,
-      aspectRatio: cardType == CardType.pool ? 0.7 : 0.58,
+      aspectRatio: cardType == CardType.pool ? 0.85 : 0.58,
       padding: 14,
-      spacing: 10,
+      spacing: 12,
       borderRadius: 14,
       buttonSize: 22,
       buttonHeight: 38,
@@ -89,9 +89,9 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Tablet
     breakpointData = _BreakpointData(
       maxCardWidth: 320,
-      aspectRatio: cardType == CardType.pool ? 0.65 : 0.56,
+      aspectRatio: cardType == CardType.pool ? 0.82 : 0.56,
       padding: 12,
-      spacing: 8,
+      spacing: 10,
       borderRadius: 12,
       buttonSize: 20,
       buttonHeight: 36,
@@ -100,9 +100,9 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Mobile large
     breakpointData = _BreakpointData(
       maxCardWidth: double.infinity,
-      aspectRatio: cardType == CardType.pool ? 0.6 : 0.54,
+      aspectRatio: cardType == CardType.pool ? 0.78 : 0.54,
       padding: 12,
-      spacing: 8,
+      spacing: 10,
       borderRadius: 12,
       buttonSize: 20,
       buttonHeight: 36,
@@ -111,8 +111,8 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Mobile small
     breakpointData = _BreakpointData(
       maxCardWidth: double.infinity,
-      aspectRatio: cardType == CardType.pool ? 0.55 : 0.52,
-      padding: 8,
+      aspectRatio: cardType == CardType.pool ? 1 : 0.52,
+      padding: 6,
       spacing: 6,
       borderRadius: 10,
       buttonSize: 18,
@@ -123,26 +123,36 @@ ResponsiveCardData calculateResponsiveCardDimensions({
   // Calcola larghezza della card
   final cardWidth = breakpointData.maxCardWidth == double.infinity
       ? availableWidth - (breakpointData.padding * 2)
-      : math.min(availableWidth - (breakpointData.padding * 2), breakpointData.maxCardWidth);
+      : math.min(availableWidth - (breakpointData.padding * 2),
+          breakpointData.maxCardWidth);
 
   // Calcola altezza dell'immagine basata sulla larghezza e aspect ratio
   final baseImageHeight = cardWidth * breakpointData.aspectRatio;
-  final maxImageHeightRatio = cardType == CardType.pool ? 0.4 : 0.35;
+  final maxImageHeightRatio = cardType == CardType.pool ? 0.6 : 0.35;
   final maxImageHeight = availableHeight * maxImageHeightRatio;
   final imageHeight = math.min(baseImageHeight, maxImageHeight);
 
   // Calcola altezza minima della card
   final estimatedContentHeight = cardType == CardType.pool
-      ? imageHeight + (breakpointData.spacing * 4) + 120 // Pool card content
-      : imageHeight + (breakpointData.spacing * 6) + breakpointData.buttonHeight * 2 + 80; // Prize card content
-  
-  final maxCardHeightRatio = cardType == CardType.pool ? 0.8 : 0.85;
-  final minCardHeight = math.min(estimatedContentHeight, availableHeight * maxCardHeightRatio);
+      ? imageHeight + (breakpointData.spacing * 5) + 140
+      : imageHeight +
+          (breakpointData.spacing * 6) +
+          breakpointData.buttonHeight * 2 +
+          80;
+
+  final desiredCardHeight =
+      cardType == CardType.pool ? imageHeight / 0.6 : imageHeight / 0.5;
+
+  final maxCardHeightRatio = cardType == CardType.pool ? 0.95 : 0.9;
+  final minCardHeight = math.min(
+    math.max(estimatedContentHeight, desiredCardHeight),
+    availableHeight * maxCardHeightRatio,
+  );
 
   // Calcola stili di testo responsive (opzionali, possono essere null per usare i default del tema)
   TextStyle? titleStyle;
   TextStyle? bodyTextStyle;
-  
+
   if (screenWidth <= 480) {
     // Mobile: testo più piccolo
     titleStyle = const TextStyle(fontSize: 14, fontWeight: FontWeight.w600);
