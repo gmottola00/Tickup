@@ -218,63 +218,139 @@ class _PoolDetailsView extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Pool info
-                  Row(
-                    children: [
-                      Chip(
-                        label: Text('Ticket: € $ticketEur'),
-                        avatar: const Icon(Icons.confirmation_number, size: 16),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.primary.withOpacity(0.85),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Chip(
-                        label: Text('Stato: ${pool.state}'),
-                        avatar: const Icon(Icons.flag, size: 16),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  LinearProgressIndicator(value: progress),
-                  const SizedBox(height: 6),
-                  Text('${pool.ticketsSold}/${pool.ticketsRequired} venduti'),
-
-                  const SizedBox(height: 24),
-                  // Prize info
-                  Row(
-                    children: [
-                      Chip(
-                        label: Text('Valore: € $priceEur'),
-                        avatar: const Icon(Icons.euro, size: 16),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      const SizedBox(width: 8),
-                      Chip(
-                        label: Text('Stock: ${prize.stock}'),
-                        avatar: const Icon(Icons.inventory_2, size: 16),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (prize.sponsor.isNotEmpty)
-                    Row(
-                      children: [
-                        const Icon(Icons.business, size: 18),
-                        const SizedBox(width: 6),
-                        Text(prize.sponsor, style: theme.textTheme.bodyMedium),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withOpacity(0.3),
+                          blurRadius: 24,
+                          offset: const Offset(0, 12),
+                        ),
                       ],
                     ),
-                  const SizedBox(height: 16),
-                  Text('Descrizione premio', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text(prize.description, style: theme.textTheme.bodyMedium),
-                  const SizedBox(height: 24),
-                  if (pool.createdAt != null)
-                    Text(
-                      'Creato il: ${pool.createdAt!.toLocal().toString().split('.').first}',
-                      style: theme.textTheme.bodySmall,
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _MetricTile(
+                            icon: Icons.confirmation_number,
+                            label: 'Ticket',
+                            value: '€ $ticketEur',
+                          ),
+                        ),
+                        const _MetricDivider(),
+                        Expanded(
+                          child: _MetricTile(
+                            icon: Icons.flag_outlined,
+                            label: 'Stato',
+                            value: pool.state,
+                          ),
+                        ),
+                        const _MetricDivider(),
+                        Expanded(
+                          child: _MetricTile(
+                            icon: Icons.inventory_2_outlined,
+                            label: 'Stock',
+                            value: '${prize.stock}',
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Avanzamento',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            Text(
+                              '${pool.ticketsSold}/${pool.ticketsRequired} ticket',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 10,
+                            backgroundColor: theme.colorScheme.surface,
+                            valueColor: AlwaysStoppedAnimation(
+                              theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Restano ${pool.ticketsRequired - pool.ticketsSold} ticket per completare il pool.',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  if (prize.sponsor.isNotEmpty)
+                    Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        leading: CircleAvatar(
+                          backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
+                          child: Icon(
+                            Icons.business,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        title: const Text('Sponsor'),
+                        subtitle: Text(prize.sponsor),
+                      ),
+                    ),
+                  if (prize.sponsor.isNotEmpty) const SizedBox(height: 20),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Descrizione premio', style: theme.textTheme.titleMedium),
+                          const SizedBox(height: 12),
+                          Text(
+                            prize.description.isNotEmpty
+                                ? prize.description
+                                : 'Nessuna descrizione disponibile.',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
                   if (relatedPools.isNotEmpty) ...[
                     const SizedBox(height: 32),
                     Text(
@@ -339,68 +415,187 @@ class _RelatedPoolCard extends StatelessWidget {
         ? (pool.ticketsSold / pool.ticketsRequired).clamp(0.0, 1.0)
         : 0.0;
 
-    final cardColor = isCurrent ? theme.colorScheme.primaryContainer : null;
-    final textColor = isCurrent
+    final remaining = (pool.ticketsRequired - pool.ticketsSold).clamp(0, pool.ticketsRequired);
+    final onColor = isCurrent
         ? theme.colorScheme.onPrimaryContainer
         : theme.colorScheme.onSurface;
 
-    return Card(
-      color: cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (isCurrent) ...[
-              Text(
-                'Pool corrente',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            _InfoRow(
-              label: 'Pool ID',
-              value: pool.poolId,
-              textColor: textColor,
-            ),
-            _InfoRow(
-              label: 'Stato',
-              value: pool.state,
-              textColor: textColor,
-            ),
-            _InfoRow(
-              label: 'Prezzo ticket (EUR)',
-              value: '€ $ticketEur',
-              textColor: textColor,
-            ),
-            _InfoRow(
-              label: 'Ticket richiesti',
-              value: pool.ticketsRequired.toString(),
-              textColor: textColor,
-            ),
-            _InfoRow(
-              label: 'Ticket venduti',
-              value: pool.ticketsSold.toString(),
-              textColor: textColor,
-            ),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(value: progress),
-            const SizedBox(height: 8),
-            Text(
-              '${pool.ticketsSold}/${pool.ticketsRequired} venduti',
-              style: theme.textTheme.bodySmall?.copyWith(color: textColor),
-            ),
-            if (pool.createdAt != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Creato il: ${pool.createdAt!.toLocal().toString().split('.').first}',
-                style: theme.textTheme.bodySmall?.copyWith(color: textColor),
-              ),
-            ],
-          ],
+    final decoration = BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      gradient: isCurrent
+          ? LinearGradient(
+              colors: [
+                theme.colorScheme.primaryContainer,
+                theme.colorScheme.primary.withOpacity(0.85),
+              ],
+            )
+          : null,
+      color: isCurrent ? null : theme.colorScheme.surface,
+      boxShadow: [
+        BoxShadow(
+          color: theme.colorScheme.shadow.withOpacity(0.08),
+          blurRadius: 18,
+          offset: const Offset(0, 12),
         ),
+      ],
+    );
+
+    return Container(
+      decoration: decoration,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isCurrent ? 'Pool corrente' : 'Pool',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: onColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _MiniMetricChip(
+                icon: Icons.flag_outlined,
+                label: pool.state,
+                color: onColor,
+              ),
+              _MiniMetricChip(
+                icon: Icons.euro,
+                label: '€ $ticketEur',
+                color: onColor,
+              ),
+              _MiniMetricChip(
+                icon: Icons.confirmation_number,
+                label: '${pool.ticketsSold}/${pool.ticketsRequired} ticket',
+                color: onColor,
+              ),
+              _MiniMetricChip(
+                icon: Icons.timer_outlined,
+                label: remaining > 0 ? 'Restano $remaining' : 'Completato',
+                color: onColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: onColor.withOpacity(0.15),
+              valueColor: AlwaysStoppedAnimation(
+                isCurrent ? theme.colorScheme.onPrimary : theme.colorScheme.primary,
+              ),
+              minHeight: 8,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 22,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          label,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: Colors.white70,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricDivider extends StatelessWidget {
+  const _MetricDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 72,
+      margin: const EdgeInsets.symmetric(horizontal: 18),
+      color: Colors.white.withOpacity(0.25),
+    );
+  }
+}
+
+class _MiniMetricChip extends StatelessWidget {
+  const _MiniMetricChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final background = color.withOpacity(color == Colors.white ? 0.2 : 0.16);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
       ),
     );
   }
@@ -651,40 +846,6 @@ class _PrizeImageGalleryDialogState extends State<_PrizeImageGalleryDialog> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value, required this.textColor});
-
-  final String label;
-  final String value;
-  final Color textColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: textColor.withOpacity(0.8),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
-          ),
-        ],
       ),
     );
   }
