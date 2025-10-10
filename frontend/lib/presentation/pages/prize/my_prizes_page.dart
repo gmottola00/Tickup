@@ -1,11 +1,14 @@
-﻿import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
 import 'package:tickup/presentation/widgets/prize_card.dart';
 import 'package:tickup/presentation/widgets/card_grid_config.dart';
+import 'package:tickup/presentation/widgets/backend_error_dialog.dart';
+import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
+import 'package:tickup/data/models/raffle_pool.dart';
 
 class MyPrizesPage extends ConsumerWidget {
   const MyPrizesPage({super.key});
@@ -147,75 +150,75 @@ class _MyPrizesContent extends ConsumerWidget {
       return;
     }
 
-    final messenger = ScaffoldMessenger.of(context);
     try {
       await ref.read(prizeRepositoryProvider).deletePrize(prize.prizeId);
       ref.invalidate(myPrizesProvider);
       ref.invalidate(prizesProvider);
       ref.invalidate(myPoolsProvider);
       ref.invalidate(poolsProvider);
+      final messenger = ScaffoldMessenger.of(context);
       messenger.showSnackBar(
         const SnackBar(content: Text('Premio eliminato con successo.')),
       );
     } catch (error) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(_deleteErrorMessage(error))),
+      if (!context.mounted) return;
+      await BackendErrorDialog.show(
+        context,
+        error: error,
+        title: 'Eliminazione non completata',
+        actions: _buildDeleteErrorActions(context, ref, prize),
       );
     }
   }
 
-  String _deleteErrorMessage(Object error) {
-    final message = _extractErrorMessage(error);
-    if (message.toLowerCase().contains('pool') ||
-        message.toLowerCase().contains('raffle')) {
-      return 'Impossibile eliminare il premio: rimuovi prima i pool associati.';
+  List<BackendErrorAction> _buildDeleteErrorActions(
+    BuildContext context,
+    WidgetRef ref,
+    Prize prize,
+  ) {
+    final actions = <BackendErrorAction>[];
+    final poolId = _findAssociatedPoolId(ref, prize.prizeId);
+
+    if (poolId != null) {
+      actions.add(
+        BackendErrorAction(
+          label: 'Apri pool collegato',
+          icon: Icons.confirmation_number_outlined,
+          isPrimary: true,
+          onPressed: (ctx) {
+            GoRouter.of(ctx).push(
+              AppRoute.poolDetails(poolId),
+            );
+          },
+        ),
+      );
     }
-    return message;
+
+    actions.add(BackendErrorAction.dismiss(icon: Icons.close));
+    return actions;
   }
 
-  String _extractErrorMessage(Object error) {
-    String? message;
-    if (error is DioException) {
-      message = _detailFromResponse(error.response?.data) ?? error.message;
-    } else if (error is Exception) {
-      message = error.toString();
-    } else if (error is Error) {
-      message = error.toString();
+  String? _findAssociatedPoolId(WidgetRef ref, String prizeId) {
+    final candidates = [
+      ref.read(myPoolsProvider),
+      ref.read(poolsProvider),
+    ];
+
+    for (final asyncPools in candidates) {
+      final poolId = asyncPools.maybeWhen(
+        data: (pools) => _poolIdForPrize(pools, prizeId),
+        orElse: () => null,
+      );
+      if (poolId != null) return poolId;
     }
-    final cleaned = message?.trim();
-    if (cleaned == null || cleaned.isEmpty) {
-      return 'Errore durante l\'eliminazione del premio.';
-    }
-    return cleaned.replaceFirst(RegExp('^Exception: '), '').trim();
+
+    return null;
   }
 
-  String? _detailFromResponse(Object? data) {
-    if (data == null) return null;
-    if (data is String) return data;
-    if (data is Map) {
-      final detail = data['detail'];
-      if (detail is String && detail.isNotEmpty) {
-        return detail;
-      }
-      if (detail is List && detail.isNotEmpty) {
-        final first = detail.first;
-        if (first is String && first.isNotEmpty) {
-          return first;
-        }
-        if (first is Map && first['msg'] is String) {
-          return first['msg'] as String;
-        }
-      }
-      final message = data['message'];
-      if (message is String && message.isNotEmpty) {
-        return message;
-      }
-    }
-    if (data is List && data.isNotEmpty) {
-      final first = data.first;
-      if (first is String && first.isNotEmpty) return first;
-      if (first is Map && first['msg'] is String) {
-        return first['msg'] as String;
+  String? _poolIdForPrize(List<RafflePool> pools, String prizeId) {
+    for (final pool in pools) {
+      if (pool.prizeId == prizeId) {
+        return pool.poolId;
       }
     }
     return null;
@@ -246,5 +249,3 @@ class _MyPrizesEmpty extends StatelessWidget {
     );
   }
 }
-
-
