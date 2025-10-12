@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tickup/data/models/wallet.dart';
 import 'package:tickup/presentation/features/wallet/wallet_provider.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
+import 'package:tickup/presentation/widgets/bottom_nav_bar.dart';
 
 class WalletOverviewPage extends ConsumerWidget {
   const WalletOverviewPage({super.key});
@@ -26,6 +27,7 @@ class WalletOverviewPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Il mio wallet'),
       ),
+      bottomNavigationBar: const ModernBottomNavigation(),
       body: RefreshIndicator(
         onRefresh: refresh,
         child: walletAsync.when(

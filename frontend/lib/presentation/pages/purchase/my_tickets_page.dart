@@ -7,6 +7,7 @@ import 'package:tickup/presentation/features/prize/prize_provider.dart';
 import 'package:tickup/presentation/features/purchase/purchase_provider.dart';
 import 'package:tickup/presentation/pages/purchase/purchase_page_args.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
+import 'package:tickup/presentation/widgets/bottom_nav_bar.dart';
 
 class MyTicketsPage extends ConsumerWidget {
   const MyTicketsPage({super.key});
@@ -19,6 +20,7 @@ class MyTicketsPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Pool a cui partecipo'),
       ),
+      bottomNavigationBar: const ModernBottomNavigation(),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(myPurchasesProvider);
