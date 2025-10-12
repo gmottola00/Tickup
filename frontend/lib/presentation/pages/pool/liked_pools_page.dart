@@ -7,6 +7,7 @@ import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/presentation/widgets/card_grid_config.dart';
 import 'package:tickup/presentation/widgets/pool_card.dart';
+import 'package:tickup/presentation/widgets/bottom_nav_bar.dart';
 
 class LikedPoolsPage extends ConsumerWidget {
   const LikedPoolsPage({super.key});
@@ -15,6 +16,7 @@ class LikedPoolsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final likedPools = ref.watch(likedPoolsProvider);
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: const Text('I miei preferiti'),
       ),
@@ -32,6 +34,7 @@ class LikedPoolsPage extends ConsumerWidget {
           data: (items) => _LikedPoolsContent(items: items),
         ),
       ),
+      bottomNavigationBar: const ModernBottomNavigation(),
     );
   }
 }

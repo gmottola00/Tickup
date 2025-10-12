@@ -8,6 +8,7 @@ import 'package:tickup/presentation/widgets/card_grid_config.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
+import 'package:tickup/presentation/widgets/bottom_nav_bar.dart';
 
 class MyPoolsPage extends ConsumerWidget {
   const MyPoolsPage({super.key});
@@ -17,6 +18,7 @@ class MyPoolsPage extends ConsumerWidget {
     final myPools = ref.watch(myPoolsProvider);
 
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: const Text('I miei pool'),
       ),
@@ -34,6 +36,7 @@ class MyPoolsPage extends ConsumerWidget {
           data: (items) => _MyPoolsContent(items: items),
         ),
       ),
+      bottomNavigationBar: const ModernBottomNavigation(),
     );
   }
 }
@@ -253,5 +256,4 @@ class _MyPoolsEmpty extends StatelessWidget {
     );
   }
 }
-
 

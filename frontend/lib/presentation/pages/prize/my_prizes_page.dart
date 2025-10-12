@@ -9,6 +9,7 @@ import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
+import 'package:tickup/presentation/widgets/bottom_nav_bar.dart';
 
 class MyPrizesPage extends ConsumerWidget {
   const MyPrizesPage({super.key});
@@ -18,6 +19,7 @@ class MyPrizesPage extends ConsumerWidget {
     final myPrizes = ref.watch(myPrizesProvider);
 
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: const Text('I miei oggetti'),
       ),
@@ -35,6 +37,7 @@ class MyPrizesPage extends ConsumerWidget {
           data: (items) => _MyPrizesContent(items: items),
         ),
       ),
+      bottomNavigationBar: const ModernBottomNavigation(),
     );
   }
 }

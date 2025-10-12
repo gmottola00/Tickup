@@ -10,6 +10,7 @@ import 'package:tickup/presentation/features/prize/prize_images_provider.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
 import 'package:tickup/presentation/pages/purchase/purchase_page_args.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
+import 'package:tickup/presentation/widgets/bottom_nav_bar.dart';
 
 class PoolDetailsPage extends ConsumerWidget {
   const PoolDetailsPage({super.key, required this.poolId, this.initial});
@@ -26,12 +27,18 @@ class PoolDetailsPage extends ConsumerWidget {
       future: RaffleRepository().fetchPool(poolId),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            extendBody: true,
+            body: Center(child: CircularProgressIndicator()),
+            bottomNavigationBar: ModernBottomNavigation(),
+          );
         }
         if (snapshot.hasError || !snapshot.hasData) {
           return Scaffold(
             appBar: AppBar(),
             body: Center(child: Text('Errore: ${snapshot.error}')),
+            extendBody: true,
+            bottomNavigationBar: const ModernBottomNavigation(),
           );
         }
         return _PoolDetailsLoader(initial: snapshot.data!);
@@ -50,12 +57,18 @@ class _PoolDetailsLoader extends ConsumerWidget {
       future: ref.read(prizeRepositoryProvider).fetchPrize(initial.prizeId),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            extendBody: true,
+            body: Center(child: CircularProgressIndicator()),
+            bottomNavigationBar: ModernBottomNavigation(),
+          );
         }
         if (snapshot.hasError || !snapshot.hasData) {
           return Scaffold(
             appBar: AppBar(),
             body: Center(child: Text('Errore: ${snapshot.error}')),
+            extendBody: true,
+            bottomNavigationBar: const ModernBottomNavigation(),
           );
         }
         return FutureBuilder<List<RafflePool>>(
@@ -63,13 +76,17 @@ class _PoolDetailsLoader extends ConsumerWidget {
           builder: (context, poolsSnapshot) {
             if (poolsSnapshot.connectionState != ConnectionState.done) {
               return const Scaffold(
+                extendBody: true,
                 body: Center(child: CircularProgressIndicator()),
+                bottomNavigationBar: ModernBottomNavigation(),
               );
             }
             if (poolsSnapshot.hasError) {
               return Scaffold(
                 appBar: AppBar(),
                 body: Center(child: Text('Errore: ${poolsSnapshot.error}')),
+                extendBody: true,
+                bottomNavigationBar: const ModernBottomNavigation(),
               );
             }
 
@@ -133,6 +150,7 @@ class _PoolDetailsView extends ConsumerWidget {
         : (initialIndex.clamp(0, galleryUrls.length - 1) as num).toInt();
 
     return Scaffold(
+      extendBody: true,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -356,29 +374,31 @@ class _PoolDetailsView extends ConsumerWidget {
                       pool: relatedPools.first,
                       isOwner: isOwner,
                     ),
+                  if (relatedPools.isNotEmpty) const SizedBox(height: 24),
+                  if (!isOwner)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          context.push(
+                            AppRoute.purchaseForPool(pool.poolId),
+                            extra: PurchasePageArgs(pool: pool, prize: prize),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text('Entra'),
+                      ),
+                    ),
                 ],
               ),
             ),
           ),
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
-      bottomNavigationBar: isOwner
-          ? null
-          : SafeArea(
-              minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    context.push(
-                      AppRoute.purchaseForPool(pool.poolId),
-                      extra: PurchasePageArgs(pool: pool, prize: prize),
-                    );
-                  },
-                  child: const Text('Entra'),
-                ),
-              ),
-            ),
+      bottomNavigationBar: const ModernBottomNavigation(),
     );
   }
 }

@@ -13,6 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
+import 'package:tickup/presentation/widgets/bottom_nav_bar.dart';
 
 class PrizeDetailsPage extends ConsumerWidget {
   const PrizeDetailsPage({super.key, required this.prizeId, this.initial});
@@ -30,13 +31,17 @@ class PrizeDetailsPage extends ConsumerWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(
+            extendBody: true,
             body: Center(child: CircularProgressIndicator()),
+            bottomNavigationBar: ModernBottomNavigation(),
           );
         }
         if (snapshot.hasError || !snapshot.hasData) {
           return Scaffold(
             appBar: AppBar(),
             body: Center(child: Text('Errore: ${snapshot.error}')),
+            extendBody: true,
+            bottomNavigationBar: const ModernBottomNavigation(),
           );
         }
         return _PrizeDetailsView(prize: snapshot.data!);
@@ -111,6 +116,7 @@ class _PrizeDetailsViewState extends ConsumerState<_PrizeDetailsView> {
     );
 
     return Scaffold(
+      extendBody: true,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -186,8 +192,10 @@ class _PrizeDetailsViewState extends ConsumerState<_PrizeDetailsView> {
               child: _buildBodySections(context, theme, priceEur, poolsAsync),
             ),
           ),
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
+      bottomNavigationBar: const ModernBottomNavigation(),
     );
   }
 
