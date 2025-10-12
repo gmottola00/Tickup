@@ -34,32 +34,32 @@ class ModernBottomNavigation extends ConsumerWidget {
     ),
   ];
 
-  int _getSelectedIndex(String location) {
-    // Handle home explicitly to avoid '/' matching all paths
-    if (location == AppRoute.home || location == '/') {
-      return 0;
-    }
-    for (int i = 0; i < _destinations.length; i++) {
-      final route = _destinations[i].route;
-      if (route == AppRoute.home) continue; // already handled
-      if (location.startsWith(route)) {
-        return i;
-      }
-    }
-    return 0;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).uri.toString();
-    final selectedIndex = _getSelectedIndex(location);
+    int detectedIndex = -1;
+    for (var i = 0; i < _destinations.length; i++) {
+      final route = _destinations[i].route;
+      final isMatch = _matchesRoute(location, route);
+      if (isMatch) {
+        detectedIndex = i;
+      }
+    }
+
+    final previousIndex = ref.watch(currentTabIndexProvider);
+    final fallbackIndex = (previousIndex >= 0 && previousIndex < _destinations.length)
+        ? previousIndex
+        : 0;
+    final selectedIndex = detectedIndex >= 0 ? detectedIndex : fallbackIndex;
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
     // Aggiorna il provider dell'indice corrente
-    Future.microtask(() {
-      ref.read(currentTabIndexProvider.notifier).state = selectedIndex;
-    });
+    if (detectedIndex >= 0 && detectedIndex != previousIndex) {
+      Future.microtask(() {
+        ref.read(currentTabIndexProvider.notifier).state = detectedIndex;
+      });
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -81,8 +81,10 @@ class ModernBottomNavigation extends ConsumerWidget {
           indicatorColor: Colors.transparent,
           selectedIndex: selectedIndex,
           onDestinationSelected: (index) {
-            if (index != selectedIndex) {
-              context.go(_destinations[index].route);
+            final destination = _destinations[index];
+            final isAlreadyOnDestination = _matchesRoute(location, destination.route);
+            if (!isAlreadyOnDestination) {
+              context.go(destination.route);
             }
           },
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
@@ -102,6 +104,15 @@ class ModernBottomNavigation extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  bool _matchesRoute(String location, String route) {
+    if (route == AppRoute.home || route == '/') {
+      return location == AppRoute.home || location == '/' || location.isEmpty;
+    }
+    return location == route ||
+        location.startsWith('$route/') ||
+        location.startsWith('$route?');
   }
 
   Widget _buildNavItem({
