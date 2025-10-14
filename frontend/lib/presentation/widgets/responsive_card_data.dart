@@ -67,7 +67,7 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Desktop large
     breakpointData = _BreakpointData(
       maxCardWidth: 400,
-      aspectRatio: 0.65,
+      aspectRatio: 1,
       padding: 16,
       spacing: 14,
       borderRadius: 16,
@@ -89,7 +89,7 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Tablet
     breakpointData = _BreakpointData(
       maxCardWidth: 320,
-      aspectRatio: 0.62,
+      aspectRatio: 1,
       padding: 12,
       spacing: 10,
       borderRadius: 12,
@@ -100,7 +100,7 @@ ResponsiveCardData calculateResponsiveCardDimensions({
     // Mobile large
     breakpointData = _BreakpointData(
       maxCardWidth: double.infinity,
-      aspectRatio: 0.6,
+      aspectRatio: 1,
       padding: 12,
       spacing: 10,
       borderRadius: 12,
