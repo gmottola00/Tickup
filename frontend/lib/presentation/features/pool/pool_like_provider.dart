@@ -35,10 +35,28 @@ LikeStatus _initialLike(Ref ref, String poolId) {
 }
 
 class PoolLikeController extends StateNotifier<LikeStatus> {
-  PoolLikeController(this.ref, this.poolId) : super(_initialLike(ref, poolId));
+  PoolLikeController(this.ref, this.poolId)
+      : super(_initialLike(ref, poolId)) {
+    // Ensure we fetch the authoritative like status on first use
+    // so the heart icon reflects persisted state after app restart.
+    _loadFromServerOnce();
+  }
 
   final Ref ref;
   final String poolId;
+  bool _loaded = false;
+
+  Future<void> _loadFromServerOnce() async {
+    if (_loaded) return;
+    _loaded = true;
+    try {
+      final repo = ref.read(raffleRepositoryProvider);
+      final res = await repo.fetchLikeStatus(poolId);
+      state = res;
+    } catch (_) {
+      // ignore network errors; keep current optimistic/local state
+    }
+  }
 
   Future<void> toggle() async {
     final repo = ref.read(raffleRepositoryProvider);
