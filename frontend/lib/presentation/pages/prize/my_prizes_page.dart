@@ -23,6 +23,12 @@ class MyPrizesPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('I miei oggetti'),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push(AppRoute.prize),
+        icon: const Icon(Icons.add),
+        label: const Text('Crea'),
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(myPrizesProvider);
