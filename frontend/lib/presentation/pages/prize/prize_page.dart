@@ -19,8 +19,7 @@ class _PrizePageState extends ConsumerState<PrizePage> {
   final _title = TextEditingController();
   final _desc = TextEditingController();
   final _value = TextEditingController();
-  final _img = TextEditingController();
-  final _sponsor = TextEditingController();
+  // image_url e sponsor rimossi dal form: gestiti altrove
   final _stock = TextEditingController();
 
   bool _submitting = false;
@@ -40,8 +39,6 @@ class _PrizePageState extends ConsumerState<PrizePage> {
     _title.dispose();
     _desc.dispose();
     _value.dispose();
-    _img.dispose();
-    _sponsor.dispose();
     _stock.dispose();
     super.dispose();
   }
@@ -69,8 +66,6 @@ class _PrizePageState extends ConsumerState<PrizePage> {
         _title.text = p.title;
         _desc.text = p.description;
         _value.text = (p.valueCents / 100).toStringAsFixed(2);
-        _img.text = p.imageUrl;
-        _sponsor.text = p.sponsor;
         _stock.text = p.stock.toString();
         _showSnackbar('Premio caricato');
       },
@@ -114,8 +109,8 @@ class _PrizePageState extends ConsumerState<PrizePage> {
       title: _title.text.trim(),
       description: _desc.text.trim(),
       valueCents: cents,
-      imageUrl: _img.text.trim(),
-      sponsor: _sponsor.text.trim(),
+      imageUrl: '',
+      sponsor: '',
       stock: int.tryParse(_stock.text.trim()) ?? 0,
     );
 
@@ -152,8 +147,6 @@ class _PrizePageState extends ConsumerState<PrizePage> {
     _title.clear();
     _desc.clear();
     _value.clear();
-    _img.clear();
-    _sponsor.clear();
     _stock.clear();
   }
 
@@ -172,18 +165,10 @@ class _PrizePageState extends ConsumerState<PrizePage> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _LoadDeleteSection(
-                  idController: _idController,
-                  onLoad: _loadPrize,
-                  onDelete: _deletePrize,
-                ),
-                const SizedBox(height: 16),
                 _PrizeFormCard(
                   title: _title,
                   desc: _desc,
                   value: _value,
-                  img: _img,
-                  sponsor: _sponsor,
                   stock: _stock,
                 ),
                 const SizedBox(height: 24),
@@ -222,81 +207,19 @@ class _PrizePageState extends ConsumerState<PrizePage> {
   }
 }
 
-class _LoadDeleteSection extends StatelessWidget {
-  const _LoadDeleteSection({
-    required this.idController,
-    required this.onLoad,
-    required this.onDelete,
-  });
-
-  final TextEditingController idController;
-  final VoidCallback onLoad;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Carica / Elimina',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            // Input ID a tutta larghezza e azioni su riga separata
-            TextFormField(
-              controller: idController,
-              decoration: const InputDecoration(
-                  labelText: 'ID Premio', hintText: 'uuid...'),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.tonalIcon(
-                    onPressed: onLoad,
-                    icon: const Icon(Icons.download),
-                    label: const Text('Carica'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onDelete,
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Elimina'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// _LoadDeleteSection rimosso secondo il nuovo design
 
 class _PrizeFormCard extends StatelessWidget {
   const _PrizeFormCard({
     required this.title,
     required this.desc,
     required this.value,
-    required this.img,
-    required this.sponsor,
     required this.stock,
   });
 
   final TextEditingController title;
   final TextEditingController desc;
   final TextEditingController value;
-  final TextEditingController img;
-  final TextEditingController sponsor;
   final TextEditingController stock;
 
   @override
@@ -308,16 +231,39 @@ class _PrizeFormCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Dettagli premio',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Icon(
+                    Icons.emoji_events_outlined,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Dettagli premio',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: title,
-              decoration: const InputDecoration(labelText: 'Titolo'),
+              decoration: InputDecoration(
+                labelText: 'Titolo',
+                prefixIcon: const Icon(Icons.emoji_events_outlined),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
               textInputAction: TextInputAction.next,
               validator: (v) => (v == null || v.trim().isEmpty)
                   ? 'Il titolo è obbligatorio'
@@ -326,7 +272,13 @@ class _PrizeFormCard extends StatelessWidget {
             const SizedBox(height: 12),
             TextFormField(
               controller: desc,
-              decoration: const InputDecoration(labelText: 'Descrizione'),
+              decoration: InputDecoration(
+                labelText: 'Descrizione',
+                prefixIcon: const Icon(Icons.description_outlined),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
               maxLines: 3,
               validator: (v) => (v == null || v.trim().isEmpty)
                   ? 'La descrizione è obbligatoria'
@@ -350,21 +302,14 @@ class _PrizeFormCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             TextFormField(
-              controller: img,
-              decoration: const InputDecoration(
-                  labelText: 'Image URL', hintText: 'https://...'),
-            ),
-            const SizedBox(height: 8),
-            _ImagePreview(urlController: img),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: sponsor,
-              decoration: const InputDecoration(labelText: 'Sponsor'),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
               controller: stock,
-              decoration: const InputDecoration(labelText: 'Stock'),
+              decoration: InputDecoration(
+                labelText: 'Stock',
+                prefixIcon: const Icon(Icons.inventory_2_outlined),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               validator: (v) {
@@ -373,6 +318,14 @@ class _PrizeFormCard extends StatelessWidget {
                 return null;
               },
             ),
+            const SizedBox(height: 6),
+            Text(
+              'Suggerimento: l\'immagine del premio si gestisce nella sezione Immagini.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Theme.of(context).hintColor),
+            ),
           ],
         ),
       ),
@@ -380,60 +333,4 @@ class _PrizeFormCard extends StatelessWidget {
   }
 }
 
-class _ImagePreview extends StatefulWidget {
-  const _ImagePreview({required this.urlController});
-  final TextEditingController urlController;
-
-  @override
-  State<_ImagePreview> createState() => _ImagePreviewState();
-}
-
-class _ImagePreviewState extends State<_ImagePreview> {
-  late String _url;
-
-  @override
-  void initState() {
-    super.initState();
-    _url = widget.urlController.text;
-    widget.urlController.addListener(_onChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.urlController.removeListener(_onChanged);
-    super.dispose();
-  }
-
-  void _onChanged() {
-    final next = widget.urlController.text;
-    if (next != _url) {
-      setState(() => _url = next);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final valid = _url.startsWith('http');
-    if (!valid) {
-      return Text(
-        'Nessuna anteprima',
-        style: Theme.of(context).textTheme.bodySmall,
-      );
-    }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: Image.network(
-          _url,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Container(
-            color: Colors.grey[200],
-            alignment: Alignment.center,
-            child: const Text('Immagine non disponibile'),
-          ),
-        ),
-      ),
-    );
-  }
-}
+// Image preview non più usata nel nuovo design
