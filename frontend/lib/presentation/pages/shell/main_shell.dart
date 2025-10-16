@@ -286,6 +286,7 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 
   Widget _buildFloatingActionButton(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 80), // Spazio per la bottom nav
       child: FloatingActionButton.extended(
@@ -293,7 +294,8 @@ class _MainShellState extends ConsumerState<MainShell>
           HapticFeedback.lightImpact();
           _showQuickPlayDialog(context);
         },
-        backgroundColor: const Color(0xFFFF9800),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         icon: const Icon(Icons.bolt),
         label: const Text('Azioni'),
         elevation: 8,
@@ -320,13 +322,14 @@ class QuickActionsBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
+    final fg = isDarkMode
+        ? theme.colorScheme.onSurface
+        : theme.colorScheme.onPrimary; // ensure contrast on primary bg
 
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDarkMode
-            ? const Color.fromARGB(255, 0, 1, 2)
-            : const Color(0xFFFF9800),
+        color: isDarkMode ? theme.colorScheme.surface : theme.colorScheme.primary,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -350,6 +353,7 @@ class QuickActionsBottomSheet extends StatelessWidget {
               'Azioni rapide',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
+                color: fg,
               ),
             ),
           ),
@@ -363,17 +367,25 @@ class QuickActionsBottomSheet extends StatelessWidget {
             leading: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: isDarkMode
+                    ? theme.colorScheme.primary.withOpacity(0.1)
+                    : fg.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.add_box, color: theme.colorScheme.primary),
+              child: Icon(
+                Icons.add_box,
+                color: isDarkMode ? theme.colorScheme.primary : fg,
+              ),
             ),
-            title: const Text(
+            title: Text(
               'Aggiungi prodotto',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w600, color: fg),
             ),
-            subtitle: const Text('Crea un nuovo premio/prodotto'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            subtitle: Text('Crea un nuovo premio/prodotto',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: fg.withOpacity(0.85),
+                )),
+            trailing: Icon(Icons.arrow_forward_ios, size: 16, color: fg),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
               vertical: 8,
@@ -389,17 +401,25 @@ class QuickActionsBottomSheet extends StatelessWidget {
             leading: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: isDarkMode
+                    ? theme.colorScheme.primary.withOpacity(0.1)
+                    : fg.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.add_box, color: theme.colorScheme.primary),
+              child: Icon(
+                Icons.add_box,
+                color: isDarkMode ? theme.colorScheme.primary : fg,
+              ),
             ),
-            title: const Text(
+            title: Text(
               'Crea una Ruffle',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w600, color: fg),
             ),
-            subtitle: const Text('Crea una nuova Ruffle'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            subtitle: Text('Crea una nuova Ruffle',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: fg.withOpacity(0.85),
+                )),
+            trailing: Icon(Icons.arrow_forward_ios, size: 16, color: fg),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
               vertical: 8,
