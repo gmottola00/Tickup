@@ -275,8 +275,8 @@ class _PoolDetailsView extends ConsumerWidget {
                         Expanded(
                           child: _MetricTile(
                             icon: Icons.inventory_2_outlined,
-                            label: 'Stock',
-                            value: '${prize.stock}',
+                            label: 'Valore',
+                            value: '€ $priceEur',
                           ),
                         ),
                       ],

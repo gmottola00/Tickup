@@ -27,7 +27,7 @@ class MyPrizesPage extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(AppRoute.prize),
         icon: const Icon(Icons.add),
-        label: const Text('Crea'),
+        label: const Text('Crea Nuovo premio'),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -250,7 +250,7 @@ class _MyPrizesEmpty extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Crea un premio dalla pagina Gestione Premio',
+            'Crea un Nuovo premio per iniziare a usarli nei tuoi pool!',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
