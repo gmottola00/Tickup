@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/data/models/prize_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tickup/core/network/auth_service.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
+import 'package:tickup/presentation/routing/app_route.dart';
 import 'package:tickup/presentation/widgets/prize_images_section.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -54,53 +55,6 @@ class _PrizePageState extends ConsumerState<PrizePage> {
   void _showSnackbar(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
-
-  Future<void> _loadPrize() async {
-    await _ensureAuthHeader();
-    final id = _idController.text.trim();
-    if (id.isEmpty) {
-      _showSnackbar('Inserisci un ID premio');
-      return;
-    }
-    await ref.read(prizeNotifierProvider.notifier).load(id);
-    final state = ref.read(prizeNotifierProvider);
-    state.when(
-      data: (p) {
-        if (p == null) {
-          _showSnackbar('Nessun premio trovato');
-          return;
-        }
-        _title.text = p.title;
-        _desc.text = p.description;
-        _value.text = (p.valueCents / 100).toStringAsFixed(2);
-        _stock.text = p.stock.toString();
-        _activePrizeId = p.prizeId;
-        _showSnackbar('Premio caricato');
-      },
-      loading: () {},
-      error: (_, __) => _showSnackbar('Errore nel caricamento'),
-    );
-  }
-
-  Future<void> _deletePrize() async {
-    await _ensureAuthHeader();
-    final id = _idController.text.trim();
-    if (id.isEmpty) {
-      _showSnackbar('Inserisci un ID premio');
-      return;
-    }
-    setState(() => _submitting = true);
-    try {
-      await ref.read(prizeNotifierProvider.notifier).delete(id);
-      // Aggiorna lista in Home
-      ref.invalidate(prizesProvider);
-      _showSnackbar('Premio eliminato');
-    } catch (_) {
-      _showSnackbar('Errore durante l\'eliminazione');
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
   }
 
   Future<void> _submit({bool update = false}) async {
@@ -175,7 +129,19 @@ class _PrizePageState extends ConsumerState<PrizePage> {
     final isLoading = async.isLoading || _submitting;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Gestione Premio')),
+      appBar: AppBar(
+        title: const Text('Gestione Premio'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go(AppRoute.home);
+            }
+          },
+        ),
+      ),
       body: Stack(
         children: [
           Form(
@@ -193,14 +159,14 @@ class _PrizePageState extends ConsumerState<PrizePage> {
                 const SizedBox(height: 24),
                 if ((_activePrizeId ?? '').isEmpty) ...[
                   ImagesHintCard(
-                    onCreateTap: isLoading ? null : () => _submit(update: false),
                     onPickTap: isLoading ? null : _pickDraftImages,
                   ),
                   if (_draftImages.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     DraftPrizeImagesSection(
                       images: _draftImages,
-                      onRemove: (idx) => setState(() => _draftImages.removeAt(idx)),
+                      onRemove: (idx) =>
+                          setState(() => _draftImages.removeAt(idx)),
                     ),
                   ],
                 ],
@@ -208,7 +174,6 @@ class _PrizePageState extends ConsumerState<PrizePage> {
                   PrizeImagesSection(prizeId: _activePrizeId!),
                   const SizedBox(height: 24),
                 ],
-                
                 Row(
                   children: [
                     Expanded(
@@ -273,14 +238,17 @@ class _PrizePageState extends ConsumerState<PrizePage> {
                 contentType: _contentType(ext),
               ),
             );
-        final publicUrl = client.storage.from('public-images').getPublicUrl(key);
+        final publicUrl =
+            client.storage.from('public-images').getPublicUrl(key);
         dtos.add(PrizeImageCreate(
           bucket: 'public-images',
           storagePath: key,
           url: publicUrl,
         ));
       }
-      final saved = await ref.read(prizeImagesControllerProvider(prizeId).notifier).addImages(dtos);
+      final saved = await ref
+          .read(prizeImagesControllerProvider(prizeId).notifier)
+          .addImages(dtos);
       setState(() => _draftImages.clear());
       _showSnackbar('Immagini caricate: $saved/${dtos.length}');
     } catch (e) {
@@ -312,7 +280,8 @@ class _PrizePageState extends ConsumerState<PrizePage> {
 // _LoadDeleteSection rimosso secondo il nuovo design
 
 class DraftPrizeImagesSection extends StatelessWidget {
-  const DraftPrizeImagesSection({super.key, required this.images, required this.onRemove});
+  const DraftPrizeImagesSection(
+      {super.key, required this.images, required this.onRemove});
   final List<XFile> images;
   final void Function(int index) onRemove;
 
@@ -343,7 +312,8 @@ class DraftPrizeImagesSection extends StatelessWidget {
                     if (!snap.hasData) {
                       return Container(
                         color: Colors.grey.shade200,
-                        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                        child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2)),
                       );
                     }
                     return Image.memory(snap.data!, fit: BoxFit.cover);
@@ -395,7 +365,8 @@ class _PrizeFormCard extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -419,8 +390,12 @@ class _PrizeFormCard extends StatelessWidget {
                 labelText: 'Titolo',
                 prefixIcon: const Icon(Icons.emoji_events_outlined),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                fillColor: Theme.of(context)
+                    .colorScheme
+                    .surfaceVariant
+                    .withOpacity(0.4),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               ),
               textInputAction: TextInputAction.next,
               validator: (v) => (v == null || v.trim().isEmpty)
@@ -434,8 +409,12 @@ class _PrizeFormCard extends StatelessWidget {
                 labelText: 'Descrizione',
                 prefixIcon: const Icon(Icons.description_outlined),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                fillColor: Theme.of(context)
+                    .colorScheme
+                    .surfaceVariant
+                    .withOpacity(0.4),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               ),
               maxLines: 3,
               validator: (v) => (v == null || v.trim().isEmpty)
@@ -465,8 +444,12 @@ class _PrizeFormCard extends StatelessWidget {
                 labelText: 'Stock',
                 prefixIcon: const Icon(Icons.inventory_2_outlined),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                fillColor: Theme.of(context)
+                    .colorScheme
+                    .surfaceVariant
+                    .withOpacity(0.4),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               ),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
