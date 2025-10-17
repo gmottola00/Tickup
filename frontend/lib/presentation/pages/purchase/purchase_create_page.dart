@@ -13,6 +13,7 @@ import 'package:tickup/presentation/features/wallet/wallet_provider.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/presentation/features/purchase/purchase_provider.dart';
 import 'package:tickup/presentation/pages/purchase/purchase_page_args.dart';
+import 'package:tickup/presentation/widgets/backend_error_dialog.dart';
 
 class PurchaseCreatePage extends ConsumerStatefulWidget {
   const PurchaseCreatePage({super.key, required this.args});
@@ -88,15 +89,13 @@ class _PurchaseCreatePageState extends ConsumerState<PurchaseCreatePage> {
           walletDebited = true;
         } catch (error) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                _walletDebitErrorMessage(
-                  _extractErrorMessage(
-                    error,
-                    fallback: 'operazione non riuscita.',
-                  ),
-                ),
+          await BackendErrorDialog.show(
+            context,
+            error: error,
+            message: _walletDebitErrorMessage(
+              _extractErrorMessage(
+                error,
+                fallback: 'operazione non riuscita.',
               ),
             ),
           );
@@ -130,15 +129,13 @@ class _PurchaseCreatePageState extends ConsumerState<PurchaseCreatePage> {
       Navigator.of(context).pop(true);
     } catch (err) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _localizedInsufficientFundsMessage(
-              _extractErrorMessage(
-                err,
-                fallback: "Errore durante la creazione dell'acquisto.",
-              ),
-            ),
+      await BackendErrorDialog.show(
+        context,
+        error: err,
+        message: _localizedInsufficientFundsMessage(
+          _extractErrorMessage(
+            err,
+            fallback: "Errore durante la creazione dell'acquisto.",
           ),
         ),
       );
