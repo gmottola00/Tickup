@@ -60,8 +60,8 @@ class App extends StatelessWidget {
           theme: ThemeData(
             textTheme: AppTextStyles.textTheme,
           ),
-          supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: SuperDashLocalizations.supportedLocales,
+          localizationsDelegates: SuperDashLocalizations.localizationsDelegates,
           home: isTesting ? const MapTesterView() : const GameIntroPage(),
         ),
       ),

@@ -6,7 +6,8 @@ import 'package:tickup/presentation/routing/app_route.dart';
 class GameLauncher extends StatelessWidget {
   const GameLauncher({Key? key}) : super(key: key);
 
-  static const List<Map<String, String>> _games = [
+  static final List<Map<String, String>> _games = [
+    {'title': 'Super Dash', 'route': AppRoute.game('super_dash')},
     {'title': 'Stop Bar', 'route': '/games/stop_bar'},
     {'title': 'Reflex Tap', 'route': '/games/reflex_tap'},
     {'title': 'Space Invaders', 'route': '/games/space_invaders'},

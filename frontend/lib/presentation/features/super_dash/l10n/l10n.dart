@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:tickup/presentation/features/super_dash/l10n/super_dash_localizations.dart';
 
-export 'package:flutter_gen/gen_l10n/app_localizations.dart';
+export 'package:tickup/presentation/features/super_dash/l10n/super_dash_localizations.dart';
 
 extension AppLocalizationsX on BuildContext {
-  AppLocalizations get l10n => AppLocalizations.of(this);
+  SuperDashLocalizations get l10n => SuperDashLocalizations.of(this);
 }

@@ -23,7 +23,8 @@ dependencies:
   firebase_core: ^2.25.5
   flame: ^1.10.0
   flame_behaviors: ^1.0.0
-  flame_tiled: ^1.15.0
+  flame_tiled:
+    path: packages/flame_tiled
   flow_builder: ^0.0.9
   flutter_bloc: ^8.1.3
   flutter_riverpod: ^2.6.1
@@ -33,10 +34,11 @@ dependencies:
   font_awesome_flutter: ^10.6.0
   go_router: ^13.0.0
   image_picker: ^1.0.7
-  intl: ^0.18.0
+  intl: ^0.20.2
   leaderboard_repository:
     path: packages/leaderboard_repository
-  leap: ^0.2.1
+  leap:
+    path: packages/leap
   logging: ^1.2.0
   ordered_set: ^5.0.2
   path: ^1.8.3
@@ -53,25 +55,13 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
 
-dependency_overrides:
-  flame_tiled:
-    git:
-      url: https://github.com/flame-engine/flame.git
-      ref: main
-      path: packages/flame_tiled
-  leap:
-    git:
-      url: https://github.com/VeryGoodOpenSource/leap.git
-      ref: vgv
-      path: packages/leap
-
 flutter:
   uses-material-design: true
   assets:
-    - assets/super_dash/images/
-    - assets/super_dash/map/
-    - assets/super_dash/map/anim/
-    - assets/super_dash/map/tiles/
-    - assets/super_dash/map/objects/
-    - assets/super_dash/music/
-    - assets/super_dash/sfx/
+    - assets/images/
+    - assets/map/
+    - assets/map/anim/
+    - assets/map/tiles/
+    - assets/map/objects/
+    - assets/music/
+    - assets/sfx/
