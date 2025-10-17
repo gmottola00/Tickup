@@ -21,6 +21,12 @@ class ModernBottomNavigation extends ConsumerWidget {
       route: AppRoute.games,
     ),
     (
+      icon: Icons.add_circle_outline,
+      activeIcon: Icons.add_circle,
+      label: 'Crea',
+      route: AppRoute.prize,
+    ),
+    (
       icon: Icons.account_circle_outlined,
       activeIcon: Icons.account_circle,
       label: 'Profilo',
