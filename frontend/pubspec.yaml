@@ -28,10 +28,18 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/
-    - assets/images/Terrain
-    - assets/iamges/Main Characters/Mask dude
-    - assets/iamges/Main Characters/Ninja Frog
-    - assets/iamges/Main Characters/Pink Man
-    - assets/iamges/Main Characters/Virtual Guy
+    - assets/audio/
+    - assets/tiles/
+    - assets/images/Background/
+    - assets/images/Terrain/
+    - assets/images/HUD/
+    - assets/images/Traps/Saw/
+    - assets/images/Items/Checkpoints/Checkpoint/
+    - assets/images/Items/Fruits/
+    - assets/images/Main Characters/
+    - assets/images/Main Characters/Mask Dude/
+    - assets/images/Main Characters/Ninja Frog/
+    - assets/images/Main Characters/Pink Man/
+    - assets/images/Main Characters/Virtual Guy/
+    - assets/images/Enemies/Chicken/
     
