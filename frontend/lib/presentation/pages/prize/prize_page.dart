@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/data/models/prize.dart';
+import 'package:tickup/data/models/prize_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tickup/core/network/auth_service.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
+import 'package:tickup/presentation/widgets/prize_images_section.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
+import 'package:tickup/presentation/features/prize/prize_images_provider.dart';
 // L'UUID viene generato dal backend alla creazione
 
 class PrizePage extends ConsumerStatefulWidget {
@@ -23,6 +29,8 @@ class _PrizePageState extends ConsumerState<PrizePage> {
   final _stock = TextEditingController();
 
   bool _submitting = false;
+  String? _activePrizeId; // prize su cui gestire immagini
+  final List<XFile> _draftImages = [];
 
   Future<void> _ensureAuthHeader() async {
     // Recupera l'access token da Supabase (se loggato) e lo imposta nell'AuthService,
@@ -67,6 +75,7 @@ class _PrizePageState extends ConsumerState<PrizePage> {
         _desc.text = p.description;
         _value.text = (p.valueCents / 100).toStringAsFixed(2);
         _stock.text = p.stock.toString();
+        _activePrizeId = p.prizeId;
         _showSnackbar('Premio caricato');
       },
       loading: () {},
@@ -125,13 +134,22 @@ class _PrizePageState extends ConsumerState<PrizePage> {
           _showSnackbar('Premio aggiornato');
           // Aggiorna lista in Home
           ref.invalidate(prizesProvider);
+          _activePrizeId = id;
+          await _uploadDraftImagesIfAny(id);
         }
       } else {
         final created = await repo.createPrize(prize);
         _showSnackbar('Premio creato');
-        // Mostra/propaga l'UUID generato dal backend
-        _idController.text = created.prizeId;
+        // Carica eventuali immagini selezionate in bozza
+        await _uploadDraftImagesIfAny(created.prizeId);
+        if (!mounted) return;
+        // Reset completo del form e della UI
+        setState(() {
+          _activePrizeId = null; // nasconde la sezione immagini
+          _draftImages.clear();
+        });
         _clearForm();
+        FocusScope.of(context).unfocus();
         // Aggiorna lista in Home
         ref.invalidate(prizesProvider);
       }
@@ -148,6 +166,7 @@ class _PrizePageState extends ConsumerState<PrizePage> {
     _desc.clear();
     _value.clear();
     _stock.clear();
+    _formKey.currentState?.reset();
   }
 
   @override
@@ -172,6 +191,24 @@ class _PrizePageState extends ConsumerState<PrizePage> {
                   stock: _stock,
                 ),
                 const SizedBox(height: 24),
+                if ((_activePrizeId ?? '').isEmpty) ...[
+                  ImagesHintCard(
+                    onCreateTap: isLoading ? null : () => _submit(update: false),
+                    onPickTap: isLoading ? null : _pickDraftImages,
+                  ),
+                  if (_draftImages.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    DraftPrizeImagesSection(
+                      images: _draftImages,
+                      onRemove: (idx) => setState(() => _draftImages.removeAt(idx)),
+                    ),
+                  ],
+                ],
+                if ((_activePrizeId ?? '').isNotEmpty) ...[
+                  PrizeImagesSection(prizeId: _activePrizeId!),
+                  const SizedBox(height: 24),
+                ],
+                
                 Row(
                   children: [
                     Expanded(
@@ -205,9 +242,130 @@ class _PrizePageState extends ConsumerState<PrizePage> {
       ),
     );
   }
+
+  Future<void> _pickDraftImages() async {
+    final picker = ImagePicker();
+    try {
+      final picked = await picker.pickMultiImage(imageQuality: 85);
+      if (picked.isEmpty) return;
+      setState(() => _draftImages.addAll(picked));
+      _showSnackbar('Immagini aggiunte in bozza: ${picked.length}');
+    } catch (e) {
+      _showSnackbar('Errore selezione immagini: $e');
+    }
+  }
+
+  Future<void> _uploadDraftImagesIfAny(String prizeId) async {
+    if (_draftImages.isEmpty) return;
+    try {
+      final client = Supabase.instance.client;
+      final List<PrizeImageCreate> dtos = [];
+      for (final x in _draftImages) {
+        final ext = _ext(x.name);
+        final key = 'prizes/$prizeId/${const Uuid().v4()}.$ext';
+        final bytes = await x.readAsBytes();
+        await client.storage.from('public-images').uploadBinary(
+              key,
+              bytes,
+              fileOptions: FileOptions(
+                upsert: false,
+                cacheControl: 'public, max-age=3600',
+                contentType: _contentType(ext),
+              ),
+            );
+        final publicUrl = client.storage.from('public-images').getPublicUrl(key);
+        dtos.add(PrizeImageCreate(
+          bucket: 'public-images',
+          storagePath: key,
+          url: publicUrl,
+        ));
+      }
+      final saved = await ref.read(prizeImagesControllerProvider(prizeId).notifier).addImages(dtos);
+      setState(() => _draftImages.clear());
+      _showSnackbar('Immagini caricate: $saved/${dtos.length}');
+    } catch (e) {
+      _showSnackbar('Errore upload immagini: $e');
+    }
+  }
+
+  String _ext(String name) {
+    final i = name.lastIndexOf('.');
+    if (i <= 0 || i == name.length - 1) return 'jpg';
+    return name.substring(i + 1).toLowerCase();
+  }
+
+  String _contentType(String ext) {
+    switch (ext) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'application/octet-stream';
+    }
+  }
 }
 
 // _LoadDeleteSection rimosso secondo il nuovo design
+
+class DraftPrizeImagesSection extends StatelessWidget {
+  const DraftPrizeImagesSection({super.key, required this.images, required this.onRemove});
+  final List<XFile> images;
+  final void Function(int index) onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final crossAxisCount = width < 600 ? 2 : (width < 900 ? 3 : 4);
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.2,
+      ),
+      itemCount: images.length,
+      itemBuilder: (context, index) {
+        final x = images[index];
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: FutureBuilder<Uint8List>(
+                  future: x.readAsBytes(),
+                  builder: (context, snap) {
+                    if (!snap.hasData) {
+                      return Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      );
+                    }
+                    return Image.memory(snap.data!, fit: BoxFit.cover);
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              child: IconButton.filledTonal(
+                onPressed: () => onRemove(index),
+                icon: const Icon(Icons.close),
+                tooltip: 'Rimuovi',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
 
 class _PrizeFormCard extends StatelessWidget {
   const _PrizeFormCard({
