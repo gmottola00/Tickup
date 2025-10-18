@@ -3,12 +3,13 @@ import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:tickup/components/background_tile.dart';
+import 'package:tickup/components/angry_pig.dart';
 import 'package:tickup/components/checkpoint.dart';
 import 'package:tickup/components/chicken.dart';
 import 'package:tickup/components/collision_block.dart';
 import 'package:tickup/components/fruit.dart';
 import 'package:tickup/components/player.dart';
-import 'package:tickup/components/saw.dart';
+import 'package:tickup/components/traps/traps.dart';
 import 'package:tickup/pixel_adventure.dart';
 
 class Level extends World with HasGameReference<PixelAdventure> {
@@ -72,17 +73,6 @@ class Level extends World with HasGameReference<PixelAdventure> {
             ),
           );
           break;
-        case 'Saw':
-          add(
-            Saw(
-              isVertical: spawnPoint.properties.getValue('isVertical'),
-              offNeg: spawnPoint.properties.getValue('offNeg'),
-              offPos: spawnPoint.properties.getValue('offPos'),
-              position: position,
-              size: size,
-            ),
-          );
-          break;
         case 'Checkpoint':
           add(
             Checkpoint(
@@ -98,6 +88,86 @@ class Level extends World with HasGameReference<PixelAdventure> {
               size: size,
               offNeg: spawnPoint.properties.getValue('offNeg'),
               offPos: spawnPoint.properties.getValue('offPos'),
+            ),
+          );
+          break;
+        case 'AngryPig':
+          add(
+            AngryPig(
+              position: position,
+              size: size,
+              offNeg: spawnPoint.properties.getValue('offNeg'),
+              offPos: spawnPoint.properties.getValue('offPos'),
+            ),
+          );
+          break;
+        case 'Saw':
+          add(
+            SawTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'SpikedBall':
+          add(
+            SpikedBallTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'MovingPlatform':
+          add(
+            MovingPlatformTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+              skin: _parsePlatformSkin(spawnPoint),
+            ),
+          );
+          break;
+        case 'Fan':
+          add(FanTrap(position: position, size: size));
+          break;
+        case 'Fire':
+          add(FireTrap(position: position, size: size));
+          break;
+        case 'Arrow':
+          add(ArrowTrap(position: position, size: size));
+          break;
+        case 'RockHead':
+          add(RockHeadTrap(position: position, size: size));
+          break;
+        case 'SpikeHead':
+          add(SpikeHeadTrap(position: position, size: size));
+          break;
+        case 'Spikes':
+          add(SpikesTrap(position: position, size: size));
+          break;
+        case 'Trampoline':
+          add(TrampolineTrap(position: position, size: size));
+          break;
+        case 'FallingPlatforms':
+          add(FallingPlatformTrap(position: position, size: size));
+          break;
+        case 'Blocks':
+          add(BlockTrap(position: position, size: size));
+          break;
+        case 'TerrainSurface':
+        case 'SandMudIce':
+          add(
+            TerrainSurfaceController(
+              position: position,
+              variant: _parseTerrainVariant(spawnPoint),
             ),
           );
           break;
@@ -123,5 +193,53 @@ class Level extends World with HasGameReference<PixelAdventure> {
       add(block);
     }
     player.collisionBlocks = _collisionBlocks;
+  }
+
+  bool _boolProp(TiledObject object, String name, [bool defaultValue = false]) {
+    final value = object.properties.getValue(name);
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      return value.toLowerCase() == 'true';
+    }
+    return defaultValue;
+  }
+
+  double _doubleProp(TiledObject object, String name,
+      [double defaultValue = 0]) {
+    final value = object.properties.getValue(name);
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value) ?? defaultValue;
+    }
+    return defaultValue;
+  }
+
+  String? _stringProp(TiledObject object, String name) {
+    final value = object.properties.getValue(name);
+    return value?.toString();
+  }
+
+  MovingPlatformSkin _parsePlatformSkin(TiledObject object) {
+    final value = _stringProp(object, 'skin');
+    if (value == null) return MovingPlatformSkin.grey;
+    switch (value.toLowerCase()) {
+      case 'brown':
+        return MovingPlatformSkin.brown;
+      default:
+        return MovingPlatformSkin.grey;
+    }
+  }
+
+  TerrainSurfaceVariant _parseTerrainVariant(TiledObject object) {
+    final value = _stringProp(object, 'variant');
+    switch (value?.toLowerCase()) {
+      case 'mud':
+        return TerrainSurfaceVariant.mud;
+      case 'ice':
+        return TerrainSurfaceVariant.ice;
+      default:
+        return TerrainSurfaceVariant.sand;
+    }
   }
 }

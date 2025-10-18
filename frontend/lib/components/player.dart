@@ -4,12 +4,12 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/services.dart';
+import 'package:tickup/components/base_enemy.dart';
 import 'package:tickup/components/checkpoint.dart';
-import 'package:tickup/components/chicken.dart';
 import 'package:tickup/components/collision_block.dart';
 import 'package:tickup/components/custom_hitbox.dart';
 import 'package:tickup/components/fruit.dart';
-import 'package:tickup/components/saw.dart';
+import 'package:tickup/components/traps/traps.dart';
 import 'package:tickup/pixel_adventure.dart';
 
 enum PlayerState {
@@ -115,8 +115,8 @@ class Player extends SpriteAnimationGroupComponent
       Set<Vector2> intersectionPoints, PositionComponent other) {
     if (!reachedCheckpoint) {
       if (other is Fruit) other.collidedWithPlayer();
-      if (other is Saw) _respawn();
-      if (other is Chicken) other.collidedWithPlayer();
+      if (other is SawTrap) _respawn();
+      if (other is BaseEnemy) other.collidedWithPlayer();
       if (other is Checkpoint) _reachedCheckpoint();
     }
     super.onCollisionStart(intersectionPoints, other);

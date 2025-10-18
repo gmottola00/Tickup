@@ -20,7 +20,13 @@ class PixelAdventure extends FlameGame
         DragCallbacks,
         HasCollisionDetection,
         TapCallbacks {
-  static const List<String> _defaultLevels = ['Level-01', 'Level-02'];
+  static const List<String> _defaultLevels = [
+    'Level-01',
+    'Level-02',
+    'Level-03',
+    'Level-04',
+    'Level-05'
+  ];
   static const int defaultFruitScore = 100;
   static const int defaultEnemyScore = 250;
 
@@ -39,7 +45,8 @@ class PixelAdventure extends FlameGame
   })  : levelNames = List.unmodifiable(levels ?? _defaultLevels),
         player = player ?? Player(character: 'Mask Dude'),
         levelTimeLimits = UnmodifiableMapView(levelTimeLimits ?? const {}),
-        currentLevelIndex = _clampIndex(initialLevelIndex, levels ?? _defaultLevels);
+        currentLevelIndex =
+            _clampIndex(initialLevelIndex, levels ?? _defaultLevels);
 
   @override
   Color backgroundColor() => const Color(0xFF211F30);
@@ -76,7 +83,8 @@ class PixelAdventure extends FlameGame
 
   @override
   Future<void> onLoad() async {
-    assert(levelNames.isNotEmpty, 'PixelAdventure requires at least one level.');
+    assert(
+        levelNames.isNotEmpty, 'PixelAdventure requires at least one level.');
     await images.loadAllImages();
 
     await _loadLevel();

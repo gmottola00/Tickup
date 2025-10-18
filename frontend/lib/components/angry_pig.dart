@@ -4,8 +4,8 @@ import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:tickup/components/base_enemy.dart';
 
-class Chicken extends BaseEnemy {
-  Chicken({
+class AngryPig extends BaseEnemy {
+  AngryPig({
     super.position,
     super.size,
     double offNeg = 0,
@@ -14,14 +14,14 @@ class Chicken extends BaseEnemy {
           offNeg: offNeg,
           offPos: offPos,
           tileSize: 16,
-          runSpeed: 80,
-          bounceHeight: 260,
-          hitboxOffset: Vector2(4, 6),
-          hitboxSize: Vector2(24, 26),
+          runSpeed: 70,
+          bounceHeight: 240,
+          hitboxOffset: Vector2(6, 6),
+          hitboxSize: Vector2(24, 22),
         );
 
-  static const stepTime = 0.05;
-  final Vector2 textureSize = Vector2(32, 34);
+  static const double stepTime = 0.06;
+  static final Vector2 textureSize = Vector2(36, 30);
 
   late final SpriteAnimation _idleAnimation;
   late final SpriteAnimation _runAnimation;
@@ -29,9 +29,9 @@ class Chicken extends BaseEnemy {
 
   @override
   FutureOr<Map<EnemyState, SpriteAnimation>> loadAnimations() {
-    _idleAnimation = _spriteAnimation('Idle', 13);
-    _runAnimation = _spriteAnimation('Run', 14);
-    _hitAnimation = _spriteAnimation('Hit', 15)..loop = false;
+    _idleAnimation = _spriteAnimation('Idle (36x30).png', 9);
+    _runAnimation = _spriteAnimation('Run (36x30).png', 12);
+    _hitAnimation = _spriteAnimation('Hit 1 (36x30).png', 5)..loop = false;
 
     return {
       EnemyState.idle: _idleAnimation,
@@ -40,9 +40,9 @@ class Chicken extends BaseEnemy {
     };
   }
 
-  SpriteAnimation _spriteAnimation(String state, int amount) {
+  SpriteAnimation _spriteAnimation(String fileName, int amount) {
     return SpriteAnimation.fromFrameData(
-      game.images.fromCache('Enemies/Chicken/$state (32x34).png'),
+      game.images.fromCache('Enemies/AngryPig/$fileName'),
       SpriteAnimationData.sequenced(
         amount: amount,
         stepTime: stepTime,
