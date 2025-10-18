@@ -136,6 +136,7 @@ class Chicken extends SpriteAnimationGroupComponent
         FlameAudio.play('bounce.wav', volume: game.soundVolume);
       }
       gotStomped = true;
+      game.addScore(game.enemyScoreValue);
       current = State.hit;
       player.velocity.y = -_bounceHeight;
       await animationTicker?.completed;
