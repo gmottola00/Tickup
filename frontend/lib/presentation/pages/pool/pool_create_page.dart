@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tickup/core/network/auth_service.dart';
 import 'package:tickup/data/models/prize.dart';
 import 'package:tickup/data/models/raffle_pool.dart';
 import 'package:tickup/data/repositories/raffle_repository.dart';
 import 'package:tickup/presentation/features/pool/pool_provider.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
+import 'package:tickup/presentation/routing/app_route.dart';
 
-const _commissionRate = 0.05;
+const _commissionRate = 0.10;
 
 class PoolCreatePage extends ConsumerStatefulWidget {
   const PoolCreatePage({super.key, required this.prizeId});
@@ -116,7 +118,8 @@ class _PoolCreatePageState extends ConsumerState<PoolCreatePage> {
       // refresh home list
       ref.invalidate(poolsProvider);
       _show('Pool creato');
-      if (mounted) Navigator.of(context).pop(true);
+      if (!mounted) return;
+      GoRouter.of(context).go(AppRoute.home);
     } catch (error) {
       _show(_creationErrorMessage(error));
     } finally {
@@ -248,12 +251,6 @@ class _PoolCreatePageState extends ConsumerState<PoolCreatePage> {
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
-                    initialValue: widget.prizeId,
-                    decoration: const InputDecoration(labelText: 'ID Premio'),
-                    enabled: false,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
                     controller: _price,
                     decoration: const InputDecoration(
                       labelText: 'Prezzo ticket (€)',
@@ -269,8 +266,7 @@ class _PoolCreatePageState extends ConsumerState<PoolCreatePage> {
                       if (_selectedTickets == null || (v ?? '').isEmpty) {
                         return 'Seleziona il numero di biglietti';
                       }
-                      final n =
-                          double.tryParse((v ?? '').replaceAll(',', '.'));
+                      final n = double.tryParse((v ?? '').replaceAll(',', '.'));
                       if (n == null || n <= 0) {
                         return 'Inserisci un importo valido';
                       }
@@ -289,6 +285,10 @@ class _PoolCreatePageState extends ConsumerState<PoolCreatePage> {
                       DropdownMenuItem(value: 30, child: Text('30 biglietti')),
                       DropdownMenuItem(value: 40, child: Text('40 biglietti')),
                       DropdownMenuItem(value: 50, child: Text('50 biglietti')),
+                      DropdownMenuItem(
+                          value: 100, child: Text('100 biglietti')),
+                      DropdownMenuItem(
+                          value: 200, child: Text('200 biglietti')),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -344,6 +344,15 @@ class _PrizeInfoCard extends StatelessWidget {
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.w600),
             ),
+            if (prize.description.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                prize.description,
+                style: theme.textTheme.bodySmall,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [
@@ -383,15 +392,6 @@ class _PrizeInfoCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(prize.sponsor, style: theme.textTheme.bodyMedium),
                 ],
-              ),
-            ],
-            if (prize.description.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                prize.description,
-                style: theme.textTheme.bodySmall,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ],
