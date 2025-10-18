@@ -8,6 +8,7 @@ import 'package:tickup/presentation/pages/home/home_screen.dart';
 import 'package:tickup/presentation/pages/games/game_launcher.dart';
 import 'package:tickup/presentation/pages/games/game_runner.dart';
 import 'package:tickup/presentation/pages/profile/profile_screen.dart';
+import 'package:tickup/presentation/pages/profile/profile_edit_page.dart';
 import 'package:tickup/presentation/pages/prize/prize_page.dart';
 import 'package:tickup/presentation/pages/prize/prize_details_page.dart';
 import 'package:tickup/presentation/pages/prize/my_prizes_page.dart';
@@ -262,6 +263,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
         ],
+      ),
+
+      GoRoute(
+        path: AppRoute.profileEdit,
+        name: 'profile-edit',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          fullscreenDialog: true,
+          child: const ProfileEditPage(),
+        ),
       ),
 
       // Game Runner (Fullscreen)

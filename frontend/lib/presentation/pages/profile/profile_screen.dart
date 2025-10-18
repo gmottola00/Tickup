@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tickup/providers/theme_provider.dart';
+import 'package:tickup/presentation/features/profile/profile_provider.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -12,6 +13,12 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final mode = ref.watch(themeModeProvider);
+    final profile = ref.watch(userProfileProvider);
+    final displayName = (profile?.nickname?.trim().isNotEmpty ?? false)
+        ? profile!.nickname!.trim()
+        : 'Utente Tickup';
+    final email =
+        profile?.email.isNotEmpty == true ? profile!.email : 'guest@example.com';
 
     return Scaffold(
       appBar: AppBar(
@@ -42,21 +49,38 @@ class ProfileScreen extends ConsumerWidget {
                 CircleAvatar(
                   radius: 48,
                   backgroundColor: theme.colorScheme.primaryContainer,
-                  child: const Icon(Icons.person, size: 48),
+                  child: Text(
+                    displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Utente Tickup',
+                  displayName,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  Supabase.instance.client.auth.currentUser?.email ??
-                      'guest@example.com',
+                  email,
                   style: theme.textTheme.bodyMedium,
                 ),
+                if (profile?.pendingEmail != null) ...[
+                  const SizedBox(height: 12),
+                  Chip(
+                    backgroundColor:
+                        theme.colorScheme.secondaryContainer.withOpacity(0.6),
+                    avatar: const Icon(Icons.hourglass_top, size: 18),
+                    label: Text(
+                      'Email in attesa di conferma: ${profile!.pendingEmail}',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -124,7 +148,14 @@ class ProfileScreen extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.edit),
                   title: const Text('Modifica profilo'),
-                  onTap: () {},
+                  subtitle: const Text('Aggiorna nickname e indirizzo email'),
+                  onTap: () async {
+                    final updated =
+                        await context.push<bool>(AppRoute.profileEdit);
+                    if (updated == true) {
+                      ref.invalidate(userProfileProvider);
+                    }
+                  },
                 ),
               ],
             ),
