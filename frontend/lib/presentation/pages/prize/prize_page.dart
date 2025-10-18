@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tickup/core/network/auth_service.dart';
 import 'package:tickup/presentation/features/prize/prize_provider.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
+import 'package:tickup/presentation/widgets/backend_success_dialog.dart';
 import 'package:tickup/presentation/widgets/prize_images_section.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -22,7 +25,6 @@ class PrizePage extends ConsumerStatefulWidget {
 
 class _PrizePageState extends ConsumerState<PrizePage> {
   final _formKey = GlobalKey<FormState>();
-  final _idController = TextEditingController();
   final _title = TextEditingController();
   final _desc = TextEditingController();
   final _value = TextEditingController();
@@ -30,7 +32,6 @@ class _PrizePageState extends ConsumerState<PrizePage> {
   final _stock = TextEditingController();
 
   bool _submitting = false;
-  String? _activePrizeId; // prize su cui gestire immagini
   final List<XFile> _draftImages = [];
 
   Future<void> _ensureAuthHeader() async {
@@ -44,7 +45,6 @@ class _PrizePageState extends ConsumerState<PrizePage> {
 
   @override
   void dispose() {
-    _idController.dispose();
     _title.dispose();
     _desc.dispose();
     _value.dispose();
@@ -57,7 +57,7 @@ class _PrizePageState extends ConsumerState<PrizePage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  Future<void> _submit({bool update = false}) async {
+  Future<void> _createPrize() async {
     await _ensureAuthHeader();
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
@@ -68,7 +68,7 @@ class _PrizePageState extends ConsumerState<PrizePage> {
 
     final prize = Prize(
       // In creazione l'ID viene generato dal backend; qui è placeholder.
-      prizeId: update ? _idController.text.trim() : '',
+      prizeId: '',
       title: _title.text.trim(),
       description: _desc.text.trim(),
       valueCents: cents,
@@ -79,34 +79,50 @@ class _PrizePageState extends ConsumerState<PrizePage> {
 
     try {
       final repo = ref.read(prizeRepositoryProvider);
-      if (update) {
-        final id = _idController.text.trim();
-        if (id.isEmpty) {
-          _showSnackbar('Inserisci ID per aggiornare');
-        } else {
-          await repo.updatePrize(id, prize);
-          _showSnackbar('Premio aggiornato');
-          // Aggiorna lista in Home
-          ref.invalidate(prizesProvider);
-          _activePrizeId = id;
-          await _uploadDraftImagesIfAny(id);
-        }
-      } else {
-        final created = await repo.createPrize(prize);
-        _showSnackbar('Premio creato');
-        // Carica eventuali immagini selezionate in bozza
-        await _uploadDraftImagesIfAny(created.prizeId);
-        if (!mounted) return;
-        // Reset completo del form e della UI
-        setState(() {
-          _activePrizeId = null; // nasconde la sezione immagini
-          _draftImages.clear();
-        });
-        _clearForm();
-        FocusScope.of(context).unfocus();
-        // Aggiorna lista in Home
-        ref.invalidate(prizesProvider);
-      }
+      final created = await repo.createPrize(prize);
+      // Carica eventuali immagini selezionate in bozza
+      await _uploadDraftImagesIfAny(created.prizeId);
+      if (!mounted) return;
+      // Reset completo del form e della UI
+      setState(() {
+        _draftImages.clear();
+      });
+      _clearForm();
+      FocusScope.of(context).unfocus();
+      // Aggiorna lista in Home
+      ref.invalidate(prizesProvider);
+      ref.invalidate(myPrizesProvider);
+      await BackendSuccessDialog.show(
+        context,
+        title: 'Premio creato',
+        message: 'Vuoi creare subito un pool per questo premio?',
+        barrierDismissible: false,
+        actions: [
+          BackendSuccessAction(
+            label: 'Crea il Pool',
+            icon: Icons.confirmation_number_outlined,
+            isPrimary: true,
+            onPressed: (ctx) {
+              GoRouter.of(ctx)
+                  .push(AppRoute.createPoolForPrize(created.prizeId));
+            },
+          ),
+          BackendSuccessAction(
+            label: 'I tuoi Oggetti',
+            icon: Icons.inventory_2_outlined,
+            onPressed: (ctx) {
+              GoRouter.of(ctx).go(AppRoute.myPrizes);
+            },
+          ),
+          BackendSuccessAction(
+            label: 'Home',
+            icon: Icons.home_outlined,
+            onPressed: (ctx) {
+              GoRouter.of(ctx).go(AppRoute.home);
+            },
+          ),
+        ],
+      );
     } catch (_) {
       _showSnackbar('Errore nella richiesta');
     } finally {
@@ -115,7 +131,6 @@ class _PrizePageState extends ConsumerState<PrizePage> {
   }
 
   void _clearForm() {
-    _idController.clear();
     _title.clear();
     _desc.clear();
     _value.clear();
@@ -157,43 +172,25 @@ class _PrizePageState extends ConsumerState<PrizePage> {
                   stock: _stock,
                 ),
                 const SizedBox(height: 24),
-                if ((_activePrizeId ?? '').isEmpty) ...[
-                  ImagesHintCard(
-                    onPickTap: isLoading ? null : _pickDraftImages,
+                ImagesHintCard(
+                  onPickTap: isLoading ? null : _pickDraftImages,
+                ),
+                if (_draftImages.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  DraftPrizeImagesSection(
+                    images: _draftImages,
+                    onRemove: (idx) =>
+                        setState(() => _draftImages.removeAt(idx)),
                   ),
-                  if (_draftImages.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    DraftPrizeImagesSection(
-                      images: _draftImages,
-                      onRemove: (idx) =>
-                          setState(() => _draftImages.removeAt(idx)),
-                    ),
-                  ],
                 ],
-                if ((_activePrizeId ?? '').isNotEmpty) ...[
-                  PrizeImagesSection(prizeId: _activePrizeId!),
-                  const SizedBox(height: 24),
-                ],
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed:
-                            isLoading ? null : () => _submit(update: false),
-                        icon: const Icon(Icons.add_circle_outline),
-                        label: const Text('Crea premio'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed:
-                            isLoading ? null : () => _submit(update: true),
-                        icon: const Icon(Icons.upgrade),
-                        label: const Text('Aggiorna esistente'),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: isLoading ? null : _createPrize,
+                    icon: const Icon(Icons.add_circle_outline),
+                    label: const Text('Crea premio'),
+                  ),
                 ),
               ],
             ),
@@ -461,7 +458,7 @@ class _PrizeFormCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Suggerimento: l\'immagine del premio si gestisce nella sezione Immagini.',
+              'Potrai creare un pool per questo premio in seguito.',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
@@ -473,5 +470,3 @@ class _PrizeFormCard extends StatelessWidget {
     );
   }
 }
-
-// Image preview non più usata nel nuovo design
