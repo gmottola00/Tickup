@@ -5,21 +5,27 @@ import 'package:flame/events.dart';
 import 'package:tickup/pixel_adventure.dart';
 
 class JumpButton extends SpriteComponent
-    with HasGameRef<PixelAdventure>, TapCallbacks {
+    with HasGameReference<PixelAdventure>, TapCallbacks {
   JumpButton();
 
   final margin = 32;
-  final buttonSize = 64;
+  final buttonSize = 64.0;
 
   @override
-  FutureOr<void> onLoad() {
+  Future<void> onLoad() async {
     sprite = Sprite(game.images.fromCache('HUD/JumpButton.png'));
-    position = Vector2(
-      game.size.x - margin - buttonSize,
-      game.size.y - margin - buttonSize,
-    );
+    size = Vector2.all(buttonSize);
     priority = 10;
-    return super.onLoad();
+    await super.onLoad();
+  }
+
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    position = Vector2(
+      size.x - margin - buttonSize,
+      size.y - margin - buttonSize,
+    );
   }
 
   @override

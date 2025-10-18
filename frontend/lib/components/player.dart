@@ -10,7 +10,6 @@ import 'package:tickup/components/collision_block.dart';
 import 'package:tickup/components/custom_hitbox.dart';
 import 'package:tickup/components/fruit.dart';
 import 'package:tickup/components/saw.dart';
-import 'package:tickup/components/utils.dart';
 import 'package:tickup/pixel_adventure.dart';
 
 enum PlayerState {
@@ -24,12 +23,13 @@ enum PlayerState {
 }
 
 class Player extends SpriteAnimationGroupComponent
-    with HasGameRef<PixelAdventure>, KeyboardHandler, CollisionCallbacks {
-  String character;
+    with HasGameReference<PixelAdventure>, KeyboardHandler, CollisionCallbacks {
   Player({
-    position,
+    super.position,
     this.character = 'Ninja Frog',
-  }) : super(position: position);
+  });
+
+  final String character;
 
   final double stepTime = 0.05;
   late final SpriteAnimation idleAnimation;
@@ -62,7 +62,7 @@ class Player extends SpriteAnimationGroupComponent
   double accumulatedTime = 0;
 
   @override
-  FutureOr<void> onLoad() {
+  Future<void> onLoad() async {
     _loadAllAnimations();
     // debugMode = true;
 
@@ -72,7 +72,7 @@ class Player extends SpriteAnimationGroupComponent
       position: Vector2(hitbox.offsetX, hitbox.offsetY),
       size: Vector2(hitbox.width, hitbox.height),
     ));
-    return super.onLoad();
+    await super.onLoad();
   }
 
   @override
@@ -210,7 +210,7 @@ class Player extends SpriteAnimationGroupComponent
   void _checkHorizontalCollisions() {
     for (final block in collisionBlocks) {
       if (!block.isPlatform) {
-        if (checkCollision(this, block)) {
+        if (_collidesWith(block)) {
           if (velocity.x > 0) {
             velocity.x = 0;
             position.x = block.x - hitbox.offsetX - hitbox.width;
@@ -235,7 +235,7 @@ class Player extends SpriteAnimationGroupComponent
   void _checkVerticalCollisions() {
     for (final block in collisionBlocks) {
       if (block.isPlatform) {
-        if (checkCollision(this, block)) {
+        if (_collidesWith(block)) {
           if (velocity.y > 0) {
             velocity.y = 0;
             position.y = block.y - hitbox.height - hitbox.offsetY;
@@ -244,7 +244,7 @@ class Player extends SpriteAnimationGroupComponent
           }
         }
       } else {
-        if (checkCollision(this, block)) {
+        if (_collidesWith(block)) {
           if (velocity.y > 0) {
             velocity.y = 0;
             position.y = block.y - hitbox.height - hitbox.offsetY;
@@ -258,6 +258,26 @@ class Player extends SpriteAnimationGroupComponent
         }
       }
     }
+  }
+
+  bool _collidesWith(CollisionBlock block) {
+    final playerX = position.x + hitbox.offsetX;
+    final playerY = position.y + hitbox.offsetY;
+    final blockX = block.x;
+    final blockY = block.y;
+
+    final adjustedX = scale.x < 0
+        ? playerX - (hitbox.offsetX * 2) - hitbox.width
+        : playerX;
+    final adjustedY =
+        block.isPlatform ? playerY + hitbox.height : playerY;
+
+    final intersectsX = adjustedX < blockX + block.width &&
+        adjustedX + hitbox.width > blockX;
+    final intersectsY = adjustedY < blockY + block.height &&
+        playerY + hitbox.height > blockY;
+
+    return intersectsX && intersectsY;
   }
 
   void _respawn() async {

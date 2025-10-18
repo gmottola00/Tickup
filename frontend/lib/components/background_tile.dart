@@ -9,15 +9,13 @@ class BackgroundTile extends ParallaxComponent<PixelAdventure> {
   final String color;
   BackgroundTile({
     this.color = 'Gray',
-    position,
-  }) : super(
-          position: position,
-        );
+    super.position,
+  });
 
   final double scrollSpeed = 40;
 
   @override
-  FutureOr<void> onLoad() async {
+  Future<void> onLoad() async {
     priority = -10;
     size = Vector2.all(64);
     parallax = await game.loadParallax(
@@ -26,5 +24,6 @@ class BackgroundTile extends ParallaxComponent<PixelAdventure> {
       repeat: ImageRepeat.repeat,
       fill: LayerFill.none,
     );
+    await super.onLoad();
   }
 }

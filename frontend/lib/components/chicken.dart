@@ -10,7 +10,7 @@ import 'package:tickup/pixel_adventure.dart';
 enum State { idle, run, hit }
 
 class Chicken extends SpriteAnimationGroupComponent
-    with HasGameRef<PixelAdventure>, CollisionCallbacks {
+    with HasGameReference<PixelAdventure>, CollisionCallbacks {
   final double offNeg;
   final double offPos;
   Chicken({
@@ -39,8 +39,7 @@ class Chicken extends SpriteAnimationGroupComponent
   late final SpriteAnimation _hitAnimation;
 
   @override
-  FutureOr<void> onLoad() {
-    // debugMode = true;
+  Future<void> onLoad() async {
     player = game.player;
 
     add(
@@ -51,7 +50,7 @@ class Chicken extends SpriteAnimationGroupComponent
     );
     _loadAllAnimations();
     _calculateRange();
-    return super.onLoad();
+    await super.onLoad();
   }
 
   @override

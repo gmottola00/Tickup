@@ -17,28 +17,28 @@ class PixelAdventure extends FlameGame
         TapCallbacks {
   @override
   Color backgroundColor() => const Color(0xFF211F30);
-  late CameraComponent cam;
-  Player player = Player(character: 'Mask Dude');
-  late JoystickComponent joystick;
-  bool showControls = false;
+  final Player player = Player(character: 'Mask Dude');
+  late final JoystickComponent joystick;
+  bool showControls = true;
   bool playSounds = true;
   double soundVolume = 1.0;
-  List<String> levelNames = ['Level-01', 'Level-01'];
+  final List<String> levelNames = ['Level-01', 'Level-01'];
   int currentLevelIndex = 0;
+  CameraComponent? _camera;
+  Level? _currentLevel;
 
   @override
-  FutureOr<void> onLoad() async {
-    // Load all images into cache
+  Future<void> onLoad() async {
     await images.loadAllImages();
 
-    _loadLevel();
+    await _loadLevel();
 
     if (showControls) {
-      addJoystick();
-      add(JumpButton());
+      await addJoystick();
+      await add(JumpButton());
     }
 
-    return super.onLoad();
+    await super.onLoad();
   }
 
   @override
@@ -49,7 +49,7 @@ class PixelAdventure extends FlameGame
     super.update(dt);
   }
 
-  void addJoystick() {
+  Future<void> addJoystick() async {
     joystick = JoystickComponent(
       priority: 10,
       knob: SpriteComponent(
@@ -65,7 +65,7 @@ class PixelAdventure extends FlameGame
       margin: const EdgeInsets.only(left: 32, bottom: 32),
     );
 
-    add(joystick);
+    await add(joystick);
   }
 
   void updateJoystick() {
@@ -86,34 +86,30 @@ class PixelAdventure extends FlameGame
     }
   }
 
-  void loadNextLevel() {
-    removeWhere((component) => component is Level);
-
-    if (currentLevelIndex < levelNames.length - 1) {
-      currentLevelIndex++;
-      _loadLevel();
-    } else {
-      // no more levels
-      currentLevelIndex = 0;
-      _loadLevel();
-    }
+  Future<void> loadNextLevel() async {
+    currentLevelIndex =
+        (currentLevelIndex + 1) % levelNames.length;
+    await _loadLevel();
   }
 
-  void _loadLevel() {
-    Future.delayed(const Duration(seconds: 1), () {
-      Level world = Level(
-        player: player,
-        levelName: levelNames[currentLevelIndex],
-      );
+  Future<void> _loadLevel() async {
+    _camera?.removeFromParent();
+    _currentLevel?.removeFromParent();
 
-      cam = CameraComponent.withFixedResolution(
-        world: world,
-        width: 640,
-        height: 360,
-      );
-      cam.viewfinder.anchor = Anchor.topLeft;
+    final level = Level(
+      player: player,
+      levelName: levelNames[currentLevelIndex],
+    );
 
-      addAll([cam, world]);
-    });
+    final camera = CameraComponent.withFixedResolution(
+      world: level,
+      width: 640,
+      height: 360,
+    )..viewfinder.anchor = Anchor.topLeft;
+
+    _currentLevel = level;
+    _camera = camera;
+
+    await addAll([level, camera]);
   }
 }

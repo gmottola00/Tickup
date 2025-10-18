@@ -7,16 +7,13 @@ import 'package:tickup/components/custom_hitbox.dart';
 import 'package:tickup/pixel_adventure.dart';
 
 class Fruit extends SpriteAnimationComponent
-    with HasGameRef<PixelAdventure>, CollisionCallbacks {
+    with HasGameReference<PixelAdventure>, CollisionCallbacks {
   final String fruit;
   Fruit({
     this.fruit = 'Apple',
-    position,
-    size,
-  }) : super(
-          position: position,
-          size: size,
-        );
+    super.position,
+    super.size,
+  });
 
   final double stepTime = 0.05;
   final hitbox = CustomHitbox(
@@ -28,8 +25,7 @@ class Fruit extends SpriteAnimationComponent
   bool collected = false;
 
   @override
-  FutureOr<void> onLoad() {
-    // debugMode = true;
+  Future<void> onLoad() async {
     priority = -1;
 
     add(
@@ -47,7 +43,7 @@ class Fruit extends SpriteAnimationComponent
         textureSize: Vector2.all(32),
       ),
     );
-    return super.onLoad();
+    await super.onLoad();
   }
 
   void collidedWithPlayer() async {

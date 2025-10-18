@@ -6,23 +6,21 @@ import 'package:tickup/components/player.dart';
 import 'package:tickup/pixel_adventure.dart';
 
 class Checkpoint extends SpriteAnimationComponent
-    with HasGameRef<PixelAdventure>, CollisionCallbacks {
+    with HasGameReference<PixelAdventure>, CollisionCallbacks {
   Checkpoint({
-    position,
-    size,
-  }) : super(
-          position: position,
-          size: size,
-        );
+    super.position,
+    super.size,
+  });
 
   @override
-  FutureOr<void> onLoad() {
-    // debugMode = true;
-    add(RectangleHitbox(
-      position: Vector2(18, 56),
-      size: Vector2(12, 8),
-      collisionType: CollisionType.passive,
-    ));
+  Future<void> onLoad() async {
+    add(
+      RectangleHitbox(
+        position: Vector2(18, 56),
+        size: Vector2(12, 8),
+        collisionType: CollisionType.passive,
+      ),
+    );
 
     animation = SpriteAnimation.fromFrameData(
       game.images
@@ -33,12 +31,14 @@ class Checkpoint extends SpriteAnimationComponent
         textureSize: Vector2.all(64),
       ),
     );
-    return super.onLoad();
+    await super.onLoad();
   }
 
   @override
   void onCollisionStart(
-      Set<Vector2> intersectionPoints, PositionComponent other) {
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
     if (other is Player) _reachedCheckpoint();
     super.onCollisionStart(intersectionPoints, other);
   }

@@ -11,15 +11,15 @@ import 'package:tickup/components/player.dart';
 import 'package:tickup/components/saw.dart';
 import 'package:tickup/pixel_adventure.dart';
 
-class Level extends World with HasGameRef<PixelAdventure> {
+class Level extends World with HasGameReference<PixelAdventure> {
   final String levelName;
   final Player player;
   Level({required this.levelName, required this.player});
   late TiledComponent level;
-  List<CollisionBlock> collisionBlocks = [];
+  final List<CollisionBlock> _collisionBlocks = [];
 
   @override
-  FutureOr<void> onLoad() async {
+  Future<void> onLoad() async {
     level = await TiledComponent.load('$levelName.tmx', Vector2.all(16));
 
     add(level);
@@ -28,7 +28,7 @@ class Level extends World with HasGameRef<PixelAdventure> {
     _spawningObjects();
     _addCollisions();
 
-    return super.onLoad();
+    await super.onLoad();
   }
 
   void _scrollingBackground() {
@@ -48,55 +48,60 @@ class Level extends World with HasGameRef<PixelAdventure> {
   void _spawningObjects() {
     final spawnPointsLayer = level.tileMap.getLayer<ObjectGroup>('Spawnpoints');
 
-    if (spawnPointsLayer != null) {
-      for (final spawnPoint in spawnPointsLayer.objects) {
-        switch (spawnPoint.class_) {
-          case 'Player':
-            player.position = Vector2(spawnPoint.x, spawnPoint.y);
-            player.scale.x = 1;
-            add(player);
-            break;
-          case 'Fruit':
-            final fruit = Fruit(
+    if (spawnPointsLayer == null) {
+      return;
+    }
+
+    for (final spawnPoint in spawnPointsLayer.objects) {
+      final position = Vector2(spawnPoint.x, spawnPoint.y);
+      final size = Vector2(spawnPoint.width, spawnPoint.height);
+
+      switch (spawnPoint.class_) {
+        case 'Player':
+          player
+            ..position = position
+            ..scale.x = 1;
+          add(player);
+          break;
+        case 'Fruit':
+          add(
+            Fruit(
               fruit: spawnPoint.name,
-              position: Vector2(spawnPoint.x, spawnPoint.y),
-              size: Vector2(spawnPoint.width, spawnPoint.height),
-            );
-            add(fruit);
-            break;
-          case 'Saw':
-            final isVertical = spawnPoint.properties.getValue('isVertical');
-            final offNeg = spawnPoint.properties.getValue('offNeg');
-            final offPos = spawnPoint.properties.getValue('offPos');
-            final saw = Saw(
-              isVertical: isVertical,
-              offNeg: offNeg,
-              offPos: offPos,
-              position: Vector2(spawnPoint.x, spawnPoint.y),
-              size: Vector2(spawnPoint.width, spawnPoint.height),
-            );
-            add(saw);
-            break;
-          case 'Checkpoint':
-            final checkpoint = Checkpoint(
-              position: Vector2(spawnPoint.x, spawnPoint.y),
-              size: Vector2(spawnPoint.width, spawnPoint.height),
-            );
-            add(checkpoint);
-            break;
-          case 'Chicken':
-            final offNeg = spawnPoint.properties.getValue('offNeg');
-            final offPos = spawnPoint.properties.getValue('offPos');
-            final chicken = Chicken(
-              position: Vector2(spawnPoint.x, spawnPoint.y),
-              size: Vector2(spawnPoint.width, spawnPoint.height),
-              offNeg: offNeg,
-              offPos: offPos,
-            );
-            add(chicken);
-            break;
-          default:
-        }
+              position: position,
+              size: size,
+            ),
+          );
+          break;
+        case 'Saw':
+          add(
+            Saw(
+              isVertical: spawnPoint.properties.getValue('isVertical'),
+              offNeg: spawnPoint.properties.getValue('offNeg'),
+              offPos: spawnPoint.properties.getValue('offPos'),
+              position: position,
+              size: size,
+            ),
+          );
+          break;
+        case 'Checkpoint':
+          add(
+            Checkpoint(
+              position: position,
+              size: size,
+            ),
+          );
+          break;
+        case 'Chicken':
+          add(
+            Chicken(
+              position: position,
+              size: size,
+              offNeg: spawnPoint.properties.getValue('offNeg'),
+              offPos: spawnPoint.properties.getValue('offPos'),
+            ),
+          );
+          break;
+        default:
       }
     }
   }
@@ -104,28 +109,19 @@ class Level extends World with HasGameRef<PixelAdventure> {
   void _addCollisions() {
     final collisionsLayer = level.tileMap.getLayer<ObjectGroup>('Collisions');
 
-    if (collisionsLayer != null) {
-      for (final collision in collisionsLayer.objects) {
-        switch (collision.class_) {
-          case 'Platform':
-            final platform = CollisionBlock(
-              position: Vector2(collision.x, collision.y),
-              size: Vector2(collision.width, collision.height),
-              isPlatform: true,
-            );
-            collisionBlocks.add(platform);
-            add(platform);
-            break;
-          default:
-            final block = CollisionBlock(
-              position: Vector2(collision.x, collision.y),
-              size: Vector2(collision.width, collision.height),
-            );
-            collisionBlocks.add(block);
-            add(block);
-        }
-      }
+    if (collisionsLayer == null) {
+      return;
     }
-    player.collisionBlocks = collisionBlocks;
+
+    for (final collision in collisionsLayer.objects) {
+      final block = CollisionBlock(
+        position: Vector2(collision.x, collision.y),
+        size: Vector2(collision.width, collision.height),
+        isPlatform: collision.class_ == 'Platform',
+      );
+      _collisionBlocks.add(block);
+      add(block);
+    }
+    player.collisionBlocks = _collisionBlocks;
   }
 }
