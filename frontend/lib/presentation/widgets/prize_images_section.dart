@@ -23,7 +23,8 @@ class ImagesHintCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.photo_library_outlined, color: theme.colorScheme.primary),
+            Icon(Icons.photo_library_outlined,
+                color: theme.colorScheme.primary),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -48,7 +49,7 @@ class ImagesHintCard extends StatelessWidget {
                         TextButton.icon(
                           onPressed: onPickTap,
                           icon: const Icon(Icons.add_photo_alternate_outlined),
-                          label: const Text('Aggiungi immagini ora'),
+                          label: const Text('Aggiungi immagini'),
                         ),
                     ],
                   ),
@@ -93,7 +94,8 @@ class PrizeImagesSection extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         imagesAsync.when(
-          loading: () => const Center(child: Padding(
+          loading: () => const Center(
+              child: Padding(
             padding: EdgeInsets.all(16),
             child: CircularProgressIndicator(),
           )),
@@ -103,7 +105,9 @@ class PrizeImagesSection extends ConsumerWidget {
               const SizedBox(width: 8),
               Expanded(child: Text('Errore galleria: $e')),
               TextButton(
-                onPressed: () => ref.read(prizeImagesControllerProvider(prizeId).notifier).refresh(),
+                onPressed: () => ref
+                    .read(prizeImagesControllerProvider(prizeId).notifier)
+                    .refresh(),
                 child: const Text('Riprova'),
               )
             ],
@@ -120,7 +124,9 @@ class PrizeImagesSection extends ConsumerWidget {
                   children: [
                     const Icon(Icons.photo_library_outlined),
                     const SizedBox(width: 12),
-                    const Expanded(child: Text('Nessuna immagine. Aggiungi dalla galleria.')),
+                    const Expanded(
+                        child:
+                            Text('Nessuna immagine. Aggiungi dalla galleria.')),
                     TextButton.icon(
                       onPressed: () => _pickAndUpload(context, ref),
                       icon: const Icon(Icons.add),
@@ -146,8 +152,12 @@ class PrizeImagesSection extends ConsumerWidget {
                 final img = items[index];
                 return PrizeImageTileSimple(
                   image: img,
-                  onSetCover: () => ref.read(prizeImagesControllerProvider(prizeId).notifier).setCover(img.imageId),
-                  onDelete: () => ref.read(prizeImagesControllerProvider(prizeId).notifier).delete(img.imageId),
+                  onSetCover: () => ref
+                      .read(prizeImagesControllerProvider(prizeId).notifier)
+                      .setCover(img.imageId),
+                  onDelete: () => ref
+                      .read(prizeImagesControllerProvider(prizeId).notifier)
+                      .delete(img.imageId),
                 );
               },
             );
@@ -189,7 +199,8 @@ class PrizeImagesSection extends ConsumerWidget {
                 contentType: _contentType(ext),
               ),
             );
-        final publicUrl = client.storage.from('public-images').getPublicUrl(key);
+        final publicUrl =
+            client.storage.from('public-images').getPublicUrl(key);
         dtos.add(PrizeImageCreate(
           bucket: 'public-images',
           storagePath: key,
@@ -197,7 +208,9 @@ class PrizeImagesSection extends ConsumerWidget {
         ));
       }
 
-      final saved = await ref.read(prizeImagesControllerProvider(prizeId).notifier).addImages(dtos);
+      final saved = await ref
+          .read(prizeImagesControllerProvider(prizeId).notifier)
+          .addImages(dtos);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Immagini salvate: $saved/${dtos.length}')),
@@ -239,7 +252,8 @@ class PrizeImagesSection extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text('Riordina immagini', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text('Riordina immagini',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Expanded(
                   child: ReorderableListView.builder(
@@ -297,7 +311,9 @@ class PrizeImagesSection extends ConsumerWidget {
         for (int i = 0; i < result.length; i++)
           PrizeImageReorderItem(imageId: result[i].imageId, sortOrder: i),
       ];
-      await ref.read(prizeImagesControllerProvider(prizeId).notifier).reorder(items);
+      await ref
+          .read(prizeImagesControllerProvider(prizeId).notifier)
+          .reorder(items);
     }
   }
 
@@ -320,7 +336,8 @@ class PrizeImagesSection extends ConsumerWidget {
                 if (s.isEmpty) {
                   return Container(
                     color: Colors.grey.shade200,
-                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    child: const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2)),
                   );
                 }
                 return Image.network(s, fit: BoxFit.cover);
@@ -352,7 +369,11 @@ class PrizeImagesSection extends ConsumerWidget {
 }
 
 class PrizeImageTileSimple extends ConsumerWidget {
-  const PrizeImageTileSimple({super.key, required this.image, required this.onSetCover, required this.onDelete});
+  const PrizeImageTileSimple(
+      {super.key,
+      required this.image,
+      required this.onSetCover,
+      required this.onDelete});
   final PrizeImage image;
   final VoidCallback onSetCover;
   final VoidCallback onDelete;
@@ -363,7 +384,8 @@ class PrizeImageTileSimple extends ConsumerWidget {
     final client = Supabase.instance.client;
     String? publicUrl;
     if (image.bucket == 'public-images') {
-      publicUrl = client.storage.from('public-images').getPublicUrl(image.storagePath);
+      publicUrl =
+          client.storage.from('public-images').getPublicUrl(image.storagePath);
     }
     return Stack(
       children: [
@@ -381,7 +403,8 @@ class PrizeImageTileSimple extends ConsumerWidget {
                       if (url.isEmpty) {
                         return Container(
                           color: Colors.grey.shade200,
-                          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          child: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2)),
                         );
                       }
                       return Image.network(
@@ -416,7 +439,8 @@ class PrizeImageTileSimple extends ConsumerWidget {
               ),
               child: const Text(
                 'Cover',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
               ),
             ),
           ),
