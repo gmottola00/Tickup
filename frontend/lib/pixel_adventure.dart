@@ -68,6 +68,7 @@ class PixelAdventure extends FlameGame
   CameraComponent? _camera;
   Level? _currentLevel;
   final VoidCallback? onTimeUp;
+  bool _timerInitialized = false;
 
   bool get isGameOver => _status == GameStatus.timeUp;
   double get remainingTime => _remainingTime;
@@ -219,15 +220,22 @@ class PixelAdventure extends FlameGame
   }
 
   void _resetForNewLevel(String levelName) {
-    final timeLimit = levelTimeLimits[levelName] ?? defaultTimeLimit;
-    _remainingTime = math.max(0, timeLimit);
+    if (!_timerInitialized) {
+      final timeLimit = levelTimeLimits[levelName] ?? defaultTimeLimit;
+      _remainingTime = math.max(0, timeLimit);
+      _timerInitialized = true;
+    }
     timeNotifier.value = _remainingTime;
-    player
-      ..horizontalMovement = 0
-      ..hasJumped = false
-      ..gotHit = false
-      ..velocity = Vector2.zero();
-    _setStatus(GameStatus.playing);
+    if (_status != GameStatus.timeUp) {
+      player
+        ..horizontalMovement = 0
+        ..hasJumped = false
+        ..gotHit = false
+        ..velocity = Vector2.zero();
+      _setStatus(GameStatus.playing);
+    } else {
+      player.gotHit = true;
+    }
   }
 
   void _setStatus(GameStatus status) {
