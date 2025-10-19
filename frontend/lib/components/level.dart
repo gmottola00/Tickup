@@ -3,13 +3,12 @@ import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:tickup/components/background_tile.dart';
-import 'package:tickup/components/angry_pig.dart';
 import 'package:tickup/components/checkpoint.dart';
-import 'package:tickup/components/chicken.dart';
 import 'package:tickup/components/collision_block.dart';
 import 'package:tickup/components/fruit.dart';
 import 'package:tickup/components/player.dart';
 import 'package:tickup/components/traps/traps.dart';
+import 'package:tickup/components/enemies/enemies.dart';
 import 'package:tickup/pixel_adventure.dart';
 
 class Level extends World with HasGameReference<PixelAdventure> {
@@ -86,8 +85,8 @@ class Level extends World with HasGameReference<PixelAdventure> {
             Chicken(
               position: position,
               size: size,
-              offNeg: spawnPoint.properties.getValue('offNeg'),
-              offPos: spawnPoint.properties.getValue('offPos'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
             ),
           );
           break;
@@ -96,8 +95,189 @@ class Level extends World with HasGameReference<PixelAdventure> {
             AngryPig(
               position: position,
               size: size,
-              offNeg: spawnPoint.properties.getValue('offNeg'),
-              offPos: spawnPoint.properties.getValue('offPos'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Bat':
+          add(
+            Bat(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Bee':
+          add(
+            Bee(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'BlueBird':
+          add(
+            BlueBird(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Bunny':
+          add(
+            Bunny(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Chameleon':
+          add(
+            Chameleon(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Duck':
+          add(
+            Duck(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'FatBird':
+          add(
+            FatBird(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Ghost':
+          add(
+            Ghost(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Mushroom':
+          add(
+            Mushroom(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Plant':
+          add(
+            Plant(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Radish':
+          add(
+            Radish(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Rino':
+          add(
+            Rino(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Rocks':
+          add(
+            RockEnemy(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+              variant: _parseRockVariant(spawnPoint),
+            ),
+          );
+          break;
+        case 'Skull':
+          add(
+            Skull(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Slime':
+          add(
+            Slime(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Snail':
+          add(
+            Snail(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Trunk':
+          add(
+            Trunk(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
+          break;
+        case 'Turtle':
+          add(
+            Turtle(
+              position: position,
+              size: size,
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
             ),
           );
           break;
@@ -136,31 +316,104 @@ class Level extends World with HasGameReference<PixelAdventure> {
           );
           break;
         case 'Fan':
-          add(FanTrap(position: position, size: size));
+          add(
+            FanTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
           break;
         case 'Fire':
-          add(FireTrap(position: position, size: size));
+          add(
+            FireTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
           break;
         case 'Arrow':
-          add(ArrowTrap(position: position, size: size));
+          add(
+            ArrowTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
           break;
         case 'RockHead':
-          add(RockHeadTrap(position: position, size: size));
+          add(
+            RockHeadTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
           break;
         case 'SpikeHead':
-          add(SpikeHeadTrap(position: position, size: size));
+          add(
+            SpikeHeadTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
           break;
         case 'Spikes':
-          add(SpikesTrap(position: position, size: size));
+          add(
+            SpikesTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
           break;
         case 'Trampoline':
-          add(TrampolineTrap(position: position, size: size));
+          add(
+            TrampolineTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
           break;
         case 'FallingPlatforms':
-          add(FallingPlatformTrap(position: position, size: size));
+        case 'FallingPlatform':
+          add(
+            FallingPlatformTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
           break;
         case 'Blocks':
-          add(BlockTrap(position: position, size: size));
+          add(
+            BlockTrap(
+              position: position,
+              size: size,
+              isVertical: _boolProp(spawnPoint, 'isVertical'),
+              offNeg: _doubleProp(spawnPoint, 'offNeg'),
+              offPos: _doubleProp(spawnPoint, 'offPos'),
+            ),
+          );
           break;
         case 'TerrainSurface':
         case 'SandMudIce':
@@ -240,6 +493,18 @@ class Level extends World with HasGameReference<PixelAdventure> {
         return TerrainSurfaceVariant.ice;
       default:
         return TerrainSurfaceVariant.sand;
+    }
+  }
+
+  RockEnemyVariant _parseRockVariant(TiledObject object) {
+    final value = _stringProp(object, 'variant');
+    switch (value?.toLowerCase()) {
+      case 'rock2':
+        return RockEnemyVariant.rock2;
+      case 'rock3':
+        return RockEnemyVariant.rock3;
+      default:
+        return RockEnemyVariant.rock1;
     }
   }
 }

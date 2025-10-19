@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
-import 'package:tickup/components/base_enemy.dart';
+import 'package:tickup/components/enemies/base_enemy.dart';
+import 'package:tickup/components/shared/sprite_animation_utils.dart';
 
 class Chicken extends BaseEnemy {
   Chicken({
@@ -20,8 +21,8 @@ class Chicken extends BaseEnemy {
           hitboxSize: Vector2(24, 26),
         );
 
-  static const stepTime = 0.05;
-  final Vector2 textureSize = Vector2(32, 34);
+  static const double stepTime = 0.05;
+  static final Vector2 textureSize = Vector2(32, 34);
 
   late final SpriteAnimation _idleAnimation;
   late final SpriteAnimation _runAnimation;
@@ -29,26 +30,31 @@ class Chicken extends BaseEnemy {
 
   @override
   FutureOr<Map<EnemyState, SpriteAnimation>> loadAnimations() {
-    _idleAnimation = _spriteAnimation('Idle', 13);
-    _runAnimation = _spriteAnimation('Run', 14);
-    _hitAnimation = _spriteAnimation('Hit', 15)..loop = false;
+    _idleAnimation = loadSequencedAnimation(
+      images: game.images,
+      path: 'Enemies/Chicken/Idle (32x34).png',
+      textureSize: textureSize,
+      stepTime: stepTime,
+    );
+    _runAnimation = loadSequencedAnimation(
+      images: game.images,
+      path: 'Enemies/Chicken/Run (32x34).png',
+      textureSize: textureSize,
+      stepTime: stepTime,
+    );
+    _hitAnimation = loadSequencedAnimation(
+      images: game.images,
+      path: 'Enemies/Chicken/Hit (32x34).png',
+      textureSize: textureSize,
+      stepTime: stepTime,
+      loop: false,
+    );
 
     return {
       EnemyState.idle: _idleAnimation,
       EnemyState.run: _runAnimation,
       EnemyState.hit: _hitAnimation,
     };
-  }
-
-  SpriteAnimation _spriteAnimation(String state, int amount) {
-    return SpriteAnimation.fromFrameData(
-      game.images.fromCache('Enemies/Chicken/$state (32x34).png'),
-      SpriteAnimationData.sequenced(
-        amount: amount,
-        stepTime: stepTime,
-        textureSize: textureSize,
-      ),
-    );
   }
 
   @override

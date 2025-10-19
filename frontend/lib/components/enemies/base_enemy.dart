@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:meta/meta.dart';
 import 'package:tickup/components/player.dart';
 import 'package:tickup/pixel_adventure.dart';
@@ -21,6 +22,8 @@ abstract class BaseEnemy extends SpriteAnimationGroupComponent<EnemyState>
     Vector2? hitboxOffset,
     this.runSpeed = 80,
     this.bounceHeight = 260,
+    this.grantScore = true,
+    this.stompSound = 'bounce.wav',
   })  : hitboxSize = hitboxSize ?? Vector2.all(16),
         hitboxOffset = hitboxOffset ?? Vector2.zero();
 
@@ -31,6 +34,8 @@ abstract class BaseEnemy extends SpriteAnimationGroupComponent<EnemyState>
   final Vector2 hitboxOffset;
   final double runSpeed;
   final double bounceHeight;
+  final bool grantScore;
+  final String? stompSound;
 
   @protected
   final Vector2 velocity = Vector2.zero();
@@ -54,6 +59,14 @@ abstract class BaseEnemy extends SpriteAnimationGroupComponent<EnemyState>
     );
     animations = await loadAnimations();
     current = EnemyState.idle;
+    if (size.x == 0 && size.y == 0) {
+      final frameSize = animations?[EnemyState.idle]?.frames.first.sprite.srcSize;
+      if (frameSize != null) {
+        size
+          ..x = frameSize.x
+          ..y = frameSize.y;
+      }
+    }
     _calculateRange();
     await super.onLoad();
   }
@@ -119,6 +132,12 @@ abstract class BaseEnemy extends SpriteAnimationGroupComponent<EnemyState>
 
   @mustCallSuper
   Future<void> onStomped() async {
+    if (stompSound != null && game.playSounds) {
+      FlameAudio.play(stompSound!, volume: game.soundVolume);
+    }
+    if (grantScore) {
+      game.addScore(game.enemyScoreValue);
+    }
     gotStomped = true;
     current = EnemyState.hit;
     player.velocity.y = -bounceHeight;

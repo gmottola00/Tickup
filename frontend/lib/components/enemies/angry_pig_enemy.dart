@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
-import 'package:tickup/components/base_enemy.dart';
+import 'package:tickup/components/enemies/base_enemy.dart';
+import 'package:tickup/components/shared/sprite_animation_utils.dart';
 
 class AngryPig extends BaseEnemy {
   AngryPig({
@@ -29,26 +30,31 @@ class AngryPig extends BaseEnemy {
 
   @override
   FutureOr<Map<EnemyState, SpriteAnimation>> loadAnimations() {
-    _idleAnimation = _spriteAnimation('Idle (36x30).png', 9);
-    _runAnimation = _spriteAnimation('Run (36x30).png', 12);
-    _hitAnimation = _spriteAnimation('Hit 1 (36x30).png', 5)..loop = false;
+    _idleAnimation = loadSequencedAnimation(
+      images: game.images,
+      path: 'Enemies/AngryPig/Idle (36x30).png',
+      textureSize: textureSize,
+      stepTime: stepTime,
+    );
+    _runAnimation = loadSequencedAnimation(
+      images: game.images,
+      path: 'Enemies/AngryPig/Run (36x30).png',
+      textureSize: textureSize,
+      stepTime: stepTime,
+    );
+    _hitAnimation = loadSequencedAnimation(
+      images: game.images,
+      path: 'Enemies/AngryPig/Hit 1 (36x30).png',
+      textureSize: textureSize,
+      stepTime: 0.08,
+      loop: false,
+    );
 
     return {
       EnemyState.idle: _idleAnimation,
       EnemyState.run: _runAnimation,
       EnemyState.hit: _hitAnimation,
     };
-  }
-
-  SpriteAnimation _spriteAnimation(String fileName, int amount) {
-    return SpriteAnimation.fromFrameData(
-      game.images.fromCache('Enemies/AngryPig/$fileName'),
-      SpriteAnimationData.sequenced(
-        amount: amount,
-        stepTime: stepTime,
-        textureSize: textureSize,
-      ),
-    );
   }
 
   @override
