@@ -28,7 +28,7 @@ class SpikeHeadTrap extends BaseTrap {
   FutureOr<SpriteAnimation> loadAnimation() {
     return loadSequencedAnimation(
       images: game.images,
-      path: '/Traps/Spike Head/Idle.png',
+      path: 'Traps/Spike Head/Idle.png',
       textureSize: Vector2(54, 52),
       stepTime: 0.12,
     );

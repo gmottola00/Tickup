@@ -393,7 +393,6 @@ class Level extends World with HasGameReference<PixelAdventure> {
           );
           break;
         case 'FallingPlatforms':
-        case 'FallingPlatform':
           add(
             FallingPlatformTrap(
               position: position,

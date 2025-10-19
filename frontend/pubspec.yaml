@@ -45,6 +45,9 @@ flutter:
     - assets/images/Traps/Rock Head/
     - assets/images/Traps/Spike Head/
     - assets/images/Traps/Spikes/
+    - assets/images/Traps/Platforms/
+    - assets/images/Traps/Blocks/
+    - assets/images/Traps/Sand Mud Ice/
     - assets/images/Items/Checkpoints/Checkpoint/
     - assets/images/Items/Fruits/
     - assets/images/Main Characters/
