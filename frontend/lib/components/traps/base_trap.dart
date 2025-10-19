@@ -14,6 +14,7 @@ abstract class BaseTrap extends SpriteAnimationComponent
     this.tileSize = 16,
     this.moveSpeed = 50,
     this.defaultPriority = -1,
+    this.useSourceSize = true,
     super.position,
     super.size,
   });
@@ -24,6 +25,7 @@ abstract class BaseTrap extends SpriteAnimationComponent
   final double tileSize;
   final double moveSpeed;
   final int defaultPriority;
+  final bool useSourceSize;
 
   double moveDirection = 1;
   double rangeNeg = 0;
@@ -40,7 +42,7 @@ abstract class BaseTrap extends SpriteAnimationComponent
     rangePos = baseCoordinate + offPos * tileSize;
 
     animation = await loadAnimation();
-    if (size.x == 0 && size.y == 0) {
+    if (useSourceSize && (size.x == 0 || size.y == 0)) {
       final frameSize = animation?.frames.first.sprite.srcSize;
       if (frameSize != null) {
         size

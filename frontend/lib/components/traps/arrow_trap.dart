@@ -1,49 +1,56 @@
 import 'dart:async';
 
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:tickup/components/traps/trap_sprite_utils.dart';
-import 'package:tickup/pixel_adventure.dart';
+import 'package:tickup/components/shared/sprite_animation_utils.dart';
+import 'package:tickup/components/traps/base_trap.dart';
 
-enum ArrowTrapState { idle, hit }
-
-class ArrowTrap extends SpriteAnimationGroupComponent<ArrowTrapState>
-    with HasGameReference<PixelAdventure> {
+class ArrowTrap extends BaseTrap {
   ArrowTrap({
     super.position,
     super.size,
-  });
+    bool isVertical = false,
+    double offNeg = 0,
+    double offPos = 0,
+  }) : super(
+          isVertical: isVertical,
+          offNeg: offNeg,
+          offPos: offPos,
+          tileSize: 16,
+          moveSpeed: isVertical || offNeg != 0 || offPos != 0 ? 45 : 0,
+          defaultPriority: 1,
+        );
 
-  static final _frameSize = Vector2(18, 18);
+  static final Vector2 _frameSize = Vector2(18, 18);
+
+  late final SpriteAnimation _idle;
+  late final SpriteAnimation _hit;
 
   @override
-  Future<void> onLoad() async {
-    animations = await _loadAnimations();
-    current = ArrowTrapState.idle;
-    await super.onLoad();
-  }
+  ShapeHitbox? createHitbox() => RectangleHitbox();
 
-  Future<Map<ArrowTrapState, SpriteAnimation>> _loadAnimations() async {
-    return {
-      ArrowTrapState.idle: loadSequencedAnimation(
-        images: game.images,
-        path: 'Traps/Arrow/Idle (18x18).png',
-        textureSize: _frameSize,
-        stepTime: 0.1,
-      ),
-      ArrowTrapState.hit: loadSequencedAnimation(
-        images: game.images,
-        path: 'Traps/Arrow/Hit (18x18).png',
-        textureSize: _frameSize,
-        stepTime: 0.08,
-        loop: false,
-      ),
-    };
+  @override
+  FutureOr<SpriteAnimation> loadAnimation() {
+    _idle = loadSequencedAnimation(
+      images: game.images,
+      path: 'Traps/Arrow/Idle (18x18).png',
+      textureSize: _frameSize,
+      stepTime: 0.1,
+    );
+    _hit = loadSequencedAnimation(
+      images: game.images,
+      path: 'Traps/Arrow/Hit (18x18).png',
+      textureSize: _frameSize,
+      stepTime: 0.08,
+      loop: false,
+    );
+    return _idle;
   }
 
   Future<void> trigger() async {
-    if (current == ArrowTrapState.hit) return;
-    current = ArrowTrapState.hit;
+    if (animation == _hit) return;
+    animation = _hit;
     await animationTicker?.completed;
-    current = ArrowTrapState.idle;
+    animation = _idle;
   }
 }

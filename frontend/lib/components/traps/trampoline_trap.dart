@@ -1,15 +1,28 @@
 import 'dart:async';
 
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:tickup/components/traps/base_static_trap.dart';
-import 'package:tickup/components/traps/trap_sprite_utils.dart';
+import 'package:tickup/components/shared/sprite_animation_utils.dart';
+import 'package:tickup/components/traps/base_trap.dart';
 
-class TrampolineTrap extends BaseStaticTrap {
+class TrampolineTrap extends BaseTrap {
   TrampolineTrap({
     super.position,
     super.size,
-    int priority = -1,
-  }) : super(priorityLayer: priority);
+    bool isVertical = false,
+    double offNeg = 0,
+    double offPos = 0,
+  }) : super(
+          isVertical: isVertical,
+          offNeg: offNeg,
+          offPos: offPos,
+          tileSize: 16,
+          moveSpeed: 0,
+          defaultPriority: 1,
+        );
+
+  @override
+  ShapeHitbox? createHitbox() => RectangleHitbox();
 
   @override
   FutureOr<SpriteAnimation> loadAnimation() {

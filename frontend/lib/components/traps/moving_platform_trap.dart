@@ -1,8 +1,9 @@
 import 'dart:async';
 
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:tickup/components/traps/base_trap.dart';
-import 'package:tickup/components/traps/trap_sprite_utils.dart';
+import 'package:tickup/components/shared/sprite_animation_utils.dart';
 
 enum MovingPlatformSkin { grey, brown }
 
@@ -20,10 +21,13 @@ class MovingPlatformTrap extends BaseTrap {
           offPos: offPos,
           tileSize: 16,
           moveSpeed: 35,
-          defaultPriority: -1,
+          defaultPriority: 1,
         );
 
   final MovingPlatformSkin skin;
+
+  @override
+  ShapeHitbox? createHitbox() => RectangleHitbox();
 
   @override
   FutureOr<SpriteAnimation> loadAnimation() {

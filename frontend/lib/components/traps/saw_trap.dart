@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:tickup/components/shared/sprite_animation_utils.dart';
 import 'package:tickup/components/traps/base_trap.dart';
 
 class SawTrap extends BaseTrap {
@@ -16,20 +18,19 @@ class SawTrap extends BaseTrap {
           offPos: offPos,
           tileSize: 16,
           moveSpeed: 50,
-          defaultPriority: -1,
+          defaultPriority: 1,
         );
 
-  static const double _stepTime = 0.03;
+  @override
+  ShapeHitbox? createHitbox() => CircleHitbox();
 
   @override
   FutureOr<SpriteAnimation> loadAnimation() {
-    return SpriteAnimation.fromFrameData(
-      game.images.fromCache('Traps/Saw/On (38x38).png'),
-      SpriteAnimationData.sequenced(
-        amount: 8,
-        stepTime: _stepTime,
-        textureSize: Vector2.all(38),
-      ),
+    return loadSequencedAnimation(
+      images: game.images,
+      path: 'Traps/Saw/On (38x38).png',
+      textureSize: Vector2.all(38),
+      stepTime: 0.03,
     );
   }
 }

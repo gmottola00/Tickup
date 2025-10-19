@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:tickup/components/traps/base_trap.dart';
-import 'package:tickup/components/traps/trap_sprite_utils.dart';
+import 'package:tickup/components/shared/sprite_animation_utils.dart';
 
 class SpikedBallTrap extends BaseTrap {
   SpikedBallTrap({
@@ -18,11 +18,11 @@ class SpikedBallTrap extends BaseTrap {
           offPos: offPos,
           tileSize: 16,
           moveSpeed: 45,
-          defaultPriority: -1,
+          defaultPriority: 1,
         );
 
   @override
-  ShapeHitbox? createHitbox() => CircleHitbox(radius: size.x / 2);
+  ShapeHitbox? createHitbox() => CircleHitbox();
 
   @override
   FutureOr<SpriteAnimation> loadAnimation() {

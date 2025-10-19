@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
-import 'package:tickup/components/traps/trap_sprite_utils.dart';
+import 'package:tickup/components/shared/sprite_animation_utils.dart';
 import 'package:tickup/pixel_adventure.dart';
 
 enum TerrainSurfaceVariant { sand, mud, ice }
