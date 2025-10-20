@@ -148,7 +148,7 @@ class Player extends SpriteAnimationGroupComponent
 
   SpriteAnimation _spriteAnimation(String state, int amount) {
     return SpriteAnimation.fromFrameData(
-      game.images.fromCache('Main Characters/$character/$state (32x32).png'),
+      game.images.fromCache('Avatars/$character/$state (32x32).png'),
       SpriteAnimationData.sequenced(
         amount: amount,
         stepTime: stepTime,
@@ -159,7 +159,7 @@ class Player extends SpriteAnimationGroupComponent
 
   SpriteAnimation _specialSpriteAnimation(String state, int amount) {
     return SpriteAnimation.fromFrameData(
-      game.images.fromCache('Main Characters/$state (96x96).png'),
+      game.images.fromCache('Avatars/$state (96x96).png'),
       SpriteAnimationData.sequenced(
         amount: amount,
         stepTime: stepTime,
@@ -266,16 +266,14 @@ class Player extends SpriteAnimationGroupComponent
     final blockX = block.x;
     final blockY = block.y;
 
-    final adjustedX = scale.x < 0
-        ? playerX - (hitbox.offsetX * 2) - hitbox.width
-        : playerX;
-    final adjustedY =
-        block.isPlatform ? playerY + hitbox.height : playerY;
+    final adjustedX =
+        scale.x < 0 ? playerX - (hitbox.offsetX * 2) - hitbox.width : playerX;
+    final adjustedY = block.isPlatform ? playerY + hitbox.height : playerY;
 
-    final intersectsX = adjustedX < blockX + block.width &&
-        adjustedX + hitbox.width > blockX;
-    final intersectsY = adjustedY < blockY + block.height &&
-        playerY + hitbox.height > blockY;
+    final intersectsX =
+        adjustedX < blockX + block.width && adjustedX + hitbox.width > blockX;
+    final intersectsY =
+        adjustedY < blockY + block.height && playerY + hitbox.height > blockY;
 
     return intersectsX && intersectsY;
   }
