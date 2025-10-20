@@ -11,8 +11,12 @@ Questo README offre la vista d’insieme. Le guide di dettaglio sono disponibili
 ---
 
 ## Step  Veloci per testare app con .env incluso
+### Solo una volta
    ```bash
    make install
+```
+### Per avviare app
+```
    make api        # FastAPI su 0.0.0.0:8000 (modificabile)
    make build-web            # Flutter build web
    make serve-web  
