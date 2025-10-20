@@ -10,6 +10,16 @@ Questo README offre la vista d’insieme. Le guide di dettaglio sono disponibili
 
 ---
 
+## STEP YURI
+   ```bash
+   make install
+   make api        # FastAPI su 0.0.0.0:8000 (modificabile)
+   make build-web            # Flutter build web
+   make serve-web  
+```
+
+---
+
 ## Cosa include il repository
 
 - **Pool e likes**: API per creare raffle, acquistare ticket, mettere/togliere “mi piace” con contatori consistenti.
@@ -75,6 +85,12 @@ Consulta i README di progetto per requisiti aggiuntivi (es. iOS/Xcode, Docker, e
    make api        # FastAPI su 0.0.0.0:8000 (modificabile)
    make web        # Flutter web su 0.0.0.0:8080
    ```
+
+4. **Avvia i servizi di sviluppo** (due terminal separati):
+   ```bash
+   make api        # FastAPI su 0.0.0.0:8000 (modificabile)
+   make build-web            # Flutter build web
+   make serve-web  
 
 5. **Opzioni utili**
    ```bash
