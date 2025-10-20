@@ -10,7 +10,7 @@ Questo README offre la vista d’insieme. Le guide di dettaglio sono disponibili
 
 ---
 
-## STEP YURI
+## Step  Veloci per testare app con .env incluso
    ```bash
    make install
    make api        # FastAPI su 0.0.0.0:8000 (modificabile)

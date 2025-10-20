@@ -61,7 +61,5 @@ frontend/android/unityLibrary
 *.log
 *.tmp
 *.bak
-.env
-.env.*
 supabase/.temp/
 supabase/.output/

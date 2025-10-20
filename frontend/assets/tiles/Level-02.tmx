@@ -30,7 +30,7 @@
  </layer>
  <objectgroup id="2" name="Spawnpoints">
   <object id="1" name="Player" type="Player" x="80" y="224" width="32" height="32"/>
-  <object id="11" name="AngryPig" type="AngryPig" x="236" y="272" width="32" height="32">
+  <object id="11" name="AngryPig" type="AngryPig" x="203" y="269.5" width="32" height="32">
    <properties>
     <property name="offNeg" type="float" value="12"/>
     <property name="offPos" type="float" value="5"/>
@@ -44,25 +44,25 @@
    </properties>
   </object>
   <object id="14" type="Checkpoint" x="496.667" y="95.3333" width="64" height="64"/>
-  <object id="16" name="Bunny" type="Bunny" x="374" y="270.667" width="32" height="32">
+  <object id="16" name="Bunny" type="Bunny" x="445.5" y="270.167" width="32" height="32">
    <properties>
     <property name="offNeg" type="float" value="12"/>
     <property name="offPos" type="float" value="5"/>
    </properties>
   </object>
-  <object id="17" name="Chameleon" type="Chameleon" x="340" y="270.667" width="32" height="32">
+  <object id="17" name="Chameleon" type="Chameleon" x="387.5" y="269.667" width="32" height="32">
    <properties>
     <property name="offNeg" type="float" value="12"/>
     <property name="offPos" type="float" value="5"/>
    </properties>
   </object>
-  <object id="18" name="Duck" type="Duck" x="310" y="270.667" width="32" height="32">
-    <properties>
-      <property name="offNeg" type="float" value="12"/>
-      <property name="offPos" type="float" value="5"/>
+  <object id="18" name="Duck" type="Duck" x="323" y="269.167" width="32" height="32">
+   <properties>
+    <property name="offNeg" type="float" value="12"/>
+    <property name="offPos" type="float" value="5"/>
    </properties>
   </object>
-  <object id="19" name="FatBird" type="FatBird" x="270" y="270.667" width="32" height="32">
+  <object id="19" name="FatBird" type="FatBird" x="258.5" y="269.167" width="32" height="32">
    <properties>
     <property name="offNeg" type="float" value="12"/>
     <property name="offPos" type="float" value="5"/>
