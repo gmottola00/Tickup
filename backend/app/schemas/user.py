@@ -1,4 +1,4 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
@@ -7,6 +7,8 @@ from datetime import datetime
 class UserBase(BaseModel):
     nickname: str
     avatar_url: Optional[str] = None
+    avatar_character: Optional[str] = None
+    avatar_asset: Optional[str] = None
 
 
 # Input per la creazione dell'utente (richiesta dal client)
@@ -27,3 +29,5 @@ class User(UserBase):
 class UserUpdate(BaseModel):
     nickname: Optional[str] = None
     avatar_url: Optional[str] = None
+    avatar_character: Optional[str] = None
+    avatar_asset: Optional[str] = None
