@@ -8,7 +8,7 @@ import 'package:meta/meta.dart';
 import 'package:tickup/components/player.dart';
 import 'package:tickup/pixel_adventure.dart';
 
-enum EnemyState { idle, run, hit }
+enum EnemyState { idle, run, attack, hit }
 
 abstract class BaseEnemy extends SpriteAnimationGroupComponent<EnemyState>
     with HasGameReference<PixelAdventure>, CollisionCallbacks {
