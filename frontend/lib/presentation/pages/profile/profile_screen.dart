@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tickup/providers/theme_provider.dart';
+import 'package:tickup/presentation/features/profile/avatar_catalog.dart';
 import 'package:tickup/presentation/features/profile/profile_provider.dart';
 import 'package:tickup/presentation/routing/app_route.dart';
 
@@ -19,6 +20,9 @@ class ProfileScreen extends ConsumerWidget {
         : 'Utente Tickup';
     final email =
         profile?.email.isNotEmpty == true ? profile!.email : 'guest@example.com';
+    final avatarAsset =
+        profile?.avatarAssetForGame(pixelAdventureGameId) ??
+            profile?.avatarAsset;
 
     return Scaffold(
       appBar: AppBar(
@@ -49,13 +53,19 @@ class ProfileScreen extends ConsumerWidget {
                 CircleAvatar(
                   radius: 48,
                   backgroundColor: theme.colorScheme.primaryContainer,
-                  child: Text(
-                    displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  backgroundImage:
+                      avatarAsset != null ? AssetImage(avatarAsset) : null,
+                  child: avatarAsset == null
+                      ? Text(
+                          displayName.isNotEmpty
+                              ? displayName[0].toUpperCase()
+                              : '?',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 Text(

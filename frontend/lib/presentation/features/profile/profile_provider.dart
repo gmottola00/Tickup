@@ -11,8 +11,13 @@ class UserProfile {
     required this.emailVerified,
     this.pendingEmail,
     this.pendingEmailRequestedAt,
+    this.avatarCharacter,
+    this.avatarAsset,
+    Map<String, Map<String, dynamic>>? avatars,
     Map<String, dynamic>? rawMetadata,
-  }) : metadata = UnmodifiableMapView(rawMetadata ?? const {});
+  })  : metadata = UnmodifiableMapView(rawMetadata ?? const {}),
+        gameAvatars =
+            UnmodifiableMapView(avatars ?? const <String, Map<String, dynamic>>{});
 
   final String id;
   final String email;
@@ -20,7 +25,10 @@ class UserProfile {
   final bool emailVerified;
   final String? pendingEmail;
   final DateTime? pendingEmailRequestedAt;
+  final String? avatarCharacter;
+  final String? avatarAsset;
   final Map<String, dynamic> metadata;
+  final Map<String, Map<String, dynamic>> gameAvatars;
 
   factory UserProfile.fromUser(User user) {
     final metadata = _normalizedMetadata(user.userMetadata);
@@ -29,6 +37,7 @@ class UserProfile {
         (rawPendingEmail != null && rawPendingEmail == (user.email ?? ''))
             ? null
             : rawPendingEmail;
+    final avatars = _normalizedAvatarMap(metadata['game_avatars']);
     return UserProfile(
       id: user.id,
       email: user.email ?? '',
@@ -37,6 +46,9 @@ class UserProfile {
       pendingEmail: resolvedPendingEmail,
       pendingEmailRequestedAt:
           _tryParseDate(metadata['pending_email_requested_at']),
+      avatarCharacter: metadata['avatar_character'] as String?,
+      avatarAsset: metadata['avatar_asset'] as String?,
+      avatars: avatars,
       rawMetadata: metadata,
     );
   }
@@ -46,6 +58,35 @@ class UserProfile {
     if (source is Map) {
       return Map<String, dynamic>.fromEntries(
         source.entries.map(
+          (e) => MapEntry(e.key.toString(), e.value),
+        ),
+      );
+    }
+    return {};
+  }
+
+  static Map<String, Map<String, dynamic>> _normalizedAvatarMap(
+      Object? source) {
+    if (source is Map) {
+      return Map<String, Map<String, dynamic>>.fromEntries(
+        source.entries.map(
+          (entry) => MapEntry(
+            entry.key.toString(),
+            _normalizedNested(entry.value),
+          ),
+        ),
+      );
+    }
+    return {};
+  }
+
+  static Map<String, dynamic> _normalizedNested(Object? value) {
+    if (value is Map<String, dynamic>) {
+      return Map<String, dynamic>.from(value);
+    }
+    if (value is Map) {
+      return Map<String, dynamic>.fromEntries(
+        value.entries.map(
           (e) => MapEntry(e.key.toString(), e.value),
         ),
       );
@@ -64,6 +105,20 @@ class UserProfile {
       return DateTime.tryParse(value)?.toLocal();
     }
     return null;
+  }
+
+  String? avatarCharacterForGame(String gameId) {
+    final entry = gameAvatars[gameId];
+    final result = entry?['character'] ?? entry?['avatar_character'];
+    return (result is String && result.trim().isNotEmpty)
+        ? result
+        : avatarCharacter;
+  }
+
+  String? avatarAssetForGame(String gameId) {
+    final entry = gameAvatars[gameId];
+    final result = entry?['asset'] ?? entry?['avatar_asset'];
+    return (result is String && result.trim().isNotEmpty) ? result : avatarAsset;
   }
 }
 

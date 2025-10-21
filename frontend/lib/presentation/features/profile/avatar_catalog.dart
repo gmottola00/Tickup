@@ -50,12 +50,14 @@ List<GameAvatarOption> avatarOptionsForGame(String gameId) =>
 
 GameAvatarOption defaultAvatarForGame(String gameId) {
   final options = avatarOptionsForGame(gameId);
-  return options.isNotEmpty ? options.first : const GameAvatarOption(
-    id: 'default',
-    label: 'Default',
-    character: 'Mask Dude',
-    asset: 'assets/images/Avatars/Mask Dude/Idle (32x32).png',
-  );
+  return options.isNotEmpty
+      ? options.first
+      : const GameAvatarOption(
+          id: 'default',
+          label: 'Default',
+          character: 'Mask Dude',
+          asset: 'assets/images/Avatars/Mask Dude/Idle (32x32).png',
+        );
 }
 
 GameAvatarOption? resolveAvatarSelection(
@@ -68,8 +70,10 @@ GameAvatarOption? resolveAvatarSelection(
   if (options.isEmpty) return null;
 
   if (optionId != null) {
-    final match =
-        options.firstWhere((opt) => opt.id == optionId, orElse: () => options.first);
+    final match = options.firstWhere(
+      (opt) => opt.id == optionId,
+      orElse: () => options.first,
+    );
     if (match.id == optionId) return match;
   }
 

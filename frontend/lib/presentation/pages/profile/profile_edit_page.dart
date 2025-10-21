@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postgrest/postgrest.dart';
 import 'package:tickup/core/network/auth_service.dart';
+import 'package:tickup/presentation/features/profile/avatar_catalog.dart';
 import 'package:tickup/presentation/features/profile/profile_provider.dart';
 
 class ProfileEditPage extends ConsumerStatefulWidget {
@@ -24,6 +25,9 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
   String? _initialEmail;
   String? _pendingEmail;
   DateTime? _pendingEmailRequestedAt;
+  GameAvatarOption _pixelAdventureAvatar =
+      defaultAvatarForGame(pixelAdventureGameId);
+  GameAvatarOption? _initialPixelAdventureAvatar;
 
   @override
   void initState() {
@@ -50,6 +54,18 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
       _pendingEmailRequestedAt = profile?.pendingEmailRequestedAt;
       _nicknameController.text = _initialNickname ?? '';
       _emailController.text = profile?.pendingEmail ?? _initialEmail ?? '';
+      final pixelMetadata = profile?.gameAvatars[pixelAdventureGameId];
+      final selectedAvatar = resolveAvatarSelection(
+            pixelAdventureGameId,
+            optionId: pixelMetadata?['id'] as String?,
+            character: (pixelMetadata?['character'] ??
+                profile?.avatarCharacter) as String?,
+            asset:
+                (pixelMetadata?['asset'] ?? profile?.avatarAsset) as String?,
+          ) ??
+          defaultAvatarForGame(pixelAdventureGameId);
+      _pixelAdventureAvatar = selectedAvatar;
+      _initialPixelAdventureAvatar = selectedAvatar;
       _initializing = false;
     });
   }
@@ -74,6 +90,9 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
 
     final nicknameChanged = newNickname != oldNickname;
     final emailChanged = newEmail.isNotEmpty && newEmail != currentEmail;
+    final selectedAvatar = _pixelAdventureAvatar;
+    final avatarChanged = _initialPixelAdventureAvatar == null ||
+        selectedAvatar.id != _initialPixelAdventureAvatar!.id;
 
     if (!emailChanged) {
       final pending = metadata['pending_email'];
@@ -83,7 +102,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
       }
     }
 
-    if (!nicknameChanged && !emailChanged) {
+    if (!nicknameChanged && !emailChanged && !avatarChanged) {
       _showMessage('Nessuna modifica da salvare.');
       return;
     }
@@ -93,6 +112,19 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
 
     try {
       metadata['nickname'] = newNickname;
+      if (avatarChanged) {
+        final gameAvatars =
+            Map<String, dynamic>.from(metadata['game_avatars'] as Map? ?? {});
+        gameAvatars[pixelAdventureGameId] = {
+          'id': selectedAvatar.id,
+          'character': selectedAvatar.character,
+          'asset': selectedAvatar.asset,
+        };
+        metadata['game_avatars'] = gameAvatars;
+        metadata['avatar_character'] = selectedAvatar.character;
+        metadata['avatar_asset'] = selectedAvatar.asset;
+        metadata['avatar_url'] = selectedAvatar.asset;
+      }
       if (emailChanged) {
         metadata['pending_email'] = newEmail;
         metadata['pending_email_requested_at'] =
@@ -113,6 +145,18 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
           user;
       final updatedProfile =
           updatedUser != null ? UserProfile.fromUser(updatedUser) : null;
+      final updatedAvatar = (() {
+        final meta = updatedProfile?.gameAvatars[pixelAdventureGameId];
+        return resolveAvatarSelection(
+              pixelAdventureGameId,
+              optionId: meta?['id'] as String?,
+              character: (meta?['character'] ??
+                  updatedProfile?.avatarCharacter) as String?,
+              asset:
+                  (meta?['asset'] ?? updatedProfile?.avatarAsset) as String?,
+            ) ??
+            selectedAvatar;
+      })();
 
       setState(() {
         _initialNickname = updatedProfile?.nickname ?? newNickname;
@@ -121,6 +165,8 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
             (emailChanged ? newEmail : null);
         _pendingEmailRequestedAt = updatedProfile?.pendingEmailRequestedAt ??
             (emailChanged ? DateTime.now() : null);
+        _pixelAdventureAvatar = updatedAvatar;
+        _initialPixelAdventureAvatar = updatedAvatar;
         _saving = false;
       });
 
@@ -276,6 +322,39 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Avatar Pixel Adventure',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Scegli come apparirai in Pixel Adventure.',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 16),
+                          _GameAvatarSelector(
+                            options: pixelAdventureAvatarOptions,
+                            selected: _pixelAdventureAvatar,
+                            onSelected: (option) {
+                              setState(() => _pixelAdventureAvatar = option);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   if (_pendingEmail != null) ...[
                     const SizedBox(height: 16),
                     Card(
@@ -333,6 +412,95 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _GameAvatarSelector extends StatelessWidget {
+  const _GameAvatarSelector({
+    required this.options,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final List<GameAvatarOption> options;
+  final GameAvatarOption selected;
+  final ValueChanged<GameAvatarOption> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        for (final option in options)
+          _AvatarOptionTile(
+            option: option,
+            isSelected: option.id == selected.id,
+            onTap: () => onSelected(option),
+          ),
+      ],
+    );
+  }
+}
+
+class _AvatarOptionTile extends StatelessWidget {
+  const _AvatarOptionTile({
+    required this.option,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final GameAvatarOption option;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final borderColor = isSelected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.outlineVariant;
+    final backgroundColor = isSelected
+        ? theme.colorScheme.primary.withOpacity(0.15)
+        : theme.colorScheme.surfaceVariant.withOpacity(0.35);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        width: 100,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: borderColor,
+            width: isSelected ? 3 : 1,
+          ),
+          color: backgroundColor,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 64,
+              child: Image.asset(
+                option.asset,
+                filterQuality: FilterQuality.none,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              option.label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

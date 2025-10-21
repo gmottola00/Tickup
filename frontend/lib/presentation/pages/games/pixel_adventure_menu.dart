@@ -3,7 +3,11 @@ import 'dart:async';
 import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tickup/pixel_adventure.dart';
+import 'package:tickup/components/player.dart';
+import 'package:tickup/presentation/features/profile/avatar_catalog.dart';
+import 'package:tickup/presentation/features/profile/profile_provider.dart';
 
 class PixelAdventureMenuPage extends StatelessWidget {
   const PixelAdventureMenuPage({super.key});
@@ -49,7 +53,7 @@ class PixelAdventureMenuPage extends StatelessWidget {
   }
 }
 
-class PixelAdventureGameScreen extends StatefulWidget {
+class PixelAdventureGameScreen extends ConsumerStatefulWidget {
   const PixelAdventureGameScreen({
     super.key,
     required this.levels,
@@ -60,20 +64,26 @@ class PixelAdventureGameScreen extends StatefulWidget {
   final int initialIndex;
 
   @override
-  State<PixelAdventureGameScreen> createState() =>
+  ConsumerState<PixelAdventureGameScreen> createState() =>
       _PixelAdventureGameScreenState();
 }
 
 class _PixelAdventureGameScreenState
-    extends State<PixelAdventureGameScreen> {
+    extends ConsumerState<PixelAdventureGameScreen> {
   late final PixelAdventure _game;
 
   @override
   void initState() {
     super.initState();
+    final profile = ref.read(userProfileProvider);
+    final selectedCharacter =
+        profile?.avatarCharacterForGame(pixelAdventureGameId) ??
+            profile?.avatarCharacter ??
+            pixelAdventureAvatarOptions.first.character;
     _game = PixelAdventure(
       levels: widget.levels,
       initialLevelIndex: widget.initialIndex,
+      player: Player(character: selectedCharacter),
       showControls: true,
     );
     _enterGameMode();
