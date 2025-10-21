@@ -9,6 +9,9 @@
     ],
     "file.lastUsedOpenFilter": "Tutti i file (*)",
     "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
         "Level-01.tmx": {
             "expandedObjectLayers": [
                 3,
@@ -41,8 +44,8 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 327,
-                "y": 200.25
+                "x": 320.5,
+                "y": 286.25
             }
         },
         "Level-04.tmx": {
@@ -77,15 +80,38 @@
                 "y": 183.99192309380626
             }
         },
+        "Level-06.tmx#Decorations (32x32)": {
+            "scaleInDock": 1
+        },
+        "Level-06.tmx#Tilemap_color1": {
+            "scaleInEditor": 1
+        },
         "Pixel Adventure.tsx": {
             "scaleInDock": 1
+        },
+        "Terrain (16x16).tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "prova": {
+            "scale": 0.47460416666666666,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1599.2274263640752,
+                "y": 1199.947324524823
+            }
+        },
+        "prova#Tilemap_color1": {
+            "scaleInDock": 2,
+            "scaleInEditor": 1
         }
     },
-    "last.imagePath": "C:/Users/Spellthorn/Desktop/pixel_adventure/assets/images/Terrain",
+    "last.externalTilesetPath": "/home/gm8la/Scrivania/Project/Tickup/frontend/assets/tiles",
+    "last.imagePath": "/home/gm8la/Scrivania/Project/Tickup/frontend/assets/images/Terrain",
     "map.height": 23,
     "map.lastUsedFormat": "tmx",
-    "map.tileHeight": 40,
-    "map.tileWidth": 40,
+    "map.tileHeight": 80,
+    "map.tileWidth": 80,
     "map.width": 40,
     "openFiles": [
         "Level-01.tmx",
@@ -93,14 +119,17 @@
     ],
     "project": "Pixel Adventure.tiled-project",
     "recentFiles": [
+        "Terrain (16x16).tsx",
+        "prova",
         "Level-01.tmx",
         "Level-02.tmx",
         "Level-04.tmx",
         "Level-03.tmx"
     ],
+    "tileset.lastUsedFilter": "File Tileset Tiled (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
-        "height": 16,
-        "width": 16
+        "height": 80,
+        "width": 80
     }
 }
