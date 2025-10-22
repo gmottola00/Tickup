@@ -1,4 +1,4 @@
-import 'package:tickup/components/enemies/enemy_projectile.dart';
+import 'package:tickup/components/shared/enemy_projectile.dart';
 
 class TrunkProjectile extends EnemyProjectile {
   TrunkProjectile({
