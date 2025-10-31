@@ -4,61 +4,61 @@ import 'package:tickup/data/repositories/tournament_repository.dart';
 
 // Tournament Repository Provider
 final tournamentRepositoryProvider = Provider<TournamentRepository>((ref) {
-  return TournamentRepositoryProvider.instance;
+  return TournamentRepository();
 });
 
 // Active Tournaments Provider
 final activeTournamentsProvider = FutureProvider<List<Tournament>>((ref) async {
   final repository = ref.read(tournamentRepositoryProvider);
-  return repository.getActiveTournaments();
+  return repository.fetchActiveTournaments();
 });
 
 // All Tournaments Provider
 final allTournamentsProvider = FutureProvider<List<Tournament>>((ref) async {
   final repository = ref.read(tournamentRepositoryProvider);
-  return repository.getAllTournaments();
+  return repository.fetchAllTournaments();
 });
 
 // My Tournaments Provider
 final myTournamentsProvider = FutureProvider<List<Tournament>>((ref) async {
   final repository = ref.read(tournamentRepositoryProvider);
-  return repository.getMyTournaments();
+  return repository.fetchMyTournaments();
 });
 
 // Tournament Details Provider (by ID)
 final tournamentProvider = FutureProvider.family<Tournament, String>((ref, tournamentId) async {
   final repository = ref.read(tournamentRepositoryProvider);
-  return repository.getTournament(tournamentId);
+  return repository.fetchTournament(tournamentId);
 });
 
 // Tournament Leaderboard Provider
 final tournamentLeaderboardProvider = FutureProvider.family<TournamentLeaderboard, String>((ref, tournamentId) async {
   final repository = ref.read(tournamentRepositoryProvider);
-  return repository.getLeaderboard(tournamentId);
+  return repository.fetchLeaderboard(tournamentId);
 });
 
 // Tournament Phase Leaderboard Provider
 final tournamentPhaseLeaderboardProvider = FutureProvider.family<TournamentLeaderboard, TournamentPhaseLeaderboardParams>((ref, params) async {
   final repository = ref.read(tournamentRepositoryProvider);
-  return repository.getLeaderboard(params.tournamentId, phaseId: params.phaseId);
+  return repository.fetchLeaderboard(params.tournamentId, phaseId: params.phaseId);
 });
 
 // Tournament Phases Provider
 final tournamentPhasesProvider = FutureProvider.family<List<TournamentPhase>, String>((ref, tournamentId) async {
   final repository = ref.read(tournamentRepositoryProvider);
-  return repository.getTournamentPhases(tournamentId);
+  return repository.fetchTournamentPhases(tournamentId);
 });
 
 // My Tournament Participation Provider
 final myTournamentParticipationProvider = FutureProvider.family<TournamentParticipant?, String>((ref, tournamentId) async {
   final repository = ref.read(tournamentRepositoryProvider);
-  return repository.getMyParticipation(tournamentId);
+  return repository.fetchMyParticipation(tournamentId);
 });
 
 // Tournament History Provider
 final tournamentHistoryProvider = FutureProvider<List<Tournament>>((ref) async {
   final repository = ref.read(tournamentRepositoryProvider);
-  return repository.getTournamentHistory();
+  return repository.fetchTournamentHistory();
 });
 
 // Tournament Controller for actions
@@ -114,7 +114,7 @@ class TournamentNotifier extends StateNotifier<AsyncValue<List<Tournament>>> {
   Future<void> _loadActiveTournaments() async {
     try {
       state = const AsyncValue.loading();
-      final tournaments = await _repository.getActiveTournaments();
+      final tournaments = await _repository.fetchActiveTournaments();
       state = AsyncValue.data(tournaments);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
